@@ -824,8 +824,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
             <div class="spec-card primary"><div class="spec-label">Combustion Face Flatness MAX</div><div class="spec-value">0.006<span class="spec-unit">in</span></div><div class="spec-sub">0.15 mm per full length</div></div>
             <div class="spec-card"><div class="spec-label">MAX Material Removal</div><div class="spec-value">0.040<span class="spec-unit">in</span></div><div class="spec-sub">1.0 mm from combustion face</div></div>
             <div class="spec-card"><div class="spec-label">Valve Stem OD (Intake &amp; Exhaust)</div><div class="spec-value">0.373–0.374<span class="spec-unit">in</span></div><div class="spec-sub">9.48–9.50 mm</div></div>
-            <div class="spec-card"><div class="spec-label">Valve Seat Recession — Intake MAX</div><div class="spec-value">0.163<span class="spec-unit">in</span></div><div class="spec-sub">4.14 mm (min 0.145")</div></div>
-            <div class="spec-card"><div class="spec-label">Valve Seat Recession — Exhaust MAX</div><div class="spec-value">0.143<span class="spec-unit">in</span></div><div class="spec-sub">3.63 mm (min 0.125")</div></div>
+            <div class="spec-card"><div class="spec-label">Valve Seat Recession — Intake MAX</div><div class="spec-value">0.044<span class="spec-unit">in</span></div><div class="spec-sub">1.12 mm (min 0.023")</div></div>
+            <div class="spec-card"><div class="spec-label">Valve Seat Recession — Exhaust MAX</div><div class="spec-value">0.064<span class="spec-unit">in</span></div><div class="spec-sub">1.62 mm (min 0.043")</div></div>
             <div class="spec-card"><div class="spec-label">Intake Valve Head Dia MAX</div><div class="spec-value">2.123<span class="spec-unit">in</span></div><div class="spec-sub">53.93 mm</div></div>
             <div class="spec-card"><div class="spec-label">Exhaust Valve Head Dia MAX</div><div class="spec-value">1.852<span class="spec-unit">in</span></div><div class="spec-sub">47.03 mm</div></div>
             <div class="spec-card"><div class="spec-label">Pressure Test</div><div class="spec-value">30<span class="spec-unit">psi</span></div><div class="spec-sub">Hold 3 min — no leaks</div></div>
@@ -1477,18 +1477,18 @@ const sec4Meas=[
 // ══ SECTION 5 — CYLINDER HEAD ══
 const sec5Meas=[
   {id:'s5-flat',     label:'Head Combustion Face Flatness',  spec:'MAX 0.006"',   min:null,  max:0.006, loc:'Full length — straight edge', group:'Head Flatness'},
-  {id:'s5-rec-i1',   label:'Valve Seat Recession — Intake #1',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 1 Intake', group:'Valve Seat Recession — Intake'},
-  {id:'s5-rec-i2',   label:'Valve Seat Recession — Intake #2',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 2 Intake', group:null},
-  {id:'s5-rec-i3',   label:'Valve Seat Recession — Intake #3',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 3 Intake', group:null},
-  {id:'s5-rec-i4',   label:'Valve Seat Recession — Intake #4',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 4 Intake', group:null},
-  {id:'s5-rec-i5',   label:'Valve Seat Recession — Intake #5',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 5 Intake', group:null},
-  {id:'s5-rec-i6',   label:'Valve Seat Recession — Intake #6',  spec:'0.145–0.163"', min:0.145, max:0.163, loc:'Cyl 6 Intake', group:null},
-  {id:'s5-rec-e1',   label:'Valve Seat Recession — Exhaust #1', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 1 Exhaust', group:'Valve Seat Recession — Exhaust'},
-  {id:'s5-rec-e2',   label:'Valve Seat Recession — Exhaust #2', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 2 Exhaust', group:null},
-  {id:'s5-rec-e3',   label:'Valve Seat Recession — Exhaust #3', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 3 Exhaust', group:null},
-  {id:'s5-rec-e4',   label:'Valve Seat Recession — Exhaust #4', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 4 Exhaust', group:null},
-  {id:'s5-rec-e5',   label:'Valve Seat Recession — Exhaust #5', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 5 Exhaust', group:null},
-  {id:'s5-rec-e6',   label:'Valve Seat Recession — Exhaust #6', spec:'0.125–0.143"', min:0.125, max:0.143, loc:'Cyl 6 Exhaust', group:null},
+  {id:'s5-rec-i1',   label:'Valve Seat Recession — Intake #1',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 1 Intake', group:'Valve Seat Recession — Intake'},
+  {id:'s5-rec-i2',   label:'Valve Seat Recession — Intake #2',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 2 Intake', group:null},
+  {id:'s5-rec-i3',   label:'Valve Seat Recession — Intake #3',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 3 Intake', group:null},
+  {id:'s5-rec-i4',   label:'Valve Seat Recession — Intake #4',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 4 Intake', group:null},
+  {id:'s5-rec-i5',   label:'Valve Seat Recession — Intake #5',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 5 Intake', group:null},
+  {id:'s5-rec-i6',   label:'Valve Seat Recession — Intake #6',  spec:'0.023–0.044"', min:0.023, max:0.044, loc:'Cyl 6 Intake', group:null},
+  {id:'s5-rec-e1',   label:'Valve Seat Recession — Exhaust #1', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 1 Exhaust', group:'Valve Seat Recession — Exhaust'},
+  {id:'s5-rec-e2',   label:'Valve Seat Recession — Exhaust #2', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 2 Exhaust', group:null},
+  {id:'s5-rec-e3',   label:'Valve Seat Recession — Exhaust #3', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 3 Exhaust', group:null},
+  {id:'s5-rec-e4',   label:'Valve Seat Recession — Exhaust #4', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 4 Exhaust', group:null},
+  {id:'s5-rec-e5',   label:'Valve Seat Recession — Exhaust #5', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 5 Exhaust', group:null},
+  {id:'s5-rec-e6',   label:'Valve Seat Recession — Exhaust #6', spec:'0.043–0.064"', min:0.043, max:0.064, loc:'Cyl 6 Exhaust', group:null},
 ];
 
 // ══ SECTION 7 — VALVETRAIN ══
@@ -1507,9 +1507,6 @@ const sec7Meas=[
   {id:'s7-lash-e6',  label:'Valve Lash — Exhaust Cyl #6',   spec:'0.024"',       min:0.023, max:0.025, loc:'Cyl 6 Exhaust', group:null},
   {id:'s7-cam-end',  label:'Camshaft End Clearance',         spec:'0.005–0.018"', min:0.005, max:0.018, loc:'Front of camshaft', group:'Camshaft'},
   {id:'s7-gear-bl',  label:'Gear Backlash',                  spec:'0.003–0.013"', min:0.003, max:0.013, loc:'Cam/crank gear mesh', group:null},
-  {id:'s7-cam-bore', label:'Camshaft Gear Bore ID',          spec:'1.633–1.634"', min:1.633, max:1.634, loc:'Camshaft gear bore', group:null},
-  {id:'s7-cam-jrnl', label:'Camshaft Gear Journal OD',       spec:'1.636–1.637"', min:1.636, max:1.637, loc:'Camshaft gear journal', group:null},
-  {id:'s7-cam-thst', label:'Camshaft Thrust Plate Thickness',spec:'0.368–0.377"', min:0.368, max:0.377, loc:'Thrust plate', group:null},
 ];
 
 // ══ SECTION 8 — OIL PUMP ══
