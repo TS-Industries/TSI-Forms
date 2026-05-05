@@ -174,13 +174,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .vi-btn-fail:hover,.vi-btn-fail.selected-fail{background:var(--fail-bg);border-color:var(--fail);}
 
 /* ── BOLT GRID ── */
-.bolt-grid{display:grid;grid-template-columns:repeat(13,1fr);gap:.5rem;padding:1rem 1.5rem;background:#F8FAFC;border-bottom:1px solid var(--border);}
-.cap-circle{width:36px;height:36px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;transition:all .15s;}
-.cap-circle.clickable{cursor:pointer;}
-.cap-circle.clickable:hover{background:var(--navy-mid);transform:scale(1.08);}
-.cap-circle.torqued{background:var(--pass);box-shadow:0 0 0 3px var(--pass-bg);}
-.cap-circle.short-bolt{background:#64748B;}
-.cap-circle.short-bolt.torqued{background:var(--pass);}
+
 
 /* ── TORQUE DIAGRAM IMAGE ── */
 .torque-diagram-wrap{background:white;border-radius:8px;padding:.75rem;margin-bottom:.75rem;border:1px solid var(--border);text-align:center;}
@@ -950,9 +944,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
           <div class="alert-box alert-info"><strong>Torque Sequence Direction</strong>Always follow the illustrated center-out sequence. Start from the center of the head and work outward. This ensures even gasket compression and prevents head warpage.</div>
         </div>
       </div>
-      <!-- Interactive Bolt Grid -->
-      <div style="padding:.75rem 1.5rem .25rem;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy);">Click each bolt to mark as torqued — Gold = Long bolt &nbsp;|&nbsp; Gray = Short bolt</div>
-       <div class="bolt-grid" id="bolt-grid-6"></div>
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Head Bolt Torque</div>
         <textarea class="section-notes-input" id="notes-sec6" placeholder="Record any observations about bolt condition, torque anomalies, or additional findings..."></textarea>
@@ -1595,15 +1586,6 @@ const viSec7=[
 ];
 
 // ══ BOLT SEQUENCE ══
-const boltSequence=[
-  {pos:1,type:'L'},{pos:2,type:'L'},{pos:3,type:'S'},{pos:4,type:'S'},
-  {pos:5,type:'S'},{pos:6,type:'S'},{pos:7,type:'L'},{pos:8,type:'L'},
-  {pos:9,type:'L'},{pos:10,type:'L'},{pos:11,type:'S'},{pos:12,type:'S'},
-  {pos:13,type:'S'},{pos:14,type:'S'},{pos:15,type:'L'},{pos:16,type:'L'},
-  {pos:17,type:'L'},{pos:18,type:'L'},{pos:19,type:'S'},{pos:20,type:'S'},
-  {pos:21,type:'S'},{pos:22,type:'S'},{pos:23,type:'L'},{pos:24,type:'L'},
-  {pos:25,type:'L'},{pos:26,type:'L'},
-];
 
 // ══ SECTION DEFS ══
 const sectionDefs=[
@@ -1633,7 +1615,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec5','vi5',viSec5);
   buildVIItems('vi-sec7','vi7',viSec7);
   buildVIItems('vi-sec8','vi8',viSec8);
-  buildBoltGrid();
+
   addPartsRow(); addPartsRow(); addPartsRow();
   updateProgress();
   const today=new Date().toISOString().split('T')[0];
@@ -1750,53 +1732,6 @@ function setVI(id,result){
   updateProgress();
 }
 
-function buildBoltGrid(){
-  const g=document.getElementById('bolt-grid-6');
-  if(!g) return;
-  boltSequence.forEach(b=>{
-    const cell=document.createElement('div');
-    cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;';
-    const isShort=b.type==='S';
-    cell.innerHTML=`<div class="cap-circle clickable${isShort?' short-bolt':''}" id="bolt-${b.pos}" onclick="toggleBolt(${b.pos})" title="Bolt ${b.pos} (${b.type==='L'?'Long':'Short'})">${b.pos}</div>
-      <div style="font-size:9px;font-weight:600;color:${b.type==='L'?GOLD:'#6B7280'};">${b.type==='L'?'L':'S'}</div>`;
-    g.appendChild(cell);
-  });
-}
-
-function toggleBolt(pos){
-  const el=document.getElementById('bolt-'+pos);
-  if(!el) return;
-  el.classList.toggle('torqued');
-  updateBoltBadge();
-  updateProgress();
-}
-
-function updateBoltBadge(){
-  const torqued=document.querySelectorAll('.cap-circle.torqued').length;
-  const b=document.getElementById('badge-sec-6-bolts');
-  if(b) b.textContent=`${torqued}/26`;
-}
-
-// buildBoltTable removed — checklist table removed per user request
-function buildBoltTable(){
-  // no-op
-  return;
-  const tb=document.getElementById('tbody-6-bolts');
-  if(!tb) return;
-  boltSequence.forEach(b=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="font-weight:700;font-family:'Barlow Condensed',sans-serif;">Bolt ${b.pos}</td>
-      <td><span style="font-size:11px;font-weight:700;color:${b.type==='L'?GOLD:'#6B7280'};">${b.type==='L'?'LONG':'SHORT'}</span></td>
-      <td style="font-size:11px;color:var(--gray);">${b.type==='L'?'Center rows':'Outer rows'}</td>
-      <td style="text-align:center;"><input type="checkbox" id="b6-1-${b.pos}" onchange="updateBoltBadge()"></td>
-      <td style="text-align:center;">${b.type==='L'?'<input type="checkbox" id="b6-2-'+b.pos+'">':'<span style="color:#CBD5E1;font-size:10px;">N/A</span>'}</td>
-      <td style="text-align:center;">${b.type==='S'?'<input type="checkbox" id="b6-3-'+b.pos+'">':'<span style="color:#CBD5E1;font-size:10px;">N/A</span>'}</td>
-      <td style="text-align:center;">${b.type==='L'?'<input type="checkbox" id="b6-4-'+b.pos+'">':'<span style="color:#CBD5E1;font-size:10px;">N/A</span>'}</td>
-      <td style="text-align:center;"><input type="checkbox" id="b6-5-${b.pos}" onchange="updateBoltBadge()"></td>`;
-    tb.appendChild(tr);
-  });
-}
 
 // ══ PARTS TRACKER ══
 let partRowId=0;
