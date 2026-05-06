@@ -400,6 +400,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="header-actions">
       <button class="btn btn-outline" onclick="saveJSON()">&#x1F4BE; Save</button>
+      <button class="btn btn-outline" onclick="setAIKey()" title="Set Anthropic API key for AI Polish feature" style="font-size:11px;border-color:#7C3AED;color:#7C3AED;">&#x2728; AI Key</button>
       <button class="btn btn-gold" onclick="openReport()">&#x1F4C4; Customer Report</button>
     </div>
   </div>
@@ -417,6 +418,17 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="unit-field"><label>Technician</label><input id="uf-tech" placeholder="Tech name"></div>
     <div class="unit-field"><label>Date</label><input id="uf-date" type="date"></div>
     <div class="unit-field"><label>Engine Hours</label><input id="uf-hours" placeholder="Hours at teardown"></div>
+  </div>
+  <!-- AI KEY SETUP BAR -->
+  <div id="ai-key-bar" style="background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1.5px solid #C4B5FD;border-radius:10px;padding:.75rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:.6rem;">
+      <span style="font-size:18px;">✨</span>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;color:#4C1D95;">AI POLISH — ANTHROPIC API KEY</div>
+        <div id="ai-key-status" style="font-size:11px;color:#6D28D9;">No key set — click Set Key to enable AI Polish on technician notes</div>
+      </div>
+    </div>
+    <button onclick="setAIKey()" style="padding:.4rem 1rem;background:#7C3AED;color:white;border:none;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;cursor:pointer;">Set Key</button>
   </div>
 
   <!-- PROGRESS CARD -->
@@ -1639,6 +1651,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Auto-save & restore
   attachAutoSaveListeners();
   checkRestore();
+  updateAIKeyStatus();
 });
 
 function toggleSection(id){
@@ -2142,23 +2155,69 @@ function exportReportPDF(){
   },300);
 }
 
+function updateAIKeyStatus(){
+  const el=document.getElementById('ai-key-status');
+  if(!el) return;
+  const has=!!sessionStorage.getItem('tsi_ak');
+  el.textContent=has?'✓ API key set — AI Polish is active':'No key set — click Set Key to enable AI Polish on technician notes';
+  el.style.color=has?'#065F46':'#6D28D9';
+}
+
+function setAIKey(){
+  const current=sessionStorage.getItem('tsi_ak');
+  const msg=current
+    ? 'API key is set for this session.\n\nEnter a new key to replace it, or leave blank and click OK to clear it.'
+    : 'Enter your Anthropic API key.\nGet one at: console.anthropic.com\n\nThe key is stored only in this browser session.';
+  const val=prompt(msg, current||'');
+  if(val===null) return;
+  if(val.trim()){
+    sessionStorage.setItem('tsi_ak', val.trim());
+    alert('✓ API key saved for this session.');
+  } else {
+    sessionStorage.removeItem('tsi_ak');
+    alert('API key cleared.');
+  }
+  updateAIKeyStatus();
+}
+
 async function polishNotes(textareaId){
   const ta=document.getElementById(textareaId);
   if(!ta) return;
   const raw=ta.value.trim();
   if(!raw){alert('Please write some notes first, then click Polish.');return;}
   const btn=document.querySelector(`[onclick="polishNotes('${textareaId}')"]`);
+
+  // Get or prompt for API key (stored for the session)
+  let apiKey=sessionStorage.getItem('tsi_ak');
+  if(!apiKey){
+    apiKey=prompt('Enter your Anthropic API key to use AI Polish.\nThis is stored only for this browser session and never sent anywhere except Anthropic.\n\nGet a key at: console.anthropic.com');
+    if(!apiKey){return;}
+    sessionStorage.setItem('tsi_ak',apiKey.trim());
+    apiKey=apiKey.trim();
+  }
+
   if(btn){btn.disabled=true;btn.innerHTML='⏳ Polishing...';}
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
         messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing professional field service notes for a customer report on a Cummins C8.3G engine overhaul. Rewrite the following rough technician notes into clear, professional, third-person technical language suitable for a customer report. Keep all technical facts exactly as stated. Be concise. Do not add information that is not in the notes. Return only the rewritten text with no preamble.\n\nRough notes: ${raw}`}]
       })
     });
+    if(resp.status===401){
+      sessionStorage.removeItem('tsi_ak');
+      alert('Invalid API key — please try again and re-enter your key.');
+      if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
+      return;
+    }
     const data=await resp.json();
     if(data.content&&data.content[0]&&data.content[0].text){
       ta.value=data.content[0].text;
@@ -2166,7 +2225,7 @@ async function polishNotes(textareaId){
       alert('AI polish failed — please try again.');
     }
   } catch(e){
-    alert('Could not connect to AI — check your connection and try again.');
+    alert('Could not connect to Anthropic API. Check your internet connection and try again.');
   }
   if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
 }
