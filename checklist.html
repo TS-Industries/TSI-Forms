@@ -2026,23 +2026,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   initOfflineMode();
   initRealtime();
   setTimeout(attachNumpadToMeasInputs, 800);
-
-  // Auto-load from cloud on page open if a job ID is saved
-  // Suspend saves immediately so nothing can fire before load completes
-  const savedJobId = localStorage.getItem('tsi_last_job_id');
-  if (savedJobId) {
-    _savesSuspended = true; // block all saves until load finishes
-    const inp = document.getElementById('job-id-input');
-    if (inp) inp.value = savedJobId;
-    setTimeout(async () => {
-      try {
-        await loadJob(true);
-      } catch(e) {
-        console.error('Auto-load failed:', e);
-        _savesSuspended = false;
-      }
-    }, 600); // wait for DOM to be fully ready
-  }
 });
 
 function toggleSection(id){
@@ -4146,4 +4129,24 @@ setInterval(() => {
     syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'periodic' });
   }
 }, 30000);
+
+// ── AUTO-LOAD ON PAGE OPEN ──
+// Runs here at the bottom so all constants (SUPABASE_URL, sbFetch etc) are defined
+window.addEventListener('load', () => {
+  const savedJobId = localStorage.getItem('tsi_last_job_id');
+  if (!savedJobId) return;
+  const inp = document.getElementById('job-id-input');
+  if (inp) inp.value = savedJobId;
+  // Suspend saves immediately — nothing writes until load is done
+  _savesSuspended = true;
+  clearTimeout(_syncTimer);
+  setTimeout(async () => {
+    try {
+      await loadJob(true);
+    } catch(e) {
+      console.error('Auto-load failed:', e);
+      _savesSuspended = false;
+    }
+  }, 500);
+});
 </script>
