@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.7</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.8</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3165,9 +3165,15 @@ async function silentReload() {
       else if (field_id === 'parts_list')     { try{ const p=JSON.parse(field_value||'[]'); if(Array.isArray(p)) state.parts=p; }catch(e){} }
     });
 
+    // Only silently reload if we haven't saved recently (avoid stomping user work)
+    const lastSaveAge = Date.now() - (_lastSaveTime || 0);
+    if (lastSaveAge < 10000) {
+      console.log('[silentReload] Skipped — saved', Math.round(lastSaveAge/1000), 's ago');
+      return;
+    }
     _savesSuspended = true;
     restoreState(state);
-    setTimeout(() => { _savesSuspended = false; }, 500);
+    // Don't unsuspend here — restoreState finally block handles it
     setSyncStatus('✓ Synced from other device');
   } catch(e) {
     setSyncStatus('⚠ Remote refresh failed');
@@ -3662,6 +3668,7 @@ async function sbFetch(path, options = {}) {
 }
 
 let _savesSuspended = false;    // hard suspend (during load/restore) — no saves at all
+let _lastSaveTime = 0;           // timestamp of last successful cloud save
 let _lastServerSnapshot = null; // last-known DB state for this job, {field_id: field_value}
 let _syncTimer = null;          // debounce handle for autoSave
 
@@ -4042,6 +4049,7 @@ async function syncToCloud(jobId, state, opts = {}) {
   // LAYER 3: write to history (fire-and-forget, doesn't block UI)
   appendHistory(jobId, flat, source);
 
+  _lastSaveTime = Date.now();
   setSyncStatus('✓ Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
 }
 
