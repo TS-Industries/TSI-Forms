@@ -2029,6 +2029,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   initOfflineMode();
   initRealtime();
   attachNumpadToMeasInputs();
+  // Auto-load from cloud on refresh if we have a saved job ID
+  const savedJobId = localStorage.getItem('tsi_last_job_id');
+  if (savedJobId) {
+    const inp = document.getElementById('job-id-input');
+    if (inp) inp.value = savedJobId;
+    // Small delay to let the page fully render before loading
+    setTimeout(() => {
+      loadJob(true); // true = silent auto-load (no confirm dialog)
+    }, 300);
+  }
 });
 
 function toggleSection(id){
@@ -3961,13 +3971,13 @@ async function forceNextSave() {
 }
 
 // ── LOAD JOB ──
-async function loadJob() {
+async function loadJob(silent = false) {
   const input = document.getElementById('job-id-input');
   const jobId = input ? input.value.trim() : '';
-  if (!jobId) { alert('Enter a job number first.'); return; }
+  if (!jobId) { if (!silent) alert('Enter a job number first.'); return; }
 
-  // If switching to a different job, warn that the current form will be replaced
-  if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId) {
+  // If switching to a different job, warn (skip on silent auto-load)
+  if (!silent && CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId) {
     if (!confirm(`Switch from job "${CURRENT_JOB_ID}" to "${jobId}"?\n\nAny unsaved changes on the current form will be replaced with "${jobId}" data (or cleared if it's a new job).`)) {
       return;
     }
