@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.1</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1709,20 +1709,17 @@ function importBackup(){
       const text=await file.text();
       const data=JSON.parse(text);
       const state=data.state||data;
-      if(confirm('Import backup from '+(data.exported||'unknown date')+'?\n\nThis will overwrite current values. Proceed?')){
-        // If cloud has more parts than the backup, keep the cloud parts
-        if(_lastServerSnapshot && _lastServerSnapshot['parts_list']){
-          try{
-            const cloudParts=JSON.parse(_lastServerSnapshot['parts_list']||'[]');
-            const backupParts=Array.isArray(state.parts)?state.parts:[];
-            if(cloudParts.length > backupParts.length){
-              state.parts=cloudParts;
-              setSyncStatus('✓ Imported (kept '+cloudParts.length+' cloud parts)');
-            }
-          }catch(e){}
-        }
+      const backupParts=Array.isArray(state.parts)?state.parts:[];
+      if(confirm('Import backup from '+(data.exported||'unknown date')+'?\n\nThis backup has '+backupParts.length+' parts and will be saved to cloud. Proceed?')){
+        // Always use backup parts — backup is the source of truth
         restoreState(state);
-        if(!getSyncStatus().includes('cloud parts')) setSyncStatus('✓ Backup imported');
+        setSyncStatus('Saving backup to cloud...');
+        // Force immediate save to cloud so LOAD gets correct data next time
+        setTimeout(async () => {
+          _savesSuspended = false;
+          await autoSave({ force: true });
+          setSyncStatus('✓ Backup imported & saved to cloud (' + backupParts.length + ' parts)');
+        }, 800);
       }
     } catch(e){
       alert('Import failed — file may be corrupt: '+e.message);
@@ -4184,12 +4181,12 @@ function setSyncStatus(msg) {
 }
 
 // ── AUTO-SAVE (debounced, suspend-aware) ──
-function autoSave() {
-  if (_savesSuspended) return;
+function autoSave(opts={}) {
+  if (_savesSuspended && !opts.force) return;
   clearTimeout(_syncTimer);
   setSyncStatus('Saving...');
   _syncTimer = setTimeout(async () => {
-    if (_savesSuspended) return;
+    if (_savesSuspended && !opts.force) return;
     if (!CURRENT_JOB_ID) {
       // No active job — only save to localStorage if there's real data worth keeping
       const input = document.getElementById('job-id-input');
