@@ -1626,6 +1626,7 @@ const sectionDefs=[
 
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
+  _savesSuspended = true;
   injectJobUI();
   buildMeasTable('tbody-1', sec1Meas);
   buildMeasTable('tbody-2', sec2Meas);
@@ -1642,7 +1643,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec7','vi7',viSec7);
   buildVIItems('vi-sec8','vi8',viSec8);
 
-  addPartsRow(); addPartsRow(); addPartsRow();
   updateProgress();
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('uf-date').value=today;
@@ -1650,6 +1650,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   attachAutoSaveListeners();
   checkRestore();
   updateAIKeyStatus();
+  // Release startup suspend — nothing before LOAD should ever save
+  setTimeout(() => { clearTimeout(_syncTimer); _savesSuspended = false; }, 1000);
 });
 
 function toggleSection(id){
