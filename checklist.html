@@ -164,9 +164,9 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
 /* ── VISUAL INSPECTION ── */
 .vi-panel{padding:1rem 1.5rem;}
-.vi-item{display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;border-radius:7px;border:1px solid var(--border);margin-bottom:.4rem;gap:.75rem;background:#FAFAFA;}
+.vi-item{display:flex;align-items:center;padding:.5rem .75rem;border-radius:7px;border:1px solid var(--border);margin-bottom:.4rem;gap:.75rem;background:#FAFAFA;}
 .vi-item-label{font-size:12px;font-weight:500;flex:1;}
-.vi-btns{display:flex;gap:.375rem;flex-shrink:0;}
+.vi-btns{display:flex;align-items:center;gap:.375rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
 .vi-btn{padding:4px 12px;border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;cursor:pointer;border:1.5px solid transparent;transition:all .12s;}
 .vi-btn-pass{border-color:#D1FAE5;color:var(--pass);background:transparent;}
 .vi-btn-pass:hover,.vi-btn-pass.selected-pass{background:var(--pass-bg);border-color:var(--pass);}
@@ -1742,8 +1742,8 @@ function buildVIItems(containerId,prefix,items){
         <button class="vi-btn vi-btn-fail" id="fail-${id}" onclick="setVI('${id}','fail')">FAIL</button>
         <input type="file" accept="image/*" capture="environment" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
         <button class="photo-btn" id="photo-btn-${id}" onclick="document.getElementById('photo-input-${id}').click()" title="Attach photo">&#128247;</button>
-      </div>
-      <div class="photo-thumbs" id="photo-thumbs-${id}" style="margin-top:0;margin-left:auto;"></div>`;
+        <div class="photo-thumbs" id="photo-thumbs-${id}"></div>
+      </div>`;
     c.appendChild(div);
   });
 }
@@ -2003,10 +2003,10 @@ function openReport(){
       if(findings.length){
         mt.innerHTML+=`<tr><td colspan="6" style="padding:.4rem .75rem .1rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);background:#F0F4FF;border-top:1px solid #C7D2FE;">👁 Visual Inspection</td></tr>`;
         findings.forEach(f=>{
-          const icon=f.pass?'✓':'✗';
           const col=f.pass?'#065F46':'#991B1B';
           const bg=f.pass?'#F0FDF4':'#FEF2F2';
-          mt.innerHTML+=`<tr style="background:${bg};"><td style="font-size:10px;color:var(--gray);">${def.title}</td><td colspan="3" style="font-size:12px;">${f.label}</td><td style="font-weight:800;color:${col};font-size:13px;">${icon}</td><td></td></tr>`;
+          const word=f.pass?'PASS':'FAIL';
+          mt.innerHTML+=`<tr style="background:${bg};"><td style="font-size:10px;color:var(--gray);">${def.title}</td><td colspan="3" style="font-size:12px;">${f.label}</td><td style="font-weight:800;color:${col};font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.5px;">${word}</td><td></td></tr>`;
         });
       }
     }
