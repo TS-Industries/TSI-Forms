@@ -1371,6 +1371,19 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
           </div>
         </div>
 
+        <!-- ── PHOTO DOCUMENTATION ── -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:.625rem;">Photo Documentation — Load Bank Run</div>
+          <div style="background:var(--gray-light);border:1px solid var(--border);border-radius:8px;padding:.875rem 1rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.625rem;">
+              <button class="photo-btn" id="photo-btn-lb-run" onclick="document.getElementById('photo-input-lb-run').click()">&#128247; Add Photos</button>
+              <input type="file" id="photo-input-lb-run" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload('lb-run',this)">
+              <span style="font-size:11px;color:var(--gray);">Add photos from the load bank run — engine, generator, load bank setup, readings, etc.</span>
+            </div>
+            <div id="photo-thumbs-lb-run" style="display:flex;flex-wrap:wrap;gap:.5rem;"></div>
+          </div>
+        </div>
+
         <!-- ── TECHNICIAN NOTES ── -->
         <div style="margin-bottom:1.25rem;">
           <div class="section-notes-label">Technician Notes — Load Bank Run</div>
@@ -1468,6 +1481,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </table>
       <div class="report-section-title" id="rpt-photos-title" style="display:none;">Photo Documentation</div>
       <div id="rpt-photos-gallery"></div>
+      <div class="report-section-title" id="rpt-lb-title" style="display:none;">9. Load Bank Break-In — Post-Overhaul Acceptance</div>
+      <div id="rpt-lb-section"></div>
       <div class="report-section-title">Parts Installed</div>
       <table class="parts-report-table">
         <thead><tr><th>Description</th><th>Part Number</th><th>Qty</th><th>Supplier</th><th>Condition</th><th>Notes</th></tr></thead>
@@ -2265,11 +2280,151 @@ function openReport(){
   buildFlaggedPanel(sectionDefs);
   // Photo gallery
   buildPhotoGallery(sectionDefs);
+  // Section 9 — Load Bank Break-In
+  buildLbReport();
   document.getElementById('report-overlay').classList.add('open');
 }
 
 function closeReport(){
   document.getElementById('report-overlay').classList.remove('open');
+}
+
+function buildLbReport() {
+  const container = document.getElementById('rpt-lb-section');
+  const title = document.getElementById('rpt-lb-title');
+  if (!container || !title) return;
+  container.innerHTML = '';
+
+  // Collect data
+  const genMake   = document.getElementById('lb-gen-make')?.value  || '—';
+  const genModel  = document.getElementById('lb-gen-model')?.value || '—';
+  const genSerial = document.getElementById('lb-gen-serial')?.value|| '—';
+  const genKw     = document.getElementById('lb-gen-kw')?.value    || '—';
+  const genVolts  = document.getElementById('lb-gen-volts')?.value || '—';
+  const ambientC  = document.getElementById('lb-ambient-c')?.value || '—';
+  const hp        = document.getElementById('lb-hp')?.value        || '—';
+  const r75kw     = document.getElementById('lb-r-75kw')?.textContent?.replace(/[^0-9.—]/g,'').trim() || '—';
+  const rAmps     = document.getElementById('lb-r-amps')?.textContent?.replace(/[^0-9.—]/g,'').trim() || '—';
+  const notes9    = document.getElementById('notes-sec9')?.value?.trim() || '';
+
+  // Collect run data rows
+  const tbody = document.getElementById('lb-tbody');
+  const rows = [];
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const rowId = tr.id.replace('lb-row-','');
+      const get = c => document.getElementById(`lb-row-${rowId}-${c}`)?.value || '';
+      const kw  = document.getElementById(`lb-kw-${rowId}`)?.textContent || '—';
+      const row = {
+        time: get('time'), v1: get('v1'), v2: get('v2'), v3: get('v3'),
+        a1: get('a1'), a2: get('a2'), a3: get('a3'), hz: get('hz'), kw,
+        oilpsi: get('oilpsi'), coolant: get('coolant'), oiltemp: get('oiltemp'),
+        batt: get('batt'), fuelpsi: get('fuelpsi'), fuelwc: get('fuelwc'), timing: get('timing')
+      };
+      // Only include rows that have at least a time entry
+      if (row.time || row.v1 || row.oilpsi) rows.push(row);
+    });
+  }
+
+  // Check if there's anything to show
+  const hasData = rows.length > 0 || notes9 || genMake !== '—' || (photoStore['lb-run'] && photoStore['lb-run'].length > 0);
+  if (!hasData) {
+    title.style.display = 'none';
+    return;
+  }
+  title.style.display = 'block';
+
+  let html = '';
+
+  // Generator info + calculator summary
+  html += `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem;margin-bottom:1rem;">
+      ${[
+        ['Generator Make',   genMake],
+        ['Generator Model',  genModel],
+        ['Generator Serial', genSerial],
+        ['Generator Rating', genKw + ' kW'],
+        ['Output Voltage',   genVolts + ' V'],
+        ['Ambient Temp',     ambientC + ' °C'],
+        ['Engine HP',        hp + ' hp'],
+        ['75% Load Target',  r75kw + ' kW'],
+        ['Set Load Bank To', rAmps + ' A'],
+      ].map(([label, val]) => `
+        <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:6px;padding:.5rem .75rem;">
+          <div style="font-size:9px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;">${label}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--dark);">${val}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Run data table
+  if (rows.length > 0) {
+    html += `
+      <div style="overflow-x:auto;margin-bottom:1rem;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr>
+              <th rowspan="2" style="background:#1A3A5C;color:var(--gold);padding:5px 7px;text-align:left;border:1px solid var(--border);">Time</th>
+              <th colspan="3" style="background:#0D2A4A;color:#60A5FA;padding:4px;text-align:center;border:1px solid var(--border);font-size:10px;">VOLTS</th>
+              <th colspan="3" style="background:#0D2A4A;color:#60A5FA;padding:4px;text-align:center;border:1px solid var(--border);font-size:10px;">AMPS</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Hz</th>
+              <th rowspan="2" style="background:#166534;color:#86EFAC;padding:5px 4px;text-align:center;border:1px solid var(--border);">kW</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Oil PSI</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Coolant °F</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Oil Temp °F</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Batt V</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Fuel PSI</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Fuel "WC</th>
+              <th rowspan="2" style="background:#1A3A5C;color:white;padding:5px 4px;text-align:center;border:1px solid var(--border);">Timing °</th>
+            </tr>
+            <tr>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L1-L2</th>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L2-L3</th>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L3-L1</th>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L1</th>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L2</th>
+              <th style="background:#0D2A4A;color:#93C5FD;padding:3px 4px;text-align:center;border:1px solid var(--border);font-size:10px;">L3</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => `
+              <tr style="background:${i%2===0?'white':'#F8FAFC'};">
+                <td style="border:1px solid var(--border);padding:4px 6px;font-weight:700;color:var(--gold);font-family:'JetBrains Mono',monospace;">${r.time||'—'}</td>
+                ${[r.v1,r.v2,r.v3,r.a1,r.a2,r.a3].map(v=>`<td style="border:1px solid var(--border);padding:4px;text-align:center;font-family:'JetBrains Mono',monospace;">${v||'—'}</td>`).join('')}
+                <td style="border:1px solid var(--border);padding:4px;text-align:center;font-family:'JetBrains Mono',monospace;">${r.hz||'—'}</td>
+                <td style="border:1px solid var(--border);padding:4px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--pass);">${r.kw||'—'}</td>
+                ${[r.oilpsi,r.coolant,r.oiltemp,r.batt,r.fuelpsi,r.fuelwc,r.timing].map(v=>`<td style="border:1px solid var(--border);padding:4px;text-align:center;font-family:'JetBrains Mono',monospace;">${v||'—'}</td>`).join('')}
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Technician notes
+  if (notes9) {
+    html += `
+      <div style="padding:.625rem .875rem;background:#FAFBFF;border-left:3px solid var(--navy);border-radius:0 4px 4px 0;margin-bottom:1rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:3px;">📝 Technician Notes — Load Bank Run</div>
+        <div style="font-size:12px;color:#374151;line-height:1.6;">${notes9.replace(/\n/g,'<br>')}</div>
+      </div>`;
+  }
+
+  // Photos
+  const lbPhotos = photoStore['lb-run'] || [];
+  if (lbPhotos.length > 0) {
+    html += `
+      <div style="margin-bottom:1rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);padding:.375rem .625rem;background:var(--navy-light);border-radius:5px;margin-bottom:.75rem;color:white;">Load Bank Run — ${lbPhotos.length} photo${lbPhotos.length>1?'s':''}</div>
+        <div class="rpt-photo-grid">
+          ${lbPhotos.map((src, i) => `
+            <div class="rpt-photo-item">
+              <img src="${src}" onclick="openLightbox_report('${src}')" title="Load Bank Run Photo ${i+1}">
+              <div class="rpt-photo-caption">Load Bank Run<br><span style="color:var(--navy);">Photo ${i+1} of ${lbPhotos.length}</span></div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 // ══ CHART RENDERING ══
