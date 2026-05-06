@@ -6,6 +6,7 @@
 <title>Cummins C8.3G — Complete Engine Overhaul Checklist</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --navy:#1A3A5C;--navy-mid:#1E4D7B;--navy-light:#2563EB;
@@ -351,7 +352,33 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .polish-btn .spin{display:inline-block;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── AUTO-SAVE INDICATOR ── */
+/* ── OFFLINE INDICATOR ── */
+.offline-bar{position:fixed;top:0;left:0;right:0;z-index:9000;background:#92400E;color:white;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.5px;padding:5px 1.5rem;display:flex;align-items:center;justify-content:space-between;transform:translateY(-100%);transition:transform .3s ease;}
+.offline-bar.visible{transform:translateY(0);}
+.offline-queue{font-size:11px;opacity:.8;}
+
+/* ── NUMPAD OVERLAY ── */
+.numpad-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.numpad-overlay.open{opacity:1;pointer-events:all;}
+.numpad{background:#1A3A5C;border-radius:16px 16px 0 0;padding:1rem 1rem 1.5rem;width:100%;max-width:420px;box-shadow:0 -8px 40px rgba(0,0,0,.4);}
+.numpad-display{background:#0D1B2A;border-radius:8px;padding:.6rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
+.numpad-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8BAAC8;}
+.numpad-value{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:white;letter-spacing:1px;min-width:120px;text-align:right;}
+.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;}
+.np-btn{background:#12263F;border:1px solid #1E4976;color:white;border-radius:8px;padding:.9rem;font-size:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;text-align:center;transition:background .1s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.np-btn:active{background:#2563EB;}
+.np-btn.np-dot{font-size:24px;}
+.np-btn.np-del{background:#1A2A3A;font-size:16px;}
+.np-btn.np-clear{background:#3D1515;color:#EF4444;font-size:13px;letter-spacing:.3px;}
+.np-btn.np-done{background:#065F46;color:#86EFAC;font-size:14px;font-weight:800;letter-spacing:.5px;grid-column:span 2;}
+.np-btn.np-cancel{background:#1A2A3A;color:#8BAAC8;font-size:13px;}
+
+/* ── REAL-TIME SYNC INDICATOR ── */
+.sync-live{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.5px;color:#22C55E;}
+.sync-live-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;animation:pulse-dot 2s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.3;}}
+.sync-live.disconnected{color:#EF4444;}
+.sync-live.disconnected .sync-live-dot{background:#EF4444;animation:none;}
 .autosave-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:rgba(255,255,255,0.7);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:150;transform:translateY(100%);transition:transform .3s ease;}
 .autosave-bar.visible{transform:translateY(0);}
 .autosave-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:.375rem;animation:pulse-dot 1.5s ease infinite;}
@@ -395,6 +422,38 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 </style>
 </head>
 <body>
+<!-- OFFLINE BAR -->
+<div class="offline-bar" id="offline-bar">
+  <span>⚠ OFFLINE — Changes are being saved locally and will sync when connection returns</span>
+  <span class="offline-queue" id="offline-queue-count"></span>
+</div>
+
+<!-- NUMPAD OVERLAY -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="if(event.target===this)closeNumpad()">
+  <div class="numpad">
+    <div class="numpad-display">
+      <div class="numpad-label" id="np-label">Enter Value</div>
+      <div class="numpad-value" id="np-display">—</div>
+    </div>
+    <div class="numpad-grid">
+      <button class="np-btn" onclick="npKey('7')">7</button>
+      <button class="np-btn" onclick="npKey('8')">8</button>
+      <button class="np-btn" onclick="npKey('9')">9</button>
+      <button class="np-btn" onclick="npKey('4')">4</button>
+      <button class="np-btn" onclick="npKey('5')">5</button>
+      <button class="np-btn" onclick="npKey('6')">6</button>
+      <button class="np-btn" onclick="npKey('1')">1</button>
+      <button class="np-btn" onclick="npKey('2')">2</button>
+      <button class="np-btn" onclick="npKey('3')">3</button>
+      <button class="np-btn np-dot" onclick="npKey('.')">·</button>
+      <button class="np-btn" onclick="npKey('0')">0</button>
+      <button class="np-btn np-del" onclick="npDel()">⌫</button>
+      <button class="np-btn np-clear" onclick="npClear()">Clear</button>
+      <button class="np-btn np-done" onclick="npDone()">✓ Done</button>
+      <button class="np-btn np-cancel" onclick="closeNumpad()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ STICKY HEADER ══ -->
 <header class="site-header">
@@ -1485,6 +1544,7 @@ function injectJobUI() {
       style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);border-radius:5px;padding:4px 10px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;width:140px;max-width:45vw;">
     <button onclick="loadJob()" style="background:var(--gold);color:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">LOAD</button>
     <span id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Barlow',sans-serif;flex-basis:100%;text-align:center;"></span>
+    <span class="sync-live disconnected" id="sync-live-indicator" title="Real-time sync status"><span class="sync-live-dot"></span><span id="sync-live-txt">Connecting...</span></span>
   `;
   header.insertBefore(jobDiv, header.firstChild);
   const lastJob = localStorage.getItem('tsi_last_job_id');
@@ -1958,12 +2018,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildRunLog();
   buildExhTempTable();
   updateProgress();
+  // Attach numpad to dynamically built measurement inputs
+  setTimeout(attachNumpadToMeasInputs, 100);
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('uf-date').value=today;
   // Auto-save & restore
   attachAutoSaveListeners();
   checkRestore();
   updateAIKeyStatus();
+  initOfflineMode();
+  initRealtime();
+  attachNumpadToMeasInputs();
 });
 
 function toggleSection(id){
@@ -2889,6 +2954,201 @@ async function polishNotes(textareaId){
   if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
 }
 
+// ══ OFFLINE MODE ══
+let _isOnline = navigator.onLine;
+let _offlineQueue = []; // pending saves while offline
+
+function initOfflineMode() {
+  window.addEventListener('online',  () => { _isOnline=true;  updateOfflineBar(); flushOfflineQueue(); });
+  window.addEventListener('offline', () => { _isOnline=false; updateOfflineBar(); });
+  updateOfflineBar();
+}
+
+function updateOfflineBar() {
+  const bar = document.getElementById('offline-bar');
+  if (!bar) return;
+  if (!_isOnline) {
+    bar.classList.add('visible');
+    const qc = document.getElementById('offline-queue-count');
+    if (qc) qc.textContent = _offlineQueue.length > 0 ? _offlineQueue.length + ' save(s) queued' : '';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+async function flushOfflineQueue() {
+  if (_offlineQueue.length === 0) return;
+  setSyncStatus('Syncing ' + _offlineQueue.length + ' offline save(s)...');
+  // Take the latest queued state (no point sending all intermediate states)
+  const latest = _offlineQueue[_offlineQueue.length - 1];
+  _offlineQueue = [];
+  try {
+    await syncToCloud(latest.jobId, latest.state, { source: 'offline-flush' });
+    setSyncStatus('✓ Offline changes synced');
+  } catch(e) {
+    setSyncStatus('⚠ Sync failed after reconnect');
+  }
+}
+
+// Wrap syncToCloud to queue when offline
+const _origSyncToCloud = syncToCloud;
+
+// ══ REAL-TIME SYNC ══
+let _realtimeChannel = null;
+let _realtimeIgnoreNext = false; // prevent echo of our own saves
+
+function initRealtime() {
+  if (!window.supabase) { console.warn('Supabase client not loaded'); return; }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function connect() {
+    if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); }
+
+    _realtimeChannel = sb.channel('overhaul-sync')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'overhaul_data' },
+        handleRemoteChange
+      )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'overhaul_data' },
+        handleRemoteChange
+      )
+      .subscribe((status) => {
+        const ind = document.getElementById('sync-live-indicator');
+        const txt = document.getElementById('sync-live-txt');
+        if (status === 'SUBSCRIBED') {
+          if (ind) ind.className = 'sync-live';
+          if (txt) txt.textContent = 'Live';
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          if (ind) ind.className = 'sync-live disconnected';
+          if (txt) txt.textContent = 'Reconnecting...';
+          // Auto-reconnect after 3s
+          setTimeout(connect, 3000);
+        } else {
+          if (ind) ind.className = 'sync-live disconnected';
+          if (txt) txt.textContent = status;
+        }
+      });
+  }
+
+  connect();
+}
+
+let _realtimeRefreshTimer = null;
+
+function handleRemoteChange(payload) {
+  // Only care about our current job
+  if (!CURRENT_JOB_ID) return;
+  if (!payload.new || payload.new.job_id !== CURRENT_JOB_ID) return;
+  // Ignore if we triggered this save ourselves
+  if (_realtimeIgnoreNext) { _realtimeIgnoreNext = false; return; }
+  // Debounce — if many fields come in rapid succession, only refresh once
+  clearTimeout(_realtimeRefreshTimer);
+  _realtimeRefreshTimer = setTimeout(() => {
+    setSyncStatus('📡 Update from another device — refreshing...');
+    silentReload();
+  }, 800);
+}
+
+async function silentReload() {
+  // Pull latest data from cloud and apply without disrupting the user
+  if (!CURRENT_JOB_ID) return;
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/rest/v1/overhaul_data?job_id=eq.${encodeURIComponent(CURRENT_JOB_ID)}&select=field_id,field_value`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!resp.ok) return;
+    const rows = await resp.json();
+    if (!rows || !rows.length) return;
+
+    // Build state from rows
+    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] };
+    rows.forEach(row => {
+      const { field_id, field_value } = row;
+      if (field_id.startsWith('meta_'))      state.meta[field_id.replace('meta_','')] = field_value;
+      else if (field_id.startsWith('meas_val_'))  { const id=field_id.replace('meas_val_',''); if(!state.meas[id]) state.meas[id]={value:'',note:''}; state.meas[id].value=field_value; }
+      else if (field_id.startsWith('meas_note_')) { const id=field_id.replace('meas_note_',''); if(!state.meas[id]) state.meas[id]={value:'',note:''}; state.meas[id].note=field_value; }
+      else if (field_id.startsWith('vi_'))    state.vi[field_id.replace('vi_','')] = field_value;
+      else if (field_id.startsWith('notes_')) state.notes[field_id.replace('notes_','')] = field_value;
+      else if (field_id === 'parts_list')     { try{ const p=JSON.parse(field_value||'[]'); if(Array.isArray(p)) state.parts=p; }catch(e){} }
+    });
+
+    _savesSuspended = true;
+    restoreState(state);
+    setTimeout(() => { _savesSuspended = false; }, 500);
+    setSyncStatus('✓ Synced from other device');
+  } catch(e) {
+    setSyncStatus('⚠ Remote refresh failed');
+  }
+}
+
+// ══ NUMPAD ══
+let _npTarget = null;   // the input element being edited
+let _npValue  = '';     // current string being built
+
+function openNumpad(inputEl, label) {
+  _npTarget = inputEl;
+  _npValue  = inputEl.value || '';
+  document.getElementById('np-label').textContent   = label || 'Enter Value';
+  document.getElementById('np-display').textContent = _npValue || '—';
+  document.getElementById('numpad-overlay').classList.add('open');
+}
+
+function closeNumpad() {
+  document.getElementById('numpad-overlay').classList.remove('open');
+  _npTarget = null;
+  _npValue  = '';
+}
+
+function npKey(k) {
+  // Prevent multiple decimal points
+  if (k === '.' && _npValue.includes('.')) return;
+  // Max reasonable length
+  if (_npValue.length >= 10) return;
+  _npValue += k;
+  document.getElementById('np-display').textContent = _npValue;
+}
+
+function npDel() {
+  _npValue = _npValue.slice(0, -1);
+  document.getElementById('np-display').textContent = _npValue || '—';
+}
+
+function npClear() {
+  _npValue = '';
+  document.getElementById('np-display').textContent = '—';
+}
+
+function npDone() {
+  if (_npTarget && _npValue !== '') {
+    _npTarget.value = _npValue;
+    // Trigger input event so validation and autosave fire
+    _npTarget.dispatchEvent(new Event('input', { bubbles: true }));
+    _npTarget.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  closeNumpad();
+}
+
+// Attach numpad to all measurement input fields
+function attachNumpadToMeasInputs() {
+  document.querySelectorAll('.meas-input').forEach(inp => {
+    // Only attach if not already done
+    if (inp.dataset.npAttached) return;
+    inp.dataset.npAttached = '1';
+    inp.addEventListener('focus', function(e) {
+      // On touch devices, always use numpad. On desktop, only if screen < 1024px
+      if (window.innerWidth < 1024 || 'ontouchstart' in window) {
+        e.preventDefault();
+        inp.blur();
+        const row = inp.closest('tr');
+        const label = row ? (row.querySelector('td:first-child')?.textContent || 'Enter Value') : 'Enter Value';
+        openNumpad(inp, label);
+      }
+    });
+  });
+}
+
 // ══ PHOTO ATTACHMENT ══
 const photoStore = {};          // id -> array of public URLs
 const photoFieldsSeen = new Set();  // ids that have ever had photos this session (so deletions sync as empty)
@@ -3529,6 +3789,18 @@ async function syncToCloud(jobId, state, opts = {}) {
     return;
   }
 
+  // OFFLINE: queue the save and bail out
+  if (!_isOnline && !opts.force) {
+    _offlineQueue.push({ jobId, state });
+    // Keep queue from growing unbounded — only keep latest 3
+    if (_offlineQueue.length > 3) _offlineQueue = _offlineQueue.slice(-3);
+    updateOfflineBar();
+    setSyncStatus('📴 Offline — save queued');
+    // Still save to localStorage as backup
+    try { localStorage.setItem('tsi_cummins_83g_v5', JSON.stringify(state)); } catch(e){}
+    return;
+  }
+
   const flat = flattenState(state);
   const source = opts.source || 'autosave';
 
@@ -3562,6 +3834,9 @@ async function syncToCloud(jobId, state, opts = {}) {
   }
 
   setSyncStatus('Saving...');
+
+  // Tell realtime listener to ignore the echo of this save
+  _realtimeIgnoreNext = true;
 
   // Build the rows for overhaul_data
   const now = new Date().toISOString();
