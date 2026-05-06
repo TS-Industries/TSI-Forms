@@ -979,11 +979,11 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
             <div class="spec-card"><div class="spec-label">Locknut Torque</div><div class="spec-value">212<span class="spec-unit">in-lb</span></div><div class="spec-sub">24 N·m</div></div>
             <div class="spec-card"><div class="spec-label">Camshaft End Clearance — MIN</div><div class="spec-value">0.005<span class="spec-unit">in</span></div><div class="spec-sub">0.12 mm</div></div>
             <div class="spec-card"><div class="spec-label">Camshaft End Clearance — MAX</div><div class="spec-value">0.018<span class="spec-unit">in</span></div><div class="spec-sub">0.46 mm</div></div>
+            <div class="spec-card"><div class="spec-label">Camshaft Thrust Plate — MIN</div><div class="spec-value">0.368<span class="spec-unit">in</span></div><div class="spec-sub">9.34 mm</div></div>
+            <div class="spec-card"><div class="spec-label">Camshaft Thrust Plate — MAX</div><div class="spec-value">0.377<span class="spec-unit">in</span></div><div class="spec-sub">9.58 mm</div></div>
             <div class="spec-card"><div class="spec-label">Gear Backlash — MIN</div><div class="spec-value">0.003<span class="spec-unit">in</span></div><div class="spec-sub">0.08 mm</div></div>
             <div class="spec-card"><div class="spec-label">Gear Backlash — MAX</div><div class="spec-value">0.013<span class="spec-unit">in</span></div><div class="spec-sub">0.33 mm</div></div>
             <div class="spec-card"><div class="spec-label">Camshaft Bushing Bore ID — MAX</div><div class="spec-value">2.367<span class="spec-unit">in</span></div><div class="spec-sub">60.12 mm</div></div>
-            <div class="spec-card"><div class="spec-label">Camshaft Thrust Plate — MIN</div><div class="spec-value">0.368<span class="spec-unit">in</span></div><div class="spec-sub">9.34 mm</div></div>
-            <div class="spec-card"><div class="spec-label">Camshaft Thrust Plate — MAX</div><div class="spec-value">0.377<span class="spec-unit">in</span></div><div class="spec-sub">9.58 mm</div></div>
           </div>
           <div class="alert-box alert-warn"><strong>NG Engine — Valve Lash Critical</strong>Natural gas engines run hotter than diesel. Correct valve lash is critical for valve longevity. Always set lash cold (below 60°C / 140°F). Incorrect lash causes rapid valve seat recession.</div>
           <div class="alert-box alert-caution"><strong>C8.3G vs. L Gas Plus</strong>C8.3G and C Gas Plus: Intake 0.012" / Exhaust 0.024". L Gas Plus engines use different specs: Intake 0.014" / Exhaust 0.030". Confirm engine model before setting lash.</div>
@@ -1512,6 +1512,7 @@ const sec7Meas=[
   {id:'s7-lash-e5',  label:'Valve Lash — Exhaust Cyl #5',   spec:'0.024"',       min:0.023, max:0.025, loc:'Cyl 5 Exhaust', group:null},
   {id:'s7-lash-e6',  label:'Valve Lash — Exhaust Cyl #6',   spec:'0.024"',       min:0.023, max:0.025, loc:'Cyl 6 Exhaust', group:null},
   {id:'s7-cam-end',  label:'Camshaft End Clearance',         spec:'0.005–0.018"', min:0.005, max:0.018, loc:'Front of camshaft', group:'Camshaft'},
+  {id:'s7-thrust',   label:'Camshaft Thrust Plate Thickness', spec:'0.368–0.377"', min:0.368, max:0.377, loc:'Thrust plate', group:null},
   {id:'s7-gear-bl',  label:'Gear Backlash',                  spec:'0.003–0.013"', min:0.003, max:0.013, loc:'Cam/crank gear mesh', group:null},
 ];
 
