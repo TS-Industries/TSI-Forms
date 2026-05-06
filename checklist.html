@@ -2018,22 +2018,38 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildRunLog();
   buildExhTempTable();
   updateProgress();
-  // Attach numpad to dynamically built measurement inputs
-  setTimeout(attachNumpadToMeasInputs, 100);
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('uf-date').value=today;
-  // Auto-save & restore
   attachAutoSaveListeners();
   checkRestore();
   updateAIKeyStatus();
   initOfflineMode();
   initRealtime();
-  attachNumpadToMeasInputs();
+  setTimeout(attachNumpadToMeasInputs, 800);
+
+  // Auto-load from cloud on page open if a job ID is saved
+  // Suspend saves immediately so nothing can fire before load completes
+  const savedJobId = localStorage.getItem('tsi_last_job_id');
+  if (savedJobId) {
+    _savesSuspended = true; // block all saves until load finishes
+    const inp = document.getElementById('job-id-input');
+    if (inp) inp.value = savedJobId;
+    setTimeout(async () => {
+      try {
+        await loadJob(true);
+      } catch(e) {
+        console.error('Auto-load failed:', e);
+        _savesSuspended = false;
+      }
+    }, 600); // wait for DOM to be fully ready
+  }
 });
 
 function toggleSection(id){
   const s=document.getElementById(id);
   if(s) s.classList.toggle('open');
+  // Re-attach numpad to any newly visible measurement inputs
+  setTimeout(attachNumpadToMeasInputs, 100);
 }
 
 function switchTab(btn,contentId){
@@ -3156,7 +3172,6 @@ function npDone() {
 
 // Attach numpad to all measurement input fields
 function attachNumpadToMeasInputs() {
-  // Only activate numpad on touch devices (mobile/tablet)
   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   if (!isTouch) return;
 
@@ -3167,17 +3182,18 @@ function attachNumpadToMeasInputs() {
     inp.inputMode = 'none';
     inp.placeholder = 'tap to enter';
     inp.style.cursor = 'pointer';
-    inp.addEventListener('click', function() {
-      const row = inp.closest('tr');
-      const label = row ? (row.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value') : 'Enter Value';
-      openNumpad(inp, label);
-    });
-    inp.addEventListener('touchstart', function(e) {
+    inp.style.caretColor = 'transparent';
+
+    const openPad = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const row = inp.closest('tr');
       const label = row ? (row.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value') : 'Enter Value';
       openNumpad(inp, label);
-    }, {passive: false});
+    };
+
+    inp.addEventListener('touchend', openPad, { passive: false });
+    inp.addEventListener('click', openPad);
   });
 }
 
