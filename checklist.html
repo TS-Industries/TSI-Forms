@@ -62,6 +62,11 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .unit-field input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:5px 10px;color:white;font-family:'Barlow',sans-serif;font-size:12px;}
 .unit-field input:focus{outline:none;border-color:var(--gold);}
 .unit-field input::placeholder{color:rgba(255,255,255,0.3);}
+.run-field{display:flex;flex-direction:column;gap:4px;margin:0;}
+.run-field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:3px;}
+.run-field input,.run-field select{width:100%;background:white;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--dark);font-family:'Barlow',sans-serif;font-size:12px;}
+.run-field input:focus,.run-field select:focus{outline:none;border-color:var(--navy);}
+.run-field input::placeholder{color:#CBD5E1;font-style:italic;}
 
 /* ── PROGRESS CARD ── */
 .progress-card{background:white;border-radius:10px;padding:.875rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.25rem;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.06);}
@@ -1187,16 +1192,16 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
       <!-- RUN INFO + LOAD BANK SETUP -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;padding:1rem 1.5rem;background:#F8FAFC;border-bottom:1px solid var(--border);">
-        <div class="unit-field" style="margin:0;"><label>Run Date</label><input id="run-date" type="date"></div>
-        <div class="unit-field" style="margin:0;"><label>Start Time</label><input id="run-start" type="time"></div>
-        <div class="unit-field" style="margin:0;"><label>End Time</label><input id="run-end" type="time"></div>
-        <div class="unit-field" style="margin:0;"><label>Ambient Temp (°F)</label><input id="run-ambient" placeholder="e.g. 72"></div>
-        <div class="unit-field" style="margin:0;"><label>Generator Make</label><input id="run-gen-make" placeholder="e.g. Cummins Onan"></div>
-        <div class="unit-field" style="margin:0;"><label>Generator Model</label><input id="run-gen-model" placeholder="e.g. DGDB"></div>
-        <div class="unit-field" style="margin:0;"><label>Generator Serial #</label><input id="run-gen-sn" placeholder="Serial number"></div>
-        <div class="unit-field" style="margin:0;"><label>Generator Rating (kW)</label><input id="run-lb-kw" type="number" placeholder="e.g. 150" oninput="calcRunTarget()"></div>
-        <div class="unit-field" style="margin:0;"><label>Engine HP</label><input id="run-hp" type="number" placeholder="e.g. 240" oninput="calcRunTarget()"></div>
-        <div class="unit-field" style="margin:0;"><label>Generator Voltage (V)</label><input id="run-volts" type="number" placeholder="e.g. 480" oninput="calcRunTarget()"></div>
+        <div class="run-field"><label>Run Date</label><input id="run-date" type="date"></div>
+        <div class="run-field"><label>Start Time</label><input id="run-start" type="time"></div>
+        <div class="run-field"><label>End Time</label><input id="run-end" type="time"></div>
+        <div class="run-field"><label>Ambient Temp (°C)</label><input id="run-ambient" placeholder="e.g. 22"></div>
+        <div class="run-field"><label>Generator Make</label><input id="run-gen-make" placeholder="e.g. Cummins Onan"></div>
+        <div class="run-field"><label>Generator Model</label><input id="run-gen-model" placeholder="e.g. DGDB"></div>
+        <div class="run-field"><label>Generator Serial #</label><input id="run-gen-sn" placeholder="Serial number"></div>
+        <div class="run-field"><label>Generator Rating (kW)</label><input id="run-lb-kw" type="number" placeholder="e.g. 150" oninput="calcRunTarget()"></div>
+        <div class="run-field"><label>Engine HP</label><input id="run-hp" type="number" placeholder="e.g. 240" oninput="calcRunTarget()"></div>
+        <div class="run-field"><label>Generator Voltage (V)</label><input id="run-volts" type="number" placeholder="e.g. 480" oninput="calcRunTarget()"></div>
       </div>
 
       <!-- BREAK-IN CALCULATOR -->
@@ -1235,14 +1240,14 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div style="padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:#FAFBFC;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Start-Up Conditions</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
-          <div class="unit-field" style="margin:0;"><label>Cold Idle Oil Press (psi)</label><input id="run-cold-oil" placeholder="Before load applied"></div>
-          <div class="unit-field" style="margin:0;"><label>Initial Coolant Temp (°F)</label><input id="run-cold-coolant" placeholder="At startup"></div>
-          <div class="unit-field" style="margin:0;"><label>Oil Level at Start</label>
+          <div class="run-field"><label>Cold Idle Oil Press (psi)</label><input id="run-cold-oil" placeholder="Before load applied"></div>
+          <div class="run-field"><label>Initial Coolant Temp (°F)</label><input id="run-cold-coolant" placeholder="At startup"></div>
+          <div class="run-field"><label>Oil Level at Start</label>
             <select id="run-oil-level-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
               <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low</option>
             </select>
           </div>
-          <div class="unit-field" style="margin:0;"><label>Leaks at Startup</label>
+          <div class="run-field"><label>Leaks at Startup</label>
             <select id="run-leaks-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
               <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
             </select>
@@ -1260,7 +1265,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
               <!-- Engine params group -->
               <th colspan="7" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0F2942;color:#93C5FD;">ENGINE PARAMETERS</th>
               <!-- Electrical group -->
-              <th colspan="7" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;">LOAD BANK — ELECTRICAL</th>
+              <th colspan="6" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;">LOAD BANK — ELECTRICAL</th>
             </tr>
             <tr style="background:#1A3050;color:white;">
               <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">RPM</th>
@@ -1302,31 +1307,31 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div style="padding:.75rem 1.5rem;border-top:1px solid var(--border);background:#FAFBFC;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">End-of-Run Conditions</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
-          <div class="unit-field" style="margin:0;"><label>Total Run Time Achieved</label><input id="run-total-time" placeholder="e.g. 4hr 00min"></div>
-          <div class="unit-field" style="margin:0;"><label>Oil Level After Run</label>
+          <div class="run-field"><label>Total Run Time Achieved</label><input id="run-total-time" placeholder="e.g. 4hr 00min"></div>
+          <div class="run-field"><label>Oil Level After Run</label>
             <select id="run-oil-level-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
               <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low — topped up</option>
             </select>
           </div>
-          <div class="unit-field" style="margin:0;"><label>Leaks After Run</label>
+          <div class="run-field"><label>Leaks After Run</label>
             <select id="run-leaks-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
               <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
             </select>
           </div>
-          <div class="unit-field" style="margin:0;"><label>Unusual Noises / Vibration</label>
+          <div class="run-field"><label>Unusual Noises / Vibration</label>
             <select id="run-noise" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
               <option value="">Select...</option><option>None</option><option>Minor — noted below</option><option>Yes — see notes</option>
             </select>
           </div>
-          <div class="unit-field" style="margin:0;"><label>Engine Approved for Service</label>
+          <div class="run-field"><label>Engine Approved for Service</label>
             <select id="run-approved" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;">
               <option value="">Select...</option>
               <option>✓ Yes — Approved for Return to Service</option>
               <option>✗ No — Further Work Required</option>
             </select>
           </div>
-          <div class="unit-field" style="margin:0;"><label>Return to Service Date</label><input id="run-rts-date" type="date"></div>
-          <div class="unit-field" style="margin:0;"><label>Hours at Return to Service</label><input id="run-rts-hours" placeholder="Engine hours"></div>
+          <div class="run-field"><label>Return to Service Date</label><input id="run-rts-date" type="date"></div>
+          <div class="run-field"><label>Hours at Return to Service</label><input id="run-rts-hours" placeholder="Engine hours"></div>
         </div>
       </div>
 
@@ -2423,7 +2428,7 @@ function buildRunReport(){
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Start</span>${runStart}</td>
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">End</span>${runEnd}</td>
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Total Time</span>${totalTime}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Ambient Temp</span>${ambient}°F</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Ambient Temp</span>${ambient}°C</td>
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Generator</span>${genMake} ${genModel}</td>
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Gen Serial #</span>${genSN}</td>
         <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Rating / HP</span>${genKW} kW / ${hp} HP</td>
