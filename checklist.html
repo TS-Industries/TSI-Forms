@@ -2918,7 +2918,7 @@ async function syncToCloud(jobId, state, opts = {}) {
     const batch = rows.slice(i, i + 100);
     await sbFetch(TABLE + '?on_conflict=job_id,field_id', {
       method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(batch)
     });
   }
@@ -2981,8 +2981,22 @@ async function loadJob() {
   setSyncStatus('Loading...');
 
   try {
-    const res = await sbFetch(TABLE + '?job_id=eq.' + encodeURIComponent(jobId) + '&limit=2000');
-    const rows = await res.json();
+    // FIX B: ORDER BY updated_at DESC so newest rows come first; raise limit to 10 000
+    // to cover worst-case duplicate accumulation from missing UNIQUE constraint.
+    // Then deduplicate client-side — first occurrence per field_id = most recent value.
+    const res = await sbFetch(
+      TABLE + '?job_id=eq.' + encodeURIComponent(jobId)
+            + '&order=updated_at.desc'
+            + '&limit=10000'
+    );
+    const rawRows = await res.json();
+    // Deduplicate: keep only the first (= most-recent) occurrence of each field_id
+    const seenFields = new Set();
+    const rows = Array.isArray(rawRows) ? rawRows.filter(row => {
+      if (seenFields.has(row.field_id)) return false;
+      seenFields.add(row.field_id);
+      return true;
+    }) : rawRows;
 
     if (!Array.isArray(rows)) {
       setSyncStatus('Load failed — see console');
