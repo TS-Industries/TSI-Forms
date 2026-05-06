@@ -4105,19 +4105,13 @@ function autoSave() {
   _syncTimer = setTimeout(async () => {
     if (_savesSuspended) return;
     if (!CURRENT_JOB_ID) {
-      // No active job. Check if user has typed a Job # but hasn't LOADed it yet.
+      // No active job — only save to localStorage if there's real data worth keeping
       const input = document.getElementById('job-id-input');
       const typed = input ? input.value.trim() : '';
       if (typed) {
         setSyncStatus('⚠ Click LOAD to start syncing "' + typed + '"');
-      } else {
-        // Genuinely no job — fall back to localStorage for browser-recovery
-        try {
-          const state = collectState();
-          localStorage.setItem('tsi_cummins_83g_v5', JSON.stringify(state));
-          setSyncStatus('Saved locally (no job # entered)');
-        } catch(e) {}
       }
+      // Do NOT save blank state to localStorage — this was overwriting real data
       return;
     }
     // SAFETY: if a job is active but we have no server snapshot, refuse.
