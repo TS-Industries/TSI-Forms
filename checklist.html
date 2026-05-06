@@ -400,6 +400,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="header-actions">
       <button class="btn btn-outline" onclick="saveJSON()">&#x1F4BE; Save</button>
+      <button class="btn btn-outline" onclick="exportBackup()" title="Download a local backup of all entered data" style="font-size:11px;">&#x2B07; Backup</button>
+      <button class="btn btn-outline" onclick="importBackup()" title="Restore from a local backup file" style="font-size:11px;">&#x2B06; Import</button>
       <button class="btn btn-outline" onclick="setAIKey()" title="Set Anthropic API key for AI Polish feature" style="font-size:11px;border-color:#7C3AED;color:#7C3AED;">&#x2728; AI Key</button>
       <button class="btn btn-gold" onclick="openReport()">&#x1F4C4; Customer Report</button>
     </div>
@@ -453,7 +455,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="restore-btns">
       <button class="btn btn-gold" onclick="doRestore()">Restore Session</button>
-      <button class="btn btn-outline" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);" onclick="dismissRestore()">Dismiss</button>
+      <button class="btn btn-outline" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);" onclick="confirmDismissRestore()">Dismiss</button>
     </div>
   </div>
 
@@ -1340,9 +1342,54 @@ function doRestore() {
   dismissRestore();
 }
 
+function confirmDismissRestore(){
+  if(confirm('Are you sure you want to dismiss?\n\nThis will discard the locally saved session. If your cloud data is intact (Loaded XX values), it is safe to dismiss.\n\nClick OK to dismiss, Cancel to go back.')){
+    dismissRestore();
+  }
+}
+
 function dismissRestore() {
   const banner = document.getElementById('restore-banner');
   if (banner) banner.style.display = 'none';
+}
+
+function exportBackup(){
+  try{
+    const state=collectState();
+    const json=JSON.stringify({exported:new Date().toISOString(),jobId:CURRENT_JOB_ID,state},null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const wo=document.getElementById('uf-wo')?.value||'backup';
+    a.href=url;
+    a.download=`TSI-checklist-${wo}-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e){
+    alert('Export failed: '+e.message);
+  }
+}
+
+function importBackup(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='.json';
+  inp.onchange=async(e)=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      const state=data.state||data;
+      if(confirm('Import backup from '+( data.exported||'unknown date')+'?\n\nThis will overwrite current values. Proceed?')){
+        restoreState(state);
+        setSyncStatus('✓ Backup imported');
+      }
+    } catch(e){
+      alert('Import failed — file may be corrupt: '+e.message);
+    }
+  };
+  inp.click();
 }
 
 
