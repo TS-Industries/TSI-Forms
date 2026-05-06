@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.9</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3914,8 +3914,12 @@ function restoreState(state) {
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
     setTimeout(() => {
+      // Verify parts are actually in DOM before unsuspending
+      const partsTbody = document.getElementById('parts-tbody');
+      const partRows = partsTbody ? partsTbody.querySelectorAll('tr').length : 0;
+      console.log('[restoreState] Unsuspending saves. Parts rows in DOM:', partRows);
       _savesSuspended = false;
-    }, 2500);
+    }, 3500);
   }
 }
 
@@ -3980,6 +3984,9 @@ async function syncToCloud(jobId, state, opts = {}) {
   }
 
   setSyncStatus('Saving...');
+  const s5fields = Object.keys(flat).filter(k=>k.startsWith('meas_val_s5-flat') || k.startsWith('meas_val_s5-rec'));
+  const savedParts = (() => { try { return JSON.parse(flat['parts_list']||'[]').length; } catch(e){ return 0; } })();
+  console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Parts:', savedParts, 'savesSuspended:', _savesSuspended);
   const s5fields = Object.keys(flat).filter(k=>k.startsWith('meas_val_s5-flat') || k.startsWith('meas_val_s5-rec'));
   console.log('[syncToCloud] s5-flat and s5-rec fields:', s5fields.map(k=>k+'='+flat[k]));
   console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Meas fields:', Object.keys(flat).filter(k=>k.startsWith('meas_val_') && flat[k]).map(k=>k+':'+flat[k]));
