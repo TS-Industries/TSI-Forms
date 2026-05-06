@@ -1242,9 +1242,13 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
         <div class="ai-badge">OVERALL SUMMARY</div>
-        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Write your summary below — then use AI to polish the language into professional report format.</div>
-        <textarea id="rpt-summary-input" style="width:100%;min-height:90px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="e.g. replaced all bearings, head was machined, all specs within range, ready for service..."></textarea>
-        <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt" style="margin-top:.5rem;">✨ Polish with AI</button>
+        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Your section notes are pulled in automatically as a draft — edit as needed, then use AI to polish into professional report language.</div>
+        <textarea id="rpt-summary-input" style="width:100%;min-height:120px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="Section notes will appear here automatically when you open the report. You can also type your own summary and use AI to polish it."></textarea>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+          <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt">✨ Polish with AI</button>
+          <button onclick="document.getElementById('rpt-summary-input').value=''" style="padding:.3rem .75rem;background:transparent;color:#94A3B8;border:1.5px solid #E2E8F0;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;">✕ Clear</button>
+          <button onclick="repopulateSummary()" style="padding:.3rem .75rem;background:transparent;color:#64748B;border:1.5px solid #E2E8F0;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;">↺ Re-pull Notes</button>
+        </div>
       </div>
       <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
@@ -1600,10 +1604,8 @@ const viSec8=[
   'Idler gear teeth — no pitting, spalling, chipping, or visible wear',
   'Gear faces — no scoring or galling on either gear',
   'Drive shaft — no scoring or wear at bushing contact areas, splines intact',
-  'Relief valve bore — clean, no scoring; spring not collapsed or fatigued',
   'Pickup screen — clean, no holes, tears, or collapsed mesh',
   'Pump primed with clean engine oil before installation',
-  'Oil suction tube O-ring — new O-ring installed, fully seated in groove',
   'Oil pressure verified at idle and rated RPM after startup',
 ];
 
@@ -2089,7 +2091,89 @@ function openReport(){
   buildFlaggedPanel(sectionDefs);
   // Photo gallery
   buildPhotoGallery(sectionDefs);
+  // Open report first so user sees it immediately, then generate summary async
   document.getElementById('report-overlay').classList.add('open');
+  // Auto-generate AI summary from section notes (only if summary is currently empty)
+  generateReportSummary(false);
+}
+
+async function generateReportSummary(force){
+  const summaryEl=document.getElementById('rpt-summary-input');
+  if(!summaryEl) return;
+  if(summaryEl.value.trim() && !force) return; // don't overwrite existing content unless forced
+  const sectionTitles={
+    '1':'Crankshaft','2':'Main Bearings','3':'Connecting Rod Bearings',
+    '4':'Cylinder Liner, Pistons & Rings','5':'Cylinder Head',
+    '6':'Head Bolt Torque','7':'Valvetrain','8':'Oil Pump'
+  };
+  const parts=[];
+  ['1','2','3','4','5','6','7','8'].forEach(n=>{
+    const el=document.getElementById('notes-sec'+n);
+    const val=el?el.value.trim():'';
+    if(val) parts.push(`${sectionTitles[n]}: ${val}`);
+  });
+  if(!parts.length){
+    summaryEl.placeholder='No section notes found — write your summary here or add notes to each section first.';
+    return;
+  }
+  const apiKey=localStorage.getItem('tsi_ak');
+  if(!apiKey){
+    // No API key — just populate raw notes as fallback
+    summaryEl.value=parts.join('\n\n');
+    return;
+  }
+  // Show loading state
+  summaryEl.value='';
+  summaryEl.placeholder='⏳ Generating summary from section notes...';
+  const polishBtn=document.getElementById('polish-btn-rpt');
+  if(polishBtn){polishBtn.disabled=true;polishBtn.innerHTML='⏳ Generating...';}
+  try{
+    const wo=document.getElementById('uf-wo')?.value||'';
+    const customer=document.getElementById('uf-customer')?.value||'';
+    const unit=document.getElementById('uf-unit')?.value||'';
+    const tech=document.getElementById('uf-tech')?.value||'';
+    const context=[wo&&`Work Order: ${wo}`,customer&&`Customer: ${customer}`,unit&&`Unit: ${unit}`,tech&&`Technician: ${tech}`].filter(Boolean).join(', ');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing a professional executive summary for a customer service report on a Cummins C8.3G engine overhaul.${context?'\n'+context:''}
+
+Below are the raw technician notes from each section of the overhaul checklist. Combine them into a single flowing professional summary paragraph (or two short paragraphs if needed). Write in third-person past tense. Include all key findings and actions. Do not use bullet points. Do not add information not present in the notes. Be concise and professional.
+
+Section notes:
+${parts.join('\n\n')}
+
+Return only the summary text with no preamble or labels.`}]
+      })
+    });
+    if(resp.ok){
+      const data=await resp.json();
+      if(data.content&&data.content[0]&&data.content[0].text){
+        summaryEl.value=data.content[0].text.trim();
+        summaryEl.placeholder='';
+      } else {
+        summaryEl.value=parts.join('\n\n');
+      }
+    } else {
+      summaryEl.value=parts.join('\n\n');
+    }
+  } catch(e){
+    summaryEl.value=parts.join('\n\n');
+  }
+  summaryEl.placeholder='Edit summary here...';
+  if(polishBtn){polishBtn.disabled=false;polishBtn.innerHTML='✨ Polish with AI';}
+}
+
+function repopulateSummary(){
+  generateReportSummary(true);
 }
 
 function closeReport(){
