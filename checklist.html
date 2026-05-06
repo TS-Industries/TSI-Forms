@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.2</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3994,30 +3994,30 @@ async function syncToCloud(jobId, state, opts = {}) {
   const source = opts.source || 'autosave';
 
   // LAYER 2: Data-loss guard.
-  // Critical fields (measurements, notes, meta) get a strict threshold — we
-  // refuse to blank even 1 of them. Non-critical fields (VI pending/pass/fail, bolts)
-  // use the looser count.
+  // Only block if a FILLED measurement/note/meta/parts field would be blanked.
+  // VI fields and bolts are NOT guarded — they reset on load and should always save.
   if (_lastServerSnapshot && !opts.force) {
     let wouldBlankCritical = 0;
-    let wouldBlankTotal = 0;
     const wouldBlankList = [];
     for (const [fid, oldVal] of Object.entries(_lastServerSnapshot)) {
-      // Use "effective downgrade" check: catches blanking AND pass/fail → pending.
-      // Only check fields the new save actually writes — if a field is omitted
-      // from `flat`, it won't be updated in Supabase, so it's safe.
       const newVal = flat[fid];
       const willBeWritten = Object.prototype.hasOwnProperty.call(flat, fid);
-      if (willBeWritten && isEffectiveDowngrade(oldVal, newVal)) {
-        wouldBlankTotal++;
-        if (isCriticalField(fid)) wouldBlankCritical++;
+      // Only guard truly critical fields — meas, notes, meta, parts
+      // Skip VI and bolt fields — they always get rewritten correctly from DOM
+      if (!willBeWritten) continue;
+      const isTrulyCritical = fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
+                              fid.startsWith('notes_') || fid.startsWith('meta_') ||
+                              fid === 'parts_list';
+      if (isTrulyCritical && isPresent(oldVal) && isBlank(newVal)) {
+        wouldBlankCritical++;
         if (wouldBlankList.length < 10) wouldBlankList.push(`${fid}: "${oldVal}" → "${newVal}"`);
       }
     }
-    // STRICT: refuse if ANY critical field would be downgraded
-    if (wouldBlankCritical >= 1 || wouldBlankTotal >= BLANK_OVERWRITE_REFUSE_COUNT) {
-      console.error('[save] REFUSED — would downgrade ' + wouldBlankTotal + ' values (' + wouldBlankCritical + ' critical):', wouldBlankList);
-      setSyncStatus('⚠ Save refused — would wipe ' + (wouldBlankCritical || wouldBlankTotal) + ' fields');
-      showDataGuardBanner(wouldBlankTotal, jobId, state);
+    // Only block if measurements/notes/parts would be wiped
+    if (wouldBlankCritical >= 1) {
+      console.error('[save] REFUSED — would blank ' + wouldBlankCritical + ' critical fields:', wouldBlankList);
+      setSyncStatus('⚠ Save refused — would wipe ' + wouldBlankCritical + ' fields');
+      showDataGuardBanner(wouldBlankCritical, jobId, state);
       return;
     }
   }
