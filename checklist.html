@@ -2260,6 +2260,7 @@ function handleRunPhotos(input){
 
 // ══ PARTS TRACKER ══
 let partRowId=0;
+let _addingPartsDuringRestore = false;
 function addPartsRow(){
   const tb=document.getElementById('parts-tbody');
   if(!tb) return;
@@ -2279,15 +2280,17 @@ function addPartsRow(){
       <option>Reused — Marginal</option>
     </select></td>
     <td><input class="parts-input" id="part-note-${id}" placeholder="Notes..."></td>
-    <td><button class="parts-del-btn" onclick="delPartsRow(${id})">✕</button></td>`;
+    <td><button class="parts-del-btn" onclick="delPartsRow(${id})">✕</button>`;
   tb.appendChild(tr);
-  // Attach autosave listeners to the new inputs (they weren't around
-  // when attachAutoSaveListeners ran at page load)
-  tr.querySelectorAll('input, select, textarea').forEach(el => {
-    const handler = () => { if (typeof autoSave === 'function') autoSave(); };
-    el.addEventListener('input',  handler);
-    el.addEventListener('change', handler);
-  });
+  // Only attach autosave listeners when NOT restoring (avoids 42 spurious saves)
+  if (!_addingPartsDuringRestore) {
+    tr.querySelectorAll('input, select, textarea').forEach(el => {
+      const handler = () => { if (typeof autoSave === 'function') autoSave(); };
+      el.addEventListener('input',  handler);
+      el.addEventListener('change', handler);
+    });
+  }
+  return id;
 }
 function delPartsRow(id){
   const r=document.getElementById('part-row-'+id);
@@ -3816,23 +3819,43 @@ function restoreState(state) {
     partRowId = 0;
     const partsArr = Array.isArray(state.parts) ? state.parts : [];
     if (partsArr.length === 0) {
-      // No saved parts — give user 3 empty rows to start with
       addPartsRow(); addPartsRow(); addPartsRow();
     } else {
+      _addingPartsDuringRestore = true;
       partsArr.forEach(p => {
-        addPartsRow();
-        const id = partRowId;
-        const set = (field, val) => {
+        const id = addPartsRow();
+        // Set values directly after row is appended
+        const setVal = (field, val) => {
           const el = document.getElementById('part-'+field+'-'+id);
           if (el) el.value = val || '';
         };
-        set('desc', p.desc);
-        set('num',  p.partNum);
-        set('qty',  p.qty);
-        set('sup',  p.sup);
-        set('cond', p.cond);
-        set('note', p.note);
+        setVal('desc', p.desc);
+        setVal('num',  p.partNum);
+        setVal('qty',  p.qty);
+        setVal('sup',  p.sup);
+        setVal('note', p.note);
+        // Select needs special handling
+        const condEl = document.getElementById('part-cond-'+id);
+        if (condEl && p.cond) {
+          // Try direct value set first
+          condEl.value = p.cond;
+          // If that didn't work (option not found), find matching option text
+          if (condEl.value !== p.cond) {
+            Array.from(condEl.options).forEach(opt => {
+              if (opt.text === p.cond || opt.value === p.cond) condEl.value = opt.value;
+            });
+          }
+        }
       });
+      _addingPartsDuringRestore = false;
+      // Now attach autosave listeners to all restored rows
+      if (partsTbody) {
+        partsTbody.querySelectorAll('input, select, textarea').forEach(el => {
+          const handler = () => { if (typeof autoSave === 'function') autoSave(); };
+          el.addEventListener('input',  handler);
+          el.addEventListener('change', handler);
+        });
+      }
     }
 
     if (typeof updateProgress === 'function') updateProgress();
