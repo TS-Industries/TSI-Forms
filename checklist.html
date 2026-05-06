@@ -2835,27 +2835,11 @@ function restoreState(state) {
 
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
-    // FIX 1: After restoring the DOM, re-snapshot from the DOM so
-    // _lastServerSnapshot exactly matches what's on screen. This prevents
-    // the data guard from seeing a mismatch between the server snapshot
-    // (which has real values) and the DOM (which may not have finished
-    // populating) and blocking or allowing incorrect saves.
-    setTimeout(() => {
-      clearTimeout(_syncTimer);
-      _savesSuspended = false;
-      // Re-sync the snapshot from the live DOM state so the data guard
-      // baseline is accurate for this session.
-      if (CURRENT_JOB_ID && _lastServerSnapshot !== null) {
-        const domFlat = flattenState(collectState());
-        // Only update snapshot fields that are PRESENT in the DOM —
-        // never let a blank DOM field overwrite a known-good server value.
-        for (const [fid, domVal] of Object.entries(domFlat)) {
-          if (isPresent(domVal)) {
-            _lastServerSnapshot[fid] = domVal;
-          }
-        }
-      }
-    }, 2000);
+    // Small delay before un-suspending so any stray events from restore
+    // (e.g. dispatched by validateMeas) are dropped, not saved.
+    // Note: syncToCloud now merges server values for blank DOM fields,
+    // so no snapshot re-sync is needed here.
+    setTimeout(() => { clearTimeout(_syncTimer); _savesSuspended = false; }, 2000);
   }
 }
 
@@ -2884,7 +2868,12 @@ async function appendHistory(jobId, flat, source) {
   }
 }
 
-// ── SAVE TO CLOUD (with data-loss guard) ──
+// ── SAVE TO CLOUD ──
+// DEFINITIVE FIX: Uses "server-wins for present values" merge strategy.
+// Before writing, any field that is blank in the DOM but has a real value
+// in _lastServerSnapshot is replaced with the server value. This means
+// collapsed sections (whose DOM inputs are empty) can never blank real data.
+// The only way to intentionally blank a field is via opts.force.
 async function syncToCloud(jobId, state, opts = {}) {
   if (!jobId) return;
   if (_savesSuspended && !opts.force) {
@@ -2892,41 +2881,24 @@ async function syncToCloud(jobId, state, opts = {}) {
     return;
   }
 
-  const flat = flattenState(state);
+  const domFlat = flattenState(state);
   const source = opts.source || 'autosave';
 
-  // LAYER 2: Data-loss guard.
-  // Critical fields (measurements, notes, meta) get a strict threshold — we
-  // refuse to blank even 1 of them. Non-critical fields (VI pending/pass/fail, bolts)
-  // use the looser count.
+  // MERGE: build the final flat object by taking the DOM value when present,
+  // or the last known server value when the DOM is blank.
+  // This is the core fix — blank DOM fields never overwrite real server data.
+  const flat = { ...domFlat };
   if (_lastServerSnapshot && !opts.force) {
-    let wouldBlankCritical = 0;
-    let wouldBlankTotal = 0;
-    const wouldBlankList = [];
-    for (const [fid, oldVal] of Object.entries(_lastServerSnapshot)) {
-      // Use "effective downgrade" check: catches blanking AND pass/fail → pending.
-      // Only check fields the new save actually writes — if a field is omitted
-      // from `flat`, it won't be updated in Supabase, so it's safe.
-      const newVal = flat[fid];
-      const willBeWritten = Object.prototype.hasOwnProperty.call(flat, fid);
-      if (willBeWritten && isEffectiveDowngrade(oldVal, newVal)) {
-        wouldBlankTotal++;
-        if (isCriticalField(fid)) wouldBlankCritical++;
-        if (wouldBlankList.length < 10) wouldBlankList.push(`${fid}: "${oldVal}" → "${newVal}"`);
+    for (const [fid, serverVal] of Object.entries(_lastServerSnapshot)) {
+      if (isPresent(serverVal) && isBlank(flat[fid])) {
+        flat[fid] = serverVal; // keep server value — DOM is blank (collapsed section)
       }
-    }
-    // STRICT: refuse if ANY critical field would be downgraded
-    if (wouldBlankCritical >= 1 || wouldBlankTotal >= BLANK_OVERWRITE_REFUSE_COUNT) {
-      console.error('[save] REFUSED — would downgrade ' + wouldBlankTotal + ' values (' + wouldBlankCritical + ' critical):', wouldBlankList);
-      setSyncStatus('⚠ Save refused — would wipe ' + (wouldBlankCritical || wouldBlankTotal) + ' fields');
-      showDataGuardBanner(wouldBlankTotal, jobId, state);
-      return;
     }
   }
 
   setSyncStatus('Saving...');
 
-  // Build the rows for overhaul_data
+  // Build rows for overhaul_data
   const now = new Date().toISOString();
   const rows = Object.entries(flat).map(([field_id, field_value]) => ({
     job_id: jobId,
@@ -2935,10 +2907,8 @@ async function syncToCloud(jobId, state, opts = {}) {
     updated_at: now
   }));
 
-   // FIX 3 & 6: Wrap upsert in try/catch and check res.ok on every batch.
-  // Only update _lastServerSnapshot if ALL batches succeed — a failed save
-  // must NOT corrupt the snapshot (which would let a subsequent blank-overwrite
-  // slip past the data guard).
+  // Wrap upsert in try/catch and check res.ok on every batch.
+  // Only update _lastServerSnapshot if ALL batches succeed.
   try {
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
@@ -2952,16 +2922,15 @@ async function syncToCloud(jobId, state, opts = {}) {
         throw new Error('Supabase upsert failed (' + res.status + '): ' + errText.slice(0, 200));
       }
     }
-    // Only update snapshot after confirmed successful save
+    // Update snapshot with the merged values that were actually written
     _lastServerSnapshot = { ...flat };
-    // LAYER 3: write to history (fire-and-forget, doesn't block UI)
+    // Write to history (fire-and-forget)
     appendHistory(jobId, flat, source);
     setSyncStatus('✓ Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
   } catch (saveErr) {
     console.error('[save] Cloud save failed:', saveErr);
     setSyncStatus('⚠ Save failed — check connection');
-    // Do NOT update _lastServerSnapshot — preserve the last known-good state
-    // so the data guard continues to protect existing values on retry.
+    // Do NOT update _lastServerSnapshot on failure
   }
 }
 // ── DATA GUARD WARNING BANNER ───
