@@ -1708,15 +1708,31 @@ function importBackup(){
       const text=await file.text();
       const data=JSON.parse(text);
       const state=data.state||data;
-      if(confirm('Import backup from '+( data.exported||'unknown date')+'?\n\nThis will overwrite current values. Proceed?')){
+      if(confirm('Import backup from '+(data.exported||'unknown date')+'?\n\nThis will overwrite current values. Proceed?')){
+        // If cloud has more parts than the backup, keep the cloud parts
+        if(_lastServerSnapshot && _lastServerSnapshot['parts_list']){
+          try{
+            const cloudParts=JSON.parse(_lastServerSnapshot['parts_list']||'[]');
+            const backupParts=Array.isArray(state.parts)?state.parts:[];
+            if(cloudParts.length > backupParts.length){
+              state.parts=cloudParts;
+              setSyncStatus('✓ Imported (kept '+cloudParts.length+' cloud parts)');
+            }
+          }catch(e){}
+        }
         restoreState(state);
-        setSyncStatus('✓ Backup imported');
+        if(!getSyncStatus().includes('cloud parts')) setSyncStatus('✓ Backup imported');
       }
     } catch(e){
       alert('Import failed — file may be corrupt: '+e.message);
     }
   };
   inp.click();
+}
+
+function getSyncStatus(){
+  const el=document.getElementById('sync-status');
+  return el?el.textContent:'';
 }
 
 
@@ -4130,23 +4146,21 @@ setInterval(() => {
   }
 }, 30000);
 
-// ── AUTO-LOAD ON PAGE OPEN ──
-// Runs here at the bottom so all constants (SUPABASE_URL, sbFetch etc) are defined
+// ── PRE-FILL JOB ID ON PAGE OPEN ──
 window.addEventListener('load', () => {
   const savedJobId = localStorage.getItem('tsi_last_job_id');
   if (!savedJobId) return;
   const inp = document.getElementById('job-id-input');
   if (inp) inp.value = savedJobId;
-  // Suspend saves immediately — nothing writes until load is done
-  _savesSuspended = true;
-  clearTimeout(_syncTimer);
-  setTimeout(async () => {
-    try {
-      await loadJob(true);
-    } catch(e) {
+  // Auto-click LOAD after a short delay
+  setTimeout(() => {
+    // Block ALL saves before load
+    _savesSuspended = true;
+    clearTimeout(_syncTimer);
+    loadJob(true).catch(e => {
       console.error('Auto-load failed:', e);
       _savesSuspended = false;
-    }
-  }, 500);
+    });
+  }, 1000);
 });
 </script>
