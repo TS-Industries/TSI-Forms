@@ -2158,23 +2158,23 @@ function exportReportPDF(){
 function updateAIKeyStatus(){
   const el=document.getElementById('ai-key-status');
   if(!el) return;
-  const has=!!sessionStorage.getItem('tsi_ak');
-  el.textContent=has?'✓ API key set — AI Polish is active':'No key set — click Set Key to enable AI Polish on technician notes';
+  const has=!!localStorage.getItem('tsi_ak');
+  el.textContent=has?'✓ API key saved on this device — AI Polish is active':'No key set — click Set Key to enable AI Polish (one time setup)';
   el.style.color=has?'#065F46':'#6D28D9';
 }
 
 function setAIKey(){
-  const current=sessionStorage.getItem('tsi_ak');
+  const current=localStorage.getItem('tsi_ak');
   const msg=current
-    ? 'API key is set for this session.\n\nEnter a new key to replace it, or leave blank and click OK to clear it.'
-    : 'Enter your Anthropic API key.\nGet one at: console.anthropic.com\n\nThe key is stored only in this browser session.';
+    ? 'API key is saved on this device.\n\nEnter a new key to replace it, or leave blank and click OK to clear it.'
+    : 'Enter your Anthropic API key.\nGet one at: console.anthropic.com\n\nThe key will be saved on this device — you only need to do this once.';
   const val=prompt(msg, current||'');
   if(val===null) return;
   if(val.trim()){
-    sessionStorage.setItem('tsi_ak', val.trim());
+    localStorage.setItem('tsi_ak', val.trim());
     alert('✓ API key saved for this session.');
   } else {
-    sessionStorage.removeItem('tsi_ak');
+    localStorage.removeItem('tsi_ak');
     alert('API key cleared.');
   }
   updateAIKeyStatus();
@@ -2188,11 +2188,11 @@ async function polishNotes(textareaId){
   const btn=document.querySelector(`[onclick="polishNotes('${textareaId}')"]`);
 
   // Get or prompt for API key (stored for the session)
-  let apiKey=sessionStorage.getItem('tsi_ak');
+  let apiKey=localStorage.getItem('tsi_ak');
   if(!apiKey){
     apiKey=prompt('Enter your Anthropic API key to use AI Polish.\nThis is stored only for this browser session and never sent anywhere except Anthropic.\n\nGet a key at: console.anthropic.com');
     if(!apiKey){return;}
-    sessionStorage.setItem('tsi_ak',apiKey.trim());
+    localStorage.setItem('tsi_ak',apiKey.trim());
     apiKey=apiKey.trim();
   }
 
@@ -2213,8 +2213,15 @@ async function polishNotes(textareaId){
       })
     });
     if(resp.status===401){
-      sessionStorage.removeItem('tsi_ak');
-      alert('Invalid API key — please try again and re-enter your key.');
+      localStorage.removeItem('tsi_ak');
+      alert('Invalid API key — key has been cleared. Please click Set Key and re-enter.');
+      if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
+      return;
+    }
+    if(!resp.ok){
+      const errData=await resp.json().catch(()=>({}));
+      console.error('Anthropic HTTP '+resp.status, errData);
+      alert('API error '+resp.status+': '+(errData.error?.message||'Unknown error'));
       if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
       return;
     }
@@ -2222,7 +2229,8 @@ async function polishNotes(textareaId){
     if(data.content&&data.content[0]&&data.content[0].text){
       ta.value=data.content[0].text;
     } else {
-      alert('AI polish failed — please try again.');
+      console.error('Anthropic response:', JSON.stringify(data));
+      alert('AI polish failed — Error: '+(data.error?.message||data.type||JSON.stringify(data)));
     }
   } catch(e){
     alert('Could not connect to Anthropic API. Check your internet connection and try again.');
