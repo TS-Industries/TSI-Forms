@@ -3942,14 +3942,8 @@ function restoreState(state) {
 
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
-    // Longer delay before un-suspending to ensure all DOM changes settle
     setTimeout(() => {
       _savesSuspended = false;
-      // Force-save immediately after restore so the restored state
-      // is written to cloud before any stale autosave can overwrite it
-      if (CURRENT_JOB_ID && _lastServerSnapshot !== null) {
-        setTimeout(() => autoSave(), 200);
-      }
     }, 1000);
   }
 }
