@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.4</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3836,18 +3836,22 @@ function restoreState(state) {
       if (el) el.value = v || '';
     });
 
+    let measSet = 0, measMissing = 0;
     Object.entries(state.meas || {}).forEach(([id,data]) => {
       const v = document.getElementById('val-'+id);
       const n = document.getElementById('note-'+id);
       if (v) {
-        // Temporarily lift readonly (for mobile numpad inputs) so value assignment works
         const wasReadOnly = v.readOnly;
         if (wasReadOnly) v.readOnly = false;
         v.value = data.value || '';
         if (wasReadOnly) v.readOnly = true;
+        if (data.value) measSet++;
+      } else {
+        if (data.value) { measMissing++; console.warn('[restoreState] MISSING input for val-'+id, 'value='+data.value); }
       }
       if (n) n.value = data.note || '';
     });
+    console.log('[restoreState] Set', measSet, 'meas values. Missing inputs:', measMissing);
 
     // Re-run validators (no input events — we don't want to trigger saves)
     const allMeasV = [...sec1Meas,...sec2Meas,...sec3Meas,...sec4Meas,...sec5Meas,...sec7Meas,...sec8Meas];
