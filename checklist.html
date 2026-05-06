@@ -3222,6 +3222,14 @@ function isEffectiveDowngrade(oldVal, newVal) {
   if (isPresent(oldVal) && isBlank(newVal)) return true;
   // VI fields: pass/fail → pending is a downgrade that erases real work
   if ((oldVal === 'pass' || oldVal === 'fail') && (newVal === 'pending' || isBlank(newVal))) return true;
+  // parts_list: going from a populated JSON array to empty array [] is a downgrade
+  if (oldVal && newVal) {
+    try {
+      const oldParts = JSON.parse(oldVal);
+      const newParts = JSON.parse(newVal);
+      if (Array.isArray(oldParts) && oldParts.length > 0 && Array.isArray(newParts) && newParts.length === 0) return true;
+    } catch(e) {}
+  }
   return false;
 }
 // A value is a real measurement or note (text a user would type).
@@ -3229,7 +3237,7 @@ function isEffectiveDowngrade(oldVal, newVal) {
 function isCriticalField(fid) {
   return fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
          fid.startsWith('notes_')    || fid.startsWith('meta_')      ||
-         fid.startsWith('vi_');
+         fid.startsWith('vi_')       || fid === 'parts_list';
 }
 
 // ── COLLECT STATE ──
