@@ -1794,6 +1794,8 @@ async function fixPartsFromHistory(){
     alert('Error: '+e.message);
   }
 }
+
+function getSyncStatus(){
   const el=document.getElementById('sync-status');
   return el?el.textContent:'';
 }
