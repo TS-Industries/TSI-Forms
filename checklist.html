@@ -1247,13 +1247,11 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
 
-      <div class="report-section-title">Measurement Details</div>
+      <div class="report-section-title">Measurement &amp; Inspection Details</div>
       <table class="report-meas-table">
-        <thead><tr><th>Section</th><th>Measurement</th><th>Spec</th><th>Actual</th><th>Status</th><th>Notes</th></tr></thead>
+        <thead><tr><th>Section</th><th>Measurement / Check</th><th>Spec</th><th>Actual</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody id="rpt-meas-tbody"></tbody>
       </table>
-      <div class="report-section-title">Visual Inspection Findings</div>
-      <ul class="findings-list" id="rpt-findings"></ul>
       <div class="report-section-title" id="rpt-photos-title" style="display:none;">Photo Documentation</div>
       <div id="rpt-photos-gallery"></div>
       <div class="report-section-title">Parts Installed</div>
@@ -1957,24 +1955,30 @@ function openReport(){
   else if(pass===total){banner.className='report-status-banner approved';banner.textContent='✓ ALL MEASUREMENTS PASS — APPROVED FOR SERVICE';}
   else if(pass>0){banner.className='report-status-banner progress';banner.textContent=`IN PROGRESS — ${pass}/${total} MEASUREMENTS COMPLETE`;}
   else{banner.className='report-status-banner incomplete';banner.textContent='CHECKLIST NOT YET STARTED';}
-  // Meas table — grouped by section with divider rows
+  // Meas table — grouped by section, VI findings injected inline after each section
+  const viMap={
+    '1':{prefix:'vi1',items:viSec1},
+    '2':{prefix:'vi2',items:viSec2},
+    '3':{prefix:'vi3',items:viSec3},
+    '4':{prefix:'vi4',items:viSec4},
+    '5':{prefix:'vi5',items:viSec5},
+    '7':{prefix:'vi7',items:viSec7},
+    '8':{prefix:'vi8',items:viSec8},
+  };
   const mt=document.getElementById('rpt-meas-tbody');
   mt.innerHTML='';
   sectionDefs.forEach(def=>{
     const mArr=def.meas();
     if(!mArr || !mArr.length) return;
-    // Section divider row
+    // Section header row
     mt.innerHTML+=`<tr class="rpt-section-row"><td colspan="6" style="background:var(--navy);color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;padding:.6rem .75rem;border-top:2px solid var(--gold);border-bottom:1px solid var(--gold);">${def.id}. ${def.title}</td></tr>`;
-    let currentGroup = null;
+    let currentGroup=null;
     mArr.forEach(r=>{
-      // Sub-group divider when the group changes (e.g. "CON ROD JOURNAL DIAMETERS" → "CON ROD JOURNAL OUT-OF-ROUND")
-      if (r.group && r.group !== currentGroup) {
-        if (currentGroup !== null) {
-          // Spacer between sub-groups
+      if(r.group && r.group!==currentGroup){
+        if(currentGroup!==null)
           mt.innerHTML+=`<tr><td colspan="6" style="height:8px;background:#F0F2F5;border:none;padding:0;"></td></tr>`;
-        }
         mt.innerHTML+=`<tr><td colspan="6" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);padding:.5rem .75rem;background:#E8ECF0;border-bottom:1px solid var(--border);">${r.group}</td></tr>`;
-        currentGroup = r.group;
+        currentGroup=r.group;
       }
       const v=document.getElementById('val-'+r.id);
       const s=document.getElementById('stat-'+r.id);
@@ -1983,45 +1987,38 @@ function openReport(){
       const cls=st==='PASS'?'r-pass':st==='FAIL'?'r-fail':'r-pend';
       mt.innerHTML+=`<tr><td style="font-size:10px;color:var(--gray);">${def.title}</td><td>${r.label}</td><td class="mono">${r.spec}</td><td class="mono">${v?v.value:'—'}</td><td class="${cls}">${st}</td><td style="font-size:10px;color:var(--gray);">${n?n.value:''}</td></tr>`;
     });
-    // Spacer row for visual breathing room between sections
-    mt.innerHTML+=`<tr class="rpt-spacer-row"><td colspan="6" style="height:10px;background:#F3F4F6;border:none;padding:0;"></td></tr>`;
+    // Inline VI findings for this section
+    const vi=viMap[String(def.id)];
+    if(vi){
+      const findings=[];
+      vi.items.forEach((label,i)=>{
+        const id=`${vi.prefix}-${i}`;
+        const pb=document.getElementById('pass-'+id);
+        const fb=document.getElementById('fail-'+id);
+        if(pb&&pb.classList.contains('selected-pass'))
+          findings.push({label,pass:true});
+        else if(fb&&fb.classList.contains('selected-fail'))
+          findings.push({label,pass:false});
+      });
+      if(findings.length){
+        mt.innerHTML+=`<tr><td colspan="6" style="padding:.4rem .75rem .1rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);background:#F0F4FF;border-top:1px solid #C7D2FE;">👁 Visual Inspection</td></tr>`;
+        findings.forEach(f=>{
+          const icon=f.pass?'✓':'✗';
+          const col=f.pass?'#065F46':'#991B1B';
+          const bg=f.pass?'#F0FDF4':'#FEF2F2';
+          mt.innerHTML+=`<tr style="background:${bg};"><td style="font-size:10px;color:var(--gray);">${def.title}</td><td colspan="3" style="font-size:12px;">${f.label}</td><td style="font-weight:800;color:${col};font-size:13px;">${icon}</td><td></td></tr>`;
+        });
+      }
+    }
     // Section technician notes
     const secNotesEl=document.getElementById('notes-sec'+def.id);
     const secNotesVal=secNotesEl?secNotesEl.value.trim():'';
     if(secNotesVal){
       mt.innerHTML+=`<tr><td colspan="6" style="padding:.5rem .75rem 1rem;font-size:11px;color:#374151;background:#FAFBFF;border-left:3px solid var(--navy);"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Technician Notes</span>${secNotesVal.replace(/\n/g,'<br>')}</td></tr>`;
     }
+    // Section spacer
+    mt.innerHTML+=`<tr><td colspan="6" style="height:12px;background:#F3F4F6;border:none;padding:0;"></td></tr>`;
   });
-  // Findings — grouped by section with header rows between them
-  const fl=document.getElementById('rpt-findings');
-  fl.innerHTML='';
-  const viDefsR=[
-    {prefix:'vi1',items:viSec1,title:'Crankshaft'},
-    {prefix:'vi2',items:viSec2,title:'Main Bearings'},
-    {prefix:'vi3',items:viSec3,title:'Con Rod Bearings'},
-    {prefix:'vi4',items:viSec4,title:'Cylinder Liner'},
-    {prefix:'vi5',items:viSec5,title:'Cylinder Head'},
-    {prefix:'vi7',items:viSec7,title:'Valvetrain'},
-    {prefix:'vi8',items:viSec8,title:'Oil Pump'},
-  ];
-  viDefsR.forEach(({prefix,items,title})=>{
-    // Collect findings for this section first, only render the header if there are any
-    const sectionFindings=[];
-    items.forEach((label,i)=>{
-      const id=`${prefix}-${i}`;
-      const pb=document.getElementById('pass-'+id);
-      const fb=document.getElementById('fail-'+id);
-      if(pb&&pb.classList.contains('selected-pass'))
-        sectionFindings.push(`<li class="finding-ok">${label}</li>`);
-      else if(fb&&fb.classList.contains('selected-fail'))
-        sectionFindings.push(`<li class="finding-fail">${label}</li>`);
-    });
-    if(sectionFindings.length){
-      fl.innerHTML+=`<li class="finding-section-header" style="list-style:none;background:var(--navy);color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:.5rem .75rem;margin:.75rem 0 .375rem 0;border-left:3px solid var(--gold);border-radius:3px;">${title}</li>`;
-      fl.innerHTML+=sectionFindings.join('');
-    }
-  });
-  if(!fl.innerHTML) fl.innerHTML='<li style="color:var(--gray);font-size:12px;padding:.5rem;">No visual inspection items recorded yet.</li>';
   // Parts
   const pt=document.getElementById('rpt-parts-tbody');
   pt.innerHTML='';
