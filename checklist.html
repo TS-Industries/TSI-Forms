@@ -1467,9 +1467,13 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
         <div class="ai-badge">OVERALL SUMMARY</div>
-        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Write your summary below — then use AI to polish the language into professional report format.</div>
-        <textarea id="rpt-summary-input" style="width:100%;min-height:90px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="e.g. replaced all bearings, head was machined, all specs within range, ready for service..."></textarea>
-        <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt" style="margin-top:.5rem;">✨ Polish with AI</button>
+        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">All technician notes from every section are automatically pulled in below. Edit freely &mdash; then use AI to polish into professional report language. Click <strong>Refresh Notes</strong> to re-pull notes after making changes.</div>
+        <textarea id="rpt-summary-input" style="width:100%;min-height:140px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="Technician notes from all sections will appear here when you open the report..."></textarea>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;">
+          <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt">&#10024; Polish with AI</button>
+          <button class="polish-btn" style="background:#F1F5F9;color:#475569;border-color:#CBD5E1;" onclick="refreshSummaryNotes()">&#8635; Refresh Notes</button>
+          <button class="polish-btn" style="background:#FEF2F2;color:#991B1B;border-color:#FECACA;" onclick="clearSummaryNotes()">&#10005; Clear Summary</button>
+        </div>
       </div>
       <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
@@ -2180,6 +2184,33 @@ function openReport(){
   document.getElementById('rpt-tech').textContent=document.getElementById('uf-tech').value||'—';
   document.getElementById('rpt-date').textContent=document.getElementById('uf-date').value||new Date().toLocaleDateString();
   document.getElementById('rpt-hours').textContent=document.getElementById('uf-hours').value||'—';
+
+  // AUTO-POPULATE SUMMARY with all technician notes from every section
+  // Only pre-fill if the summary is currently empty (don't overwrite edits)
+  const summaryEl = document.getElementById('rpt-summary-input');
+  if (summaryEl && !summaryEl.value.trim()) {
+    const sectionNoteIds = [
+      {id:'notes-sec1', label:'Section 1 — Crankshaft'},
+      {id:'notes-sec2', label:'Section 2 — Main Bearings'},
+      {id:'notes-sec3', label:'Section 3 — Con Rod Bearings'},
+      {id:'notes-sec4', label:'Section 4 — Cylinder Liner'},
+      {id:'notes-sec5', label:'Section 5 — Cylinder Head'},
+      {id:'notes-sec6', label:'Section 6 — Head Bolt Torque'},
+      {id:'notes-sec7', label:'Section 7 — Valvetrain'},
+      {id:'notes-sec8', label:'Section 8 — Oil Pump'},
+      {id:'notes-sec9', label:'Section 9 — Load Bank Break-In'},
+    ];
+    const noteParts = [];
+    sectionNoteIds.forEach(({id, label}) => {
+      const el = document.getElementById(id);
+      const val = el ? el.value.trim() : '';
+      if (val) noteParts.push(label + ':\n' + val);
+    });
+    if (noteParts.length > 0) {
+      summaryEl.value = noteParts.join('\n\n');
+    }
+  }
+
   const allMeas=[...sec1Meas,...sec2Meas,...sec3Meas,...sec4Meas,...sec5Meas,...sec7Meas,...sec8Meas];
   let total=allMeas.length,pass=0,fail=0;
   allMeas.forEach(r=>{
@@ -2287,6 +2318,39 @@ function openReport(){
 
 function closeReport(){
   document.getElementById('report-overlay').classList.remove('open');
+}
+
+function refreshSummaryNotes() {
+  // Force re-pull all notes into the summary (overwrites current content)
+  const summaryEl = document.getElementById('rpt-summary-input');
+  if (!summaryEl) return;
+  const sectionNoteIds = [
+    {id:'notes-sec1', label:'Section 1 — Crankshaft'},
+    {id:'notes-sec2', label:'Section 2 — Main Bearings'},
+    {id:'notes-sec3', label:'Section 3 — Con Rod Bearings'},
+    {id:'notes-sec4', label:'Section 4 — Cylinder Liner'},
+    {id:'notes-sec5', label:'Section 5 — Cylinder Head'},
+    {id:'notes-sec6', label:'Section 6 — Head Bolt Torque'},
+    {id:'notes-sec7', label:'Section 7 — Valvetrain'},
+    {id:'notes-sec8', label:'Section 8 — Oil Pump'},
+    {id:'notes-sec9', label:'Section 9 — Load Bank Break-In'},
+  ];
+  const noteParts = [];
+  sectionNoteIds.forEach(({id, label}) => {
+    const el = document.getElementById(id);
+    const val = el ? el.value.trim() : '';
+    if (val) noteParts.push(label + ':\n' + val);
+  });
+  summaryEl.value = noteParts.length > 0 ? noteParts.join('\n\n') : '';
+  summaryEl.focus();
+}
+
+function clearSummaryNotes() {
+  const summaryEl = document.getElementById('rpt-summary-input');
+  if (summaryEl && confirm('Clear the summary? This only clears the summary box — your section notes are not affected.')) {
+    summaryEl.value = '';
+    summaryEl.focus();
+  }
 }
 
 function buildLbReport() {
