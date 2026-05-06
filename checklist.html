@@ -365,7 +365,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .numpad-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8BAAC8;}
 .numpad-value{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:white;letter-spacing:1px;min-width:120px;text-align:right;}
 .numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;}
-.np-btn{background:#12263F;border:1px solid #1E4976;color:white;border-radius:8px;padding:.9rem;font-size:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;text-align:center;transition:background .1s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.np-btn{background:#12263F;border:1px solid #1E4976;color:white;border-radius:8px;padding:1rem;font-size:24px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;text-align:center;transition:background .1s;-webkit-tap-highlight-color:transparent;user-select:none;min-height:60px;display:flex;align-items:center;justify-content:center;}
 .np-btn:active{background:#2563EB;}
 .np-btn.np-dot{font-size:24px;}
 .np-btn.np-del{background:#1A2A3A;font-size:16px;}
@@ -2064,11 +2064,11 @@ function buildMeasTable(tbodyId, rows){
       <td style="font-weight:600;font-size:12px;">${r.label}</td>
       <td><span class="mono">${r.spec}</span></td>
       <td style="font-size:11px;color:var(--gray);">${r.loc}</td>
-      <td><input class="meas-input" id="val-${r.id}" placeholder="0.0000" oninput="validateMeas('${r.id}',${r.min},${r.max})"></td>
+      <td><input class="meas-input" id="val-${r.id}" placeholder="tap to enter" readonly inputmode="none" style="cursor:pointer;" onclick="openNumpad(this,'${r.label.replace(/'/g,"\\'")}')"></td>
       <td><span class="status-cell status-pending" id="stat-${r.id}">—</span></td>
       <td><input class="meas-note" id="note-${r.id}" placeholder="Notes..."></td>
       <td class="photo-cell">
-        <input type="file" accept="image/*" capture="environment" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
+        <input type="file" accept="image/*" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
         <button class="photo-btn" id="photo-btn-${r.id}" onclick="document.getElementById('photo-input-${r.id}').click()">&#128247; Add</button>
         <div class="photo-thumbs" id="photo-thumbs-${r.id}"></div>
       </td>`;
@@ -2119,7 +2119,7 @@ function buildVIItems(containerId,prefix,items){
       <div class="vi-btns">
         <button class="vi-btn vi-btn-pass" id="pass-${id}" onclick="setVI('${id}','pass')">PASS</button>
         <button class="vi-btn vi-btn-fail" id="fail-${id}" onclick="setVI('${id}','fail')">FAIL</button>
-        <input type="file" accept="image/*" capture="environment" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
+        <input type="file" accept="image/*" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
         <button class="photo-btn" id="photo-btn-${id}" onclick="document.getElementById('photo-input-${id}').click()" title="Attach photo">&#128247;</button>
         <div class="photo-thumbs" id="photo-thumbs-${id}"></div>
       </div>`;
@@ -2223,8 +2223,7 @@ function calcRunTarget(){
 }
 
 function saveRunField(id, value){
-  // Piggyback on the main autosave system
-  if(typeof debouncedSave==='function') debouncedSave();
+  if (typeof autoSave === 'function') autoSave();
 }
 
 function handleRunPhotos(input){
@@ -3063,7 +3062,7 @@ async function silentReload() {
     if (!rows || !rows.length) return;
 
     // Build state from rows
-    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] };
+    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} };
     rows.forEach(row => {
       const { field_id, field_value } = row;
       if (field_id.startsWith('meta_'))      state.meta[field_id.replace('meta_','')] = field_value;
@@ -3093,10 +3092,22 @@ function openNumpad(inputEl, label) {
   document.getElementById('np-label').textContent   = label || 'Enter Value';
   document.getElementById('np-display').textContent = _npValue || '—';
   document.getElementById('numpad-overlay').classList.add('open');
+  // Desktop keyboard support
+  document.addEventListener('keydown', _npKeyHandler);
+}
+
+function _npKeyHandler(e) {
+  if (!document.getElementById('numpad-overlay').classList.contains('open')) return;
+  if (e.key >= '0' && e.key <= '9') { npKey(e.key); e.preventDefault(); }
+  else if (e.key === '.') { npKey('.'); e.preventDefault(); }
+  else if (e.key === 'Backspace') { npDel(); e.preventDefault(); }
+  else if (e.key === 'Enter') { npDone(); e.preventDefault(); }
+  else if (e.key === 'Escape') { closeNumpad(); e.preventDefault(); }
 }
 
 function closeNumpad() {
   document.getElementById('numpad-overlay').classList.remove('open');
+  document.removeEventListener('keydown', _npKeyHandler);
   _npTarget = null;
   _npValue  = '';
 }
@@ -3122,8 +3133,18 @@ function npClear() {
 
 function npDone() {
   if (_npTarget && _npValue !== '') {
+    // Temporarily remove readonly so value assignment works on all browsers
+    const wasReadOnly = _npTarget.readOnly;
+    _npTarget.readOnly = false;
     _npTarget.value = _npValue;
-    // Trigger input event so validation and autosave fire
+    _npTarget.readOnly = wasReadOnly;
+    // Trigger validation
+    const id = _npTarget.id ? _npTarget.id.replace('val-', '') : null;
+    if (id) {
+      const allMeas = [...sec1Meas,...sec2Meas,...sec3Meas,...sec4Meas,...sec5Meas,...sec7Meas,...sec8Meas];
+      const def = allMeas.find(r => r.id === id);
+      if (def) validateMeas(id, def.min, def.max);
+    }
     _npTarget.dispatchEvent(new Event('input', { bubbles: true }));
     _npTarget.dispatchEvent(new Event('change', { bubbles: true }));
   }
@@ -3133,19 +3154,17 @@ function npDone() {
 // Attach numpad to all measurement input fields
 function attachNumpadToMeasInputs() {
   document.querySelectorAll('.meas-input').forEach(inp => {
-    // Only attach if not already done
     if (inp.dataset.npAttached) return;
     inp.dataset.npAttached = '1';
-    inp.addEventListener('focus', function(e) {
-      // On touch devices, always use numpad. On desktop, only if screen < 1024px
-      if (window.innerWidth < 1024 || 'ontouchstart' in window) {
-        e.preventDefault();
-        inp.blur();
-        const row = inp.closest('tr');
-        const label = row ? (row.querySelector('td:first-child')?.textContent || 'Enter Value') : 'Enter Value';
-        openNumpad(inp, label);
-      }
-    });
+    inp.readOnly = true;
+    inp.inputMode = 'none';
+    inp.style.cursor = 'pointer';
+    // If no onclick already set via HTML, attach it
+    if (!inp.onclick) {
+      inp.addEventListener('click', function() {
+        openNumpad(inp, inp.closest('tr')?.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value');
+      });
+    }
   });
 }
 
@@ -3575,12 +3594,13 @@ function isEffectiveDowngrade(oldVal, newVal) {
 function isCriticalField(fid) {
   return fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
          fid.startsWith('notes_')    || fid.startsWith('meta_')      ||
-         fid.startsWith('vi_')       || fid === 'parts_list';
+         fid.startsWith('vi_')       || fid.startsWith('run_')       ||
+         fid === 'parts_list';
 }
 
 // ── COLLECT STATE ──
 function collectState() {
-  const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{} };
+  const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, run:{} };
 
   ['wo','serial','model','unit','customer','tech','date','hours'].forEach(k => {
     const el = document.getElementById('uf-'+k);
@@ -3618,6 +3638,38 @@ function collectState() {
   document.querySelectorAll('[id^="notes-"]').forEach(el => {
     state.notes[el.id.replace('notes-','')] = el.value || '';
   });
+
+  // Section 9 — Break-In Run Record
+  state.run = {};
+  const runFields = [
+    'run-date','run-start','run-end','run-ambient',
+    'run-gen-make','run-gen-model','run-gen-sn',
+    'run-lb-kw','run-hp','run-volts',
+    'run-cold-oil','run-cold-coolant',
+    'run-oil-level-start','run-leaks-start',
+    'run-total-time','run-oil-level-end','run-leaks-end',
+    'run-noise','run-approved','run-rts-date','run-rts-hours',
+    'run-notes','run-lb-model'
+  ];
+  runFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) state.run[id] = el.value || '';
+  });
+  // Run log rows (9 intervals × 13 cols)
+  const RUN_ALL_COLS = ['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase','v1','v2','v3','a1','a2','a3'];
+  for (let i = 0; i < 9; i++) {
+    RUN_ALL_COLS.forEach(col => {
+      const el = document.getElementById(`run-${i}-${col}`);
+      if (el && el.value) state.run[`run-${i}-${col}`] = el.value;
+    });
+  }
+  // Exhaust temps
+  for (let c = 1; c <= 6; c++) {
+    ['exh-cyl-'+c, 'exh-cyl-'+c+'-note'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) state.run[id] = el.value;
+    });
+  }
 
   state.photos = {};
   const allIds = new Set([...Object.keys(photoStore), ...photoFieldsSeen]);
@@ -3665,6 +3717,7 @@ function flattenState(state) {
   });
   Object.entries(state.bolts||{}).forEach(([p,v])  => flat['bolt_'+p]    = v ? '1' : '0');
   Object.entries(state.notes||{}).forEach(([s,v])  => flat['notes_'+s]   = v);
+  Object.entries(state.run||{}).forEach(([k,v])    => flat['run_'+k]     = v);
   Object.entries(state.photos||{}).forEach(([id,u])=> flat['photos_'+id] = JSON.stringify(u || []));
   // Parts list serialized as a single JSON string
   flat['parts_list'] = JSON.stringify(state.parts || []);
@@ -3684,7 +3737,13 @@ function restoreState(state) {
     Object.entries(state.meas || {}).forEach(([id,data]) => {
       const v = document.getElementById('val-'+id);
       const n = document.getElementById('note-'+id);
-      if (v) v.value = data.value || '';
+      if (v) {
+        // Temporarily remove readonly so mobile browsers accept the value assignment
+        const wasReadOnly = v.readOnly;
+        v.readOnly = false;
+        v.value = data.value || '';
+        v.readOnly = wasReadOnly;
+      }
       if (n) n.value = data.note || '';
     });
 
@@ -3712,6 +3771,14 @@ function restoreState(state) {
       const el = document.getElementById('notes-'+s);
       if (el) el.value = v || '';
     });
+
+    // Section 9 — Break-In Run Record restore
+    Object.entries(state.run || {}).forEach(([k,v]) => {
+      const el = document.getElementById(k);
+      if (el) el.value = v || '';
+    });
+    // Re-trigger calculator after restoring HP/voltage
+    if (typeof calcRunTarget === 'function') calcRunTarget();
 
     Object.keys(photoStore).forEach(k => delete photoStore[k]);
     photoFieldsSeen.clear();
@@ -3927,7 +3994,7 @@ async function loadJob() {
 
     // Build snapshot + state
     const snapshot = {};
-    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] };
+    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} };
     rows.forEach(row => {
       const { field_id, field_value } = row;
       snapshot[field_id] = field_value;
@@ -3947,6 +4014,9 @@ async function loadJob() {
         state.bolts[field_id.replace('bolt_','')] = field_value === '1';
       } else if (field_id.startsWith('notes_')) {
         state.notes[field_id.replace('notes_','')] = field_value;
+      } else if (field_id.startsWith('run_')) {
+        if (!state.run) state.run = {};
+        state.run[field_id.replace('run_','')] = field_value;
       } else if (field_id.startsWith('photos_')) {
         const id = field_id.replace('photos_','');
         try {
@@ -3967,7 +4037,7 @@ async function loadJob() {
     if (rows.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data
       // into this one on the next autosave.
-      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] });
+      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} });
       setSyncStatus('New job — ready (form cleared)');
     } else {
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
