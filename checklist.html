@@ -340,6 +340,11 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .section-notes-input{width:100%;min-height:56px;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-family:'Barlow',sans-serif;font-size:12px;line-height:1.5;color:var(--dark);resize:vertical;transition:border-color .15s;background:white;}
 .section-notes-input:focus{outline:none;border-color:var(--navy);}
 .section-notes-input::placeholder{color:#CBD5E1;font-style:italic;}
+.polish-btn{margin-top:.5rem;padding:.3rem .75rem;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;border:none;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;transition:opacity .15s;}
+.polish-btn:hover{opacity:.85;}
+.polish-btn:disabled{opacity:.5;cursor:not-allowed;}
+.polish-btn .spin{display:inline-block;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── AUTO-SAVE INDICATOR ── */
 .autosave-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:rgba(255,255,255,0.7);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:150;transform:translateY(100%);transition:transform .3s ease;}
@@ -524,6 +529,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Crankshaft</div>
         <textarea class="section-notes-input" id="notes-sec1" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec1" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec1" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -609,6 +615,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Main Bearings</div>
         <textarea class="section-notes-input" id="notes-sec2" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec2" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec2" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -699,6 +706,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Connecting Rod Bearings</div>
         <textarea class="section-notes-input" id="notes-sec3" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec3" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec3" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -787,6 +795,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Cylinder Liner, Pistons &amp; Rings</div>
         <textarea class="section-notes-input" id="notes-sec4" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec4" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec4" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -868,6 +877,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Cylinder Head</div>
         <textarea class="section-notes-input" id="notes-sec5" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec5" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec5" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -947,6 +957,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Head Bolt Torque</div>
         <textarea class="section-notes-input" id="notes-sec6" placeholder="Record any observations about bolt condition, torque anomalies, or additional findings..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec6" placeholder="Record any observations about bolt condition, torque anomalies, or additional findings..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec6" placeholder="Record any observations about bolt condition, torque anomalies, or additional findings..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -1041,6 +1052,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Valvetrain</div>
         <textarea class="section-notes-input" id="notes-sec7" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec7" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec7" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -1139,6 +1151,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="section-notes-panel">
         <div class="section-notes-label">Technician Notes — Oil Pump</div>
         <textarea class="section-notes-input" id="notes-sec8" placeholder="Record any observations, pump condition, pressure readings after startup, or additional findings..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('notes-sec<textarea class="section-notes-input" id="notes-sec8" placeholder="Record any observations, pump condition, pressure readings after startup, or additional findings..."></textarea>')" id="polish-btn-sec<textarea class="section-notes-input" id="notes-sec8" placeholder="Record any observations, pump condition, pressure readings after startup, or additional findings..."></textarea>">✨ Polish with AI</button>
       </div>
     </div>
   </div>
@@ -1214,8 +1227,10 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div id="rpt-status-banner" class="report-status-banner incomplete">Checklist In Progress</div>
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
-        <div class="ai-badge">SUMMARY</div>
-        <div id="ai-summary-content"><div class="ai-loading"><div class="ai-spinner"></div>Generating summary...</div></div>
+        <div class="ai-badge">OVERALL SUMMARY</div>
+        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Write your summary below — then use AI to polish the language into professional report format.</div>
+        <textarea id="rpt-summary-input" style="width:100%;min-height:90px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="e.g. replaced all bearings, head was machined, all specs within range, ready for service..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('rpt-summary-input','rpt-summary-input')" id="polish-btn-rpt" style="margin-top:.5rem;">✨ Polish with AI</button>
       </div>
       <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
@@ -1957,6 +1972,12 @@ function openReport(){
     });
     // Spacer row for visual breathing room between sections
     mt.innerHTML+=`<tr class="rpt-spacer-row"><td colspan="6" style="height:10px;background:#F3F4F6;border:none;padding:0;"></td></tr>`;
+    // Section technician notes
+    const secNotesEl=document.getElementById('notes-sec'+def.id);
+    const secNotesVal=secNotesEl?secNotesEl.value.trim():'';
+    if(secNotesVal){
+      mt.innerHTML+=`<tr><td colspan="6" style="padding:.5rem .75rem 1rem;font-size:11px;color:#374151;background:#FAFBFF;border-left:3px solid var(--navy);"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Technician Notes</span>${secNotesVal.replace(/\n/g,'<br>')}</td></tr>`;
+    }
   });
   // Findings — grouped by section with header rows between them
   const fl=document.getElementById('rpt-findings');
@@ -2011,8 +2032,6 @@ function openReport(){
   buildFlaggedPanel(sectionDefs);
   // Photo gallery
   buildPhotoGallery(sectionDefs);
-  // AI summary
-  generateAISummary(allMeas,pass,fail,total);
   document.getElementById('report-overlay').classList.add('open');
 }
 
@@ -2123,32 +2142,37 @@ function exportReportPDF(){
   },300);
 }
 
-async function generateAISummary(allMeas,pass,fail,total){
-  const el=document.getElementById('ai-summary-content');
-  el.innerHTML='<div class="ai-loading"><div class="ai-spinner"></div>Generating AI summary...</div>';
-  const failItems=allMeas.filter(r=>{
-    const s=document.getElementById('stat-'+r.id);
-    return s&&s.classList.contains('status-fail');
-  }).map(r=>r.label);
-  const prompt=`You are a diesel/natural gas engine overhaul technician writing a brief professional summary for a customer report. Engine: Cummins C8.3G. Total checks: ${total}. Passed: ${pass}. Failed: ${fail}. Failed items: ${failItems.length>0?failItems.join(', '):'None'}. Write 2-3 sentences summarizing the overhaul status and any critical findings. Be concise and professional.`;
+async function polishNotes(textareaId, btnSuffix){
+  const ta=document.getElementById(textareaId);
+  if(!ta) return;
+  const raw=ta.value.trim();
+  if(!raw){alert('Please write some notes first, then click Polish.');return;}
+  // Determine button id
+  const btnId = btnSuffix
+    ? 'polish-btn-'+btnSuffix.replace('notes-','').replace('rpt-summary-input','rpt')
+    : 'polish-btn-'+textareaId.replace('notes-','');
+  const btn=document.getElementById(btnId)||document.querySelector(`[onclick*="${textareaId}"]`);
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spin">⏳</span> Polishing...';}
   try{
-    const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+window._oaik},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:200})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing professional field service notes for a customer report on a Cummins C8.3G engine overhaul. Rewrite the following rough technician notes into clear, professional, third-person technical language suitable for a customer report. Keep all technical facts exactly as stated. Be concise. Do not add information that is not in the notes. Return only the rewritten text with no preamble.\n\nRough notes: ${raw}`}]
+      })
     });
-    if(resp.ok){
-      const data=await resp.json();
-      el.innerHTML=`<div class="ai-summary-text">${data.choices[0].message.content}</div>`;
-    } else throw new Error('API error');
+    const data=await resp.json();
+    if(data.content&&data.content[0]&&data.content[0].text){
+      ta.value=data.content[0].text;
+    } else {
+      alert('AI polish failed — please try again.');
+    }
   } catch(e){
-    const pct=total>0?Math.round((pass/total)*100):0;
-    let summary;
-    if(fail===0&&pass>0) summary=`Engine overhaul is complete with all ${pass} recorded measurements within factory specification. No failed measurements were detected during this inspection. The engine is approved for return to natural gas service.`;
-    else if(fail>0) summary=`Engine overhaul inspection recorded ${pass} passing and ${fail} failing measurements out of ${total} total checks. The following items require attention before the engine can be approved for service: ${failItems.slice(0,3).join('; ')}${failItems.length>3?' and others':''}. Review all failed measurements and take corrective action.`;
-    else summary=`Engine overhaul checklist is in progress. ${pass} of ${total} measurements have been recorded to date. Complete all sections before generating the final customer report.`;
-    el.innerHTML=`<div class="ai-summary-text">${summary}</div>`;
+    alert('Could not connect to AI — check your connection and try again.');
   }
+  if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
 }
 
 // ══ PHOTO ATTACHMENT ══
