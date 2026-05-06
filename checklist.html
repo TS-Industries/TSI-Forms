@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.5</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3997,36 +3997,21 @@ async function syncToCloud(jobId, state, opts = {}) {
   const flat = flattenState(state);
   const source = opts.source || 'autosave';
 
-  // LAYER 2: Data-loss guard.
-  // Only block if a FILLED measurement/note/meta/parts field would be blanked.
-  // VI fields and bolts are NOT guarded — they reset on load and should always save.
+  // LAYER 2: Parts-only guard — only block if parts list would be wiped
   if (_lastServerSnapshot && !opts.force) {
-    let wouldBlankCritical = 0;
-    const wouldBlankList = [];
-    for (const [fid, oldVal] of Object.entries(_lastServerSnapshot)) {
-      const newVal = flat[fid];
-      const willBeWritten = Object.prototype.hasOwnProperty.call(flat, fid);
-      // Only guard truly critical fields — meas, notes, meta, parts
-      // Skip VI and bolt fields — they always get rewritten correctly from DOM
-      if (!willBeWritten) continue;
-      const isTrulyCritical = fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
-                              fid.startsWith('notes_') || fid.startsWith('meta_') ||
-                              fid === 'parts_list';
-      if (isTrulyCritical && isPresent(oldVal) && isBlank(newVal)) {
-        wouldBlankCritical++;
-        if (wouldBlankList.length < 10) wouldBlankList.push(`${fid}: "${oldVal}" → "${newVal}"`);
-      }
-    }
-    // Only block if measurements/notes/parts would be wiped
-    if (wouldBlankCritical >= 1) {
-      console.error('[save] REFUSED — would blank ' + wouldBlankCritical + ' critical fields:', wouldBlankList);
-      setSyncStatus('⚠ Save refused — would wipe ' + wouldBlankCritical + ' fields');
-      showDataGuardBanner(wouldBlankCritical, jobId, state);
+    const oldParts = (() => { try { return JSON.parse(_lastServerSnapshot['parts_list']||'[]'); } catch(e){ return []; } })();
+    const newParts = (() => { try { return JSON.parse(flat['parts_list']||'[]'); } catch(e){ return []; } })();
+    if (oldParts.length > 0 && newParts.length === 0) {
+      console.error('[save] REFUSED — would wipe', oldParts.length, 'parts');
+      setSyncStatus('⚠ Save refused — would wipe parts list');
+      showDataGuardBanner(oldParts.length, jobId, state);
       return;
     }
   }
 
   setSyncStatus('Saving...');
+  const s5fields = Object.keys(flat).filter(k=>k.startsWith('meas_val_s5-flat') || k.startsWith('meas_val_s5-rec'));
+  console.log('[syncToCloud] s5-flat and s5-rec fields:', s5fields.map(k=>k+'='+flat[k]));
   console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Meas fields:', Object.keys(flat).filter(k=>k.startsWith('meas_val_') && flat[k]).map(k=>k+':'+flat[k]));
 
   // Tell realtime listener to ignore the echo of this save
