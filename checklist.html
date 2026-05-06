@@ -1171,6 +1171,176 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
+       SECTION 9 — BREAK-IN RUN RECORD
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="section" id="sec-9">
+    <div class="section-header" onclick="toggleSection('sec-9')">
+      <div class="section-num">9</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Break-In Run Record</div>
+        <div class="section-subtitle">4-Hour / 75% Load &nbsp;|&nbsp; Engine Parameters &amp; Load Bank &nbsp;|&nbsp; Record every 30 minutes</div>
+      </div>
+      <div class="section-badges"><span class="badge badge-gray" id="badge-sec-9">Run Log</span></div>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+
+      <!-- RUN INFO + LOAD BANK SETUP -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;padding:1rem 1.5rem;background:#F8FAFC;border-bottom:1px solid var(--border);">
+        <div class="unit-field" style="margin:0;"><label>Run Date</label><input id="run-date" type="date"></div>
+        <div class="unit-field" style="margin:0;"><label>Start Time</label><input id="run-start" type="time"></div>
+        <div class="unit-field" style="margin:0;"><label>End Time</label><input id="run-end" type="time"></div>
+        <div class="unit-field" style="margin:0;"><label>Ambient Temp (°F)</label><input id="run-ambient" placeholder="e.g. 72"></div>
+        <div class="unit-field" style="margin:0;"><label>Generator Make</label><input id="run-gen-make" placeholder="e.g. Cummins Onan"></div>
+        <div class="unit-field" style="margin:0;"><label>Generator Model</label><input id="run-gen-model" placeholder="e.g. DGDB"></div>
+        <div class="unit-field" style="margin:0;"><label>Generator Serial #</label><input id="run-gen-sn" placeholder="Serial number"></div>
+        <div class="unit-field" style="margin:0;"><label>Generator Rating (kW)</label><input id="run-lb-kw" type="number" placeholder="e.g. 150" oninput="calcRunTarget()"></div>
+        <div class="unit-field" style="margin:0;"><label>Engine HP</label><input id="run-hp" type="number" placeholder="e.g. 240" oninput="calcRunTarget()"></div>
+        <div class="unit-field" style="margin:0;"><label>Generator Voltage (V)</label><input id="run-volts" type="number" placeholder="e.g. 480" oninput="calcRunTarget()"></div>
+      </div>
+
+      <!-- BREAK-IN CALCULATOR -->
+      <div style="background:#12263F;border-top:2px solid #E87722;border-bottom:2px solid #E87722;padding:.75rem 1.5rem;">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;color:white;">LOAD BANK BREAK-IN CALCULATOR</div>
+          <div style="font-size:12px;color:#8BAAC8;flex:1;">75% Engine Load Target — Resistive load bank (Power Factor = 1.0)</div>
+          <span style="background:#1E3A5F;color:#60A5FA;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;">PF = 1.0 Resistive</span>
+          <span style="background:#1A2E1A;color:#86EFAC;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;">75% Load</span>
+        </div>
+        <div style="font-size:12px;color:#8BAAC8;margin-bottom:.75rem;">Enter Engine HP, Generator Rating, and Voltage — dial your load bank to the <strong style="color:#E87722;">TARGET AMPS</strong> shown below.</div>
+        <!-- Calc result boxes -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:.75rem;margin-bottom:.75rem;">
+          <div style="background:#0D1B2A;border:1px solid #1E4976;border-radius:6px;padding:14px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#8BAAC8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Generator Rated Output</div>
+            <div id="run-calc-rated" style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:white;">—<span style="font-size:14px;"> kW</span></div>
+            <div style="font-size:11px;color:#8BAAC8;margin-top:4px;">Pulled from Generator Rating input</div>
+          </div>
+          <div style="background:#1A1000;border:2px solid #E87722;border-radius:6px;padding:14px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#8BAAC8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">75% Load Target</div>
+            <div id="run-calc-kw" style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#E87722;">—<span style="font-size:14px;"> kW</span></div>
+            <div style="font-size:11px;color:#8BAAC8;margin-top:4px;">HP × 0.75 × 0.746 kW/hp</div>
+          </div>
+          <div style="background:#001A0D;border:2px solid #22C55E;border-radius:6px;padding:14px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#86EFAC;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">▶ Set Load Bank To</div>
+            <div id="run-calc-amps" style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:#22C55E;line-height:1;">—<span style="font-size:18px;"> AMPS</span></div>
+            <div style="font-size:11px;color:#86EFAC;margin-top:4px;">HP × 0.75 × 0.746 × 1000 ÷ (√3 × V)</div>
+          </div>
+        </div>
+        <div style="background:#0D1B2A;border-left:3px solid #F4A340;padding:10px 14px;border-radius:0 4px 4px 0;font-size:12px;color:#8BAAC8;line-height:1.5;">
+          <strong style="color:#F4A340;">Note:</strong> Power Factor is locked at 1.0 for resistive load banks. The 75% load target is based on Engine HP. Dial load bank amps to match the <strong style="color:#22C55E;">SET LOAD BANK TO</strong> value above. The kW column in the run log is auto-calculated: <code style="background:#1A3A5C;padding:1px 5px;border-radius:3px;color:#F4A340;font-family:monospace;">√3 × avg(V) × avg(A) ÷ 1000</code>
+        </div>
+      </div>
+
+      <!-- START CONDITIONS -->
+      <div style="padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:#FAFBFC;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Start-Up Conditions</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
+          <div class="unit-field" style="margin:0;"><label>Cold Idle Oil Press (psi)</label><input id="run-cold-oil" placeholder="Before load applied"></div>
+          <div class="unit-field" style="margin:0;"><label>Initial Coolant Temp (°F)</label><input id="run-cold-coolant" placeholder="At startup"></div>
+          <div class="unit-field" style="margin:0;"><label>Oil Level at Start</label>
+            <select id="run-oil-level-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
+              <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low</option>
+            </select>
+          </div>
+          <div class="unit-field" style="margin:0;"><label>Leaks at Startup</label>
+            <select id="run-leaks-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
+              <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMBINED RUN LOG TABLE -->
+      <div style="padding:.75rem 1.5rem;overflow-x:auto;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Combined Run Log — Engine Parameters &amp; Load Bank</div>
+        <table id="run-table" style="width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;">
+          <thead>
+            <tr style="background:var(--navy);color:white;">
+              <th rowspan="2" style="padding:.4rem .5rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.5px;border:1px solid #1E3A5C;white-space:nowrap;color:var(--gold);">Time</th>
+              <!-- Engine params group -->
+              <th colspan="7" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0F2942;color:#93C5FD;">ENGINE PARAMETERS</th>
+              <!-- Electrical group -->
+              <th colspan="7" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;">LOAD BANK — ELECTRICAL</th>
+            </tr>
+            <tr style="background:#1A3050;color:white;">
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">RPM</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Oil Press<br>(psi)</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Oil Temp<br>(°F)</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Coolant<br>(°F)</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Fuel<br>(in W.C.)</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Reg Press<br>(psi)</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Crankcase<br>Press</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L1-L2</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L2-L3</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L3-L1</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L1</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L2</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L3</th>
+              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;color:#86EFAC;">kW<br>(auto)</th>
+            </tr>
+          </thead>
+          <tbody id="run-log-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- EXHAUST TEMP PER CYLINDER -->
+      <div style="padding:.5rem 1.5rem 1rem;border-top:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Exhaust Manifold Temperature — Infrared Gun (°F) — End of Run</div>
+        <table style="border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr style="background:#E8ECF0;">
+              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Cylinder</th>
+              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Temp (°F)</th>
+              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="exh-temp-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- END CONDITIONS -->
+      <div style="padding:.75rem 1.5rem;border-top:1px solid var(--border);background:#FAFBFC;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">End-of-Run Conditions</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
+          <div class="unit-field" style="margin:0;"><label>Total Run Time Achieved</label><input id="run-total-time" placeholder="e.g. 4hr 00min"></div>
+          <div class="unit-field" style="margin:0;"><label>Oil Level After Run</label>
+            <select id="run-oil-level-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
+              <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low — topped up</option>
+            </select>
+          </div>
+          <div class="unit-field" style="margin:0;"><label>Leaks After Run</label>
+            <select id="run-leaks-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
+              <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
+            </select>
+          </div>
+          <div class="unit-field" style="margin:0;"><label>Unusual Noises / Vibration</label>
+            <select id="run-noise" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
+              <option value="">Select...</option><option>None</option><option>Minor — noted below</option><option>Yes — see notes</option>
+            </select>
+          </div>
+          <div class="unit-field" style="margin:0;"><label>Engine Approved for Service</label>
+            <select id="run-approved" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;">
+              <option value="">Select...</option>
+              <option>✓ Yes — Approved for Return to Service</option>
+              <option>✗ No — Further Work Required</option>
+            </select>
+          </div>
+          <div class="unit-field" style="margin:0;"><label>Return to Service Date</label><input id="run-rts-date" type="date"></div>
+          <div class="unit-field" style="margin:0;"><label>Hours at Return to Service</label><input id="run-rts-hours" placeholder="Engine hours"></div>
+        </div>
+      </div>
+
+      <!-- RUN NOTES -->
+      <div style="padding:.75rem 1.5rem 1rem;border-top:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Run Observations &amp; Follow-Up Items</div>
+        <textarea id="run-notes" class="section-notes-input" placeholder="Record any observations during run — leaks, noises, parameter anomalies, follow-up work required..."></textarea>
+        <button class="polish-btn" id="polish-btn-sec9" onclick="polishNotes('run-notes')" style="margin-top:.5rem;">✨ Polish with AI</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
        PARTS TRACKER
   ═══════════════════════════════════════════════════════════ -->
   <div class="section" id="sec-parts">
@@ -1260,6 +1430,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </table>
       <div class="report-section-title" id="rpt-photos-title" style="display:none;">Photo Documentation</div>
       <div id="rpt-photos-gallery"></div>
+      <div class="report-section-title">Break-In Run Record</div>
+      <div id="rpt-run-section"></div>
       <div class="report-section-title">Parts Installed</div>
       <table class="parts-report-table">
         <thead><tr><th>Description</th><th>Part Number</th><th>Qty</th><th>Supplier</th><th>Condition</th><th>Notes</th></tr></thead>
@@ -1692,6 +1864,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec8','vi8',viSec8);
 
   addPartsRow(); addPartsRow(); addPartsRow();
+  buildRunLog();
+  buildExhTempTable();
   updateProgress();
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('uf-date').value=today;
@@ -1808,6 +1982,94 @@ function setVI(id,result){
   updateProgress();
 }
 
+
+// ══ SECTION 9 — BREAK-IN RUN RECORD ══
+const RUN_INTERVALS=[
+  'Start (0:00)','0:30','1:00','1:30','2:00','2:30','3:00','3:30','4:00 (End)'
+];
+const RUN_ENG_COLS=['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase'];
+const RUN_ELEC_COLS=['v1','v2','v3','a1','a2','a3'];
+
+function buildRunLog(){
+  const tb=document.getElementById('run-log-tbody');
+  if(!tb) return;
+  RUN_INTERVALS.forEach((label,i)=>{
+    const isEdge=(i===0||i===RUN_INTERVALS.length-1);
+    const bg=isEdge?'#EFF6FF':'white';
+    const tr=document.createElement('tr');
+    tr.style.background=bg;
+    tr.id=`run-row-${i}`;
+    // Time label cell
+    let html=`<td style="padding:.3rem .5rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;color:var(--navy);white-space:nowrap;background:${isEdge?'#DBEAFE':'#F8FAFC'};">${label}</td>`;
+    // Engine param inputs
+    RUN_ENG_COLS.forEach(col=>{
+      const id=`run-${i}-${col}`;
+      html+=`<td style="padding:1px;border:1px solid var(--border);"><input id="${id}" type="text" placeholder="—" style="width:100%;border:none;padding:.3rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;text-align:center;background:transparent;" oninput="saveRunField('${id}',this.value)"></td>`;
+    });
+    // Electrical inputs
+    RUN_ELEC_COLS.forEach(col=>{
+      const id=`run-${i}-${col}`;
+      html+=`<td style="padding:1px;border:1px solid var(--border);background:#F0FDF4;"><input id="${id}" type="text" placeholder="—" style="width:100%;border:none;padding:.3rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;text-align:center;background:transparent;" oninput="saveRunField('${id}',this.value);recalcRunKW(${i})"></td>`;
+    });
+    // kW auto-calc cell
+    html+=`<td id="run-${i}-kw" style="padding:.3rem .5rem;border:1px solid var(--border);background:#F0FDF4;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#065F46;text-align:center;">—</td>`;
+    tr.innerHTML=html;
+    tb.appendChild(tr);
+  });
+}
+
+function recalcRunKW(i){
+  const g=id=>{const el=document.getElementById(id);return parseFloat(el?el.value:'')||0;};
+  const v=(g(`run-${i}-v1`)+g(`run-${i}-v2`)+g(`run-${i}-v3`))/3;
+  const a=(g(`run-${i}-a1`)+g(`run-${i}-a2`)+g(`run-${i}-a3`))/3;
+  const kw=(v&&a)?(Math.sqrt(3)*v*a/1000).toFixed(1):'—';
+  const el=document.getElementById(`run-${i}-kw`);
+  if(el) el.textContent=kw!=='—'?kw+' kW':'—';
+}
+
+function buildExhTempTable(){
+  const tb=document.getElementById('exh-temp-tbody');
+  if(!tb) return;
+  for(let c=1;c<=6;c++){
+    const tr=document.createElement('tr');
+    tr.style.background=c%2===0?'#F8FAFC':'white';
+    tr.innerHTML=`
+      <td style="padding:.35rem .75rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;">Cyl ${c}</td>
+      <td style="padding:1px;border:1px solid var(--border);"><input id="exh-cyl-${c}" type="text" placeholder="°F" style="width:100%;border:none;padding:.3rem .5rem;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-align:center;" oninput="saveRunField('exh-cyl-${c}',this.value)"></td>
+      <td style="padding:1px;border:1px solid var(--border);"><input id="exh-cyl-${c}-note" type="text" placeholder="Notes..." style="width:100%;border:none;padding:.3rem .5rem;font-family:'Barlow',sans-serif;font-size:11px;" oninput="saveRunField('exh-cyl-${c}-note',this.value)"></td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function calcRunTarget(){
+  const hp=parseFloat(document.getElementById('run-hp')?.value)||0;
+  const kw=parseFloat(document.getElementById('run-lb-kw')?.value)||0;
+  const v=parseFloat(document.getElementById('run-volts')?.value)||0;
+  const ratedEl=document.getElementById('run-calc-rated');
+  const kwEl=document.getElementById('run-calc-kw');
+  const aEl=document.getElementById('run-calc-amps');
+  // Generator Rated Output — from kW input
+  if(ratedEl) ratedEl.innerHTML=kw?`${kw}<span style="font-size:14px;"> kW</span>`:`—<span style="font-size:14px;"> kW</span>`;
+  // 75% target — based on HP
+  if(hp>0){
+    const kw75=(hp*0.75*0.746);
+    if(kwEl) kwEl.innerHTML=`${kw75.toFixed(1)}<span style="font-size:14px;"> kW</span>`;
+    if(v>0){
+      const amps=(kw75*1000)/(Math.sqrt(3)*v);
+      if(aEl) aEl.innerHTML=`${amps.toFixed(1)}<span style="font-size:18px;"> AMPS</span>`;
+    } else {
+      if(aEl) aEl.innerHTML=`Enter V<span style="font-size:18px;"> AMPS</span>`;
+    }
+  } else {
+    if(kwEl) kwEl.innerHTML=`—<span style="font-size:14px;"> kW</span>`;
+    if(aEl) aEl.innerHTML=`—<span style="font-size:18px;"> AMPS</span>`;
+  }
+}
+
+function saveRunField(id, value){
+  // Piggyback on the main autosave system
+  if(typeof debouncedSave==='function') debouncedSave();
+}
 
 // ══ PARTS TRACKER ══
 let partRowId=0;
@@ -2091,10 +2353,148 @@ function openReport(){
   buildFlaggedPanel(sectionDefs);
   // Photo gallery
   buildPhotoGallery(sectionDefs);
+  // Break-in run record
+  buildRunReport();
   // Open report first so user sees it immediately, then generate summary async
   document.getElementById('report-overlay').classList.add('open');
   // Auto-generate AI summary from section notes (only if summary is currently empty)
   generateReportSummary(false);
+}
+
+function buildRunReport(){
+  const wrap=document.getElementById('rpt-run-section');
+  if(!wrap) return;
+  const g=id=>document.getElementById(id)?.value||'—';
+  const runDate=g('run-date'); const runStart=g('run-start'); const runEnd=g('run-end');
+  const ambient=g('run-ambient'); const genMake=g('run-gen-make'); const genModel=g('run-gen-model');
+  const genSN=g('run-gen-sn'); const genKW=g('run-lb-kw'); const hp=g('run-hp');
+  const volts=g('run-volts');
+  const calcKWEl=document.getElementById('run-calc-kw');
+  const calcAEl=document.getElementById('run-calc-amps');
+  const calcRatedEl=document.getElementById('run-calc-rated');
+  const calcKW=calcKWEl?calcKWEl.textContent.replace(/\s+/g,' ').trim():'—';
+  const calcA=calcAEl?calcAEl.textContent.replace(/\s+/g,' ').trim():'—';
+  const calcRated=calcRatedEl?calcRatedEl.textContent.replace(/\s+/g,' ').trim():'—';
+
+  // Run log rows
+  const RUN_ENG=['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase'];
+  const RUN_ELEC=['v1','v2','v3','a1','a2','a3'];
+  const RUN_LABELS=['Start (0:00)','0:30','1:00','1:30','2:00','2:30','3:00','3:30','4:00 (End)'];
+  let logRows='';
+  RUN_LABELS.forEach((lbl,i)=>{
+    const isEdge=(i===0||i===RUN_LABELS.length-1);
+    const bg=isEdge?'#EFF6FF':'white';
+    let cells=`<td style="padding:.3rem .5rem;background:#F0F4FF;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;border:1px solid var(--border);white-space:nowrap;">${lbl}</td>`;
+    RUN_ENG.forEach(col=>{
+      const v=document.getElementById(`run-${i}-${col}`)?.value||'';
+      cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;border:1px solid var(--border);background:${bg};">${v||'—'}</td>`;
+    });
+    RUN_ELEC.forEach(col=>{
+      const v=document.getElementById(`run-${i}-${col}`)?.value||'';
+      cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;border:1px solid var(--border);background:${isEdge?'#F0FDF4':'#FAFFF8'};">${v||'—'}</td>`;
+    });
+    const kw=document.getElementById(`run-${i}-kw`)?.textContent||'—';
+    cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;font-weight:700;color:#065F46;border:1px solid var(--border);background:#F0FDF4;">${kw}</td>`;
+    logRows+=`<tr>${cells}</tr>`;
+  });
+
+  // Exhaust temps
+  let exhRows='';
+  for(let c=1;c<=6;c++){
+    const temp=document.getElementById(`exh-cyl-${c}`)?.value||'—';
+    const note=document.getElementById(`exh-cyl-${c}-note`)?.value||'';
+    exhRows+=`<tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;">Cyl ${c}</td><td style="padding:.3rem .6rem;border:1px solid var(--border);text-align:center;font-weight:700;">${temp}</td><td style="padding:.3rem .6rem;border:1px solid var(--border);font-size:11px;color:var(--gray);">${note}</td></tr>`;
+  }
+
+  const approved=g('run-approved'); const rtsDate=g('run-rts-date'); const rtsHours=g('run-rts-hours');
+  const leaksStart=g('run-leaks-start'); const leaksEnd=g('run-leaks-end');
+  const oilStart=g('run-oil-level-start'); const oilEnd=g('run-oil-level-end');
+  const noise=g('run-noise'); const coldOil=g('run-cold-oil'); const coldCoolant=g('run-cold-coolant');
+  const runNotes=document.getElementById('run-notes')?.value||'';
+  const totalTime=g('run-total-time');
+
+  const approvedColor=approved.includes('Yes')?'#065F46':'#991B1B';
+
+  wrap.innerHTML=`
+    <!-- Unit info -->
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:.75rem;">
+      <tr style="background:#F0F4FF;">
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Run Date</span>${runDate}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Start</span>${runStart}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">End</span>${runEnd}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Total Time</span>${totalTime}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Ambient Temp</span>${ambient}°F</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Generator</span>${genMake} ${genModel}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Gen Serial #</span>${genSN}</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Rating / HP</span>${genKW} kW / ${hp} HP</td>
+        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">75% Target</span>${calcKW} @ ${calcA}</td>
+      </tr>
+    </table>
+
+    <!-- Combined run log -->
+    <div style="overflow-x:auto;margin-bottom:.75rem;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px;">
+        <thead>
+          <tr style="background:var(--navy);color:white;">
+            <th rowspan="2" style="padding:.35rem .5rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;color:var(--gold);">Time</th>
+            <th colspan="7" style="padding:.25rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0F2942;color:#93C5FD;letter-spacing:.5px;">ENGINE PARAMETERS</th>
+            <th colspan="6" style="padding:.25rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;letter-spacing:.5px;">LOAD BANK — ELECTRICAL</th>
+            <th rowspan="2" style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;text-align:center;">kW</th>
+          </tr>
+          <tr style="background:#1A3050;color:white;">
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">RPM</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Oil PSI</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Oil °F</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Coolant °F</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Fuel W.C.</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Reg PSI</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Crankcase</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L1-L2</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L2-L3</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L3-L1</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L1</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L2</th>
+            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L3</th>
+          </tr>
+        </thead>
+        <tbody>${logRows}</tbody>
+      </table>
+    </div>
+
+    <!-- Exhaust temps + conditions side by side -->
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:1rem;margin-bottom:.75rem;">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.25rem;">Exhaust Temp — IR Gun (°F)</div>
+        <table style="border-collapse:collapse;font-size:11px;">
+          <thead><tr style="background:#E8ECF0;">
+            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Cylinder</th>
+            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Temp °F</th>
+            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Notes</th>
+          </tr></thead>
+          <tbody>${exhRows}</tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.25rem;">Start / End Conditions</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;width:40%;">Cold Idle Oil Press</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${coldOil} psi</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Initial Coolant Temp</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${coldCoolant}°F</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Oil Level — Start</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${oilStart}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Oil Level — End</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${oilEnd}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Leaks — Start</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${leaksStart}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Leaks — End</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${leaksEnd}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Noises / Vibration</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${noise}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Return to Service Date</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${rtsDate}</td></tr>
+          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Hours at RTS</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${rtsHours}</td></tr>
+          <tr style="background:${approved.includes('Yes')?'#F0FDF4':'#FEF2F2'};">
+            <td style="padding:.4rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:.5px;">APPROVED FOR SERVICE</td>
+            <td style="padding:.4rem .6rem;border:1px solid var(--border);font-weight:800;color:${approvedColor};">${approved||'—'}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    ${runNotes?`<div style="padding:.5rem .75rem;background:#FAFBFF;border-left:3px solid var(--navy);font-size:11px;color:#374151;"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Run Observations</span>${runNotes.replace(/\n/g,'<br>')}</div>`:''}
+  `;
 }
 
 async function generateReportSummary(force){
@@ -2112,6 +2512,9 @@ async function generateReportSummary(force){
     const val=el?el.value.trim():'';
     if(val) parts.push(`${sectionTitles[n]}: ${val}`);
   });
+  // Include break-in run observations
+  const runNotes=document.getElementById('run-notes')?.value.trim();
+  if(runNotes) parts.push(`Break-In Run (4hr/75% Load): ${runNotes}`);
   if(!parts.length){
     summaryEl.placeholder='No section notes found — write your summary here or add notes to each section first.';
     return;
