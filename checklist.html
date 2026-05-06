@@ -1511,14 +1511,91 @@ function attachAutoSaveListeners() {
   });
 }
 
-// ── Check for unsaved local backup on startup ──
-function checkRestore() {
+// ── Smart restore check — compares local backup vs cloud before showing banner ──
+async function checkRestore() {
   try {
     const raw = localStorage.getItem('tsi_cummins_83g_v5');
-    if (!raw) return;
-    const banner = document.getElementById('restore-banner');
-    if (banner) banner.style.display = 'flex';
-  } catch(e) { /* ignore */ }
+    if (!raw) return; // No local backup at all — nothing to do
+
+    const local = JSON.parse(raw);
+
+    // Count meaningful local fields
+    const localScore = scoreState(local);
+    if (localScore === 0) {
+      // Local backup is empty — clear it and move on
+      localStorage.removeItem('tsi_cummins_83g_v5');
+      return;
+    }
+
+    // Check if there's a job ID we can compare against
+    const jobId = localStorage.getItem('tsi_last_job_id');
+    if (!jobId) {
+      // No job to compare against — show banner as fallback
+      showRestoreBanner(localScore);
+      return;
+    }
+
+    // Silently fetch cloud record count for this job
+    try {
+      const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/overhaul_data?job_id=eq.${encodeURIComponent(jobId)}&select=field_id,field_value`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!resp.ok) throw new Error('fetch failed');
+      const cloudRows = await resp.json();
+
+      // Count meaningful cloud fields
+      const cloudScore = cloudRows.filter(r => r.field_value && r.field_value !== '' && r.field_value !== '[]').length;
+
+      // Also check cloud parts count vs local parts count
+      const cloudPartsRow = cloudRows.find(r => r.field_id === 'parts_list');
+      const cloudParts = cloudPartsRow ? (()=>{ try{ return JSON.parse(cloudPartsRow.field_value||'[]').length; }catch(e){ return 0; } })() : 0;
+      const localParts = Array.isArray(local.parts) ? local.parts.length : 0;
+
+      if (cloudScore >= localScore && cloudParts >= localParts) {
+        // Cloud has at least as much data — safe to auto-dismiss
+        localStorage.removeItem('tsi_cummins_83g_v5');
+        return;
+      }
+
+      // Local has MORE data than cloud — show banner
+      showRestoreBanner(localScore, cloudScore, localParts, cloudParts);
+
+    } catch(e) {
+      // Can't reach cloud — show banner as safe fallback
+      showRestoreBanner(localScore);
+    }
+
+  } catch(e) { /* ignore parse errors */ }
+}
+
+function scoreState(state) {
+  let score = 0;
+  if (state.meta) score += Object.values(state.meta).filter(v => v && v !== '').length;
+  if (state.meas) Object.values(state.meas).forEach(m => { if (m.value) score++; if (m.note) score++; });
+  if (state.vi)   score += Object.values(state.vi).filter(v => v === 'pass' || v === 'fail').length;
+  if (state.notes) score += Object.values(state.notes).filter(v => v && v !== '').length;
+  if (state.parts) score += state.parts.length;
+  return score;
+}
+
+function showRestoreBanner(localScore, cloudScore, localParts, cloudParts) {
+  const banner = document.getElementById('restore-banner');
+  if (!banner) return;
+  // Update banner text to explain why it's showing
+  const textEl = banner.querySelector('.restore-banner-text');
+  if (textEl) {
+    let msg = '<strong>&#x1F4BE; Local Backup Found</strong> ';
+    if (cloudScore !== undefined && localScore > cloudScore) {
+      msg += `Your local backup has <strong>${localScore}</strong> fields vs <strong>${cloudScore}</strong> in the cloud.`;
+      if (localParts > cloudParts) msg += ` Local has <strong>${localParts} parts</strong>, cloud has <strong>${cloudParts}</strong>.`;
+      msg += ' Your local copy may have more recent data.';
+    } else {
+      msg += 'A previous session was found. Would you like to restore it?';
+    }
+    textEl.innerHTML = msg;
+  }
+  banner.style.display = 'flex';
 }
 
 function doRestore() {
@@ -1532,7 +1609,8 @@ function doRestore() {
 }
 
 function confirmDismissRestore(){
-  if(confirm('Are you sure you want to dismiss?\n\nThis will discard the locally saved session. If your cloud data is intact (Loaded XX values), it is safe to dismiss.\n\nClick OK to dismiss, Cancel to go back.')){
+  if(confirm('Are you sure you want to dismiss?\n\nYour cloud data will be used instead. Click OK to dismiss.')){
+    localStorage.removeItem('tsi_cummins_83g_v5');
     dismissRestore();
   }
 }
