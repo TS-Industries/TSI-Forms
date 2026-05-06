@@ -2029,16 +2029,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   initOfflineMode();
   initRealtime();
   attachNumpadToMeasInputs();
-  // Auto-load from cloud on refresh if we have a saved job ID
-  const savedJobId = localStorage.getItem('tsi_last_job_id');
-  if (savedJobId) {
-    const inp = document.getElementById('job-id-input');
-    if (inp) inp.value = savedJobId;
-    // Longer delay to ensure all dynamic tables are fully built before loading
-    setTimeout(() => {
-      loadJob(true);
-    }, 800);
-  }
 });
 
 function toggleSection(id){
