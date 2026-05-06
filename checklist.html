@@ -1335,6 +1335,17 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         </div>
       </div>
 
+      <!-- POST RUN PHOTOS -->
+      <div style="padding:.75rem 1.5rem 1rem;border-top:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Post Break-In Photos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem;">
+          <input type="file" id="run-photo-input" accept="image/*" multiple style="display:none;" onchange="handleRunPhotos(this)">
+          <button class="photo-btn" onclick="document.getElementById('run-photo-input').click()" style="padding:.4rem .9rem;font-size:12px;">📷 Add Photos</button>
+          <span style="font-size:11px;color:var(--gray);">Attach photos taken after the break-in run</span>
+        </div>
+        <div id="run-photo-grid" style="display:flex;flex-wrap:wrap;gap:.75rem;"></div>
+      </div>
+
       <!-- RUN NOTES -->
       <div style="padding:.75rem 1.5rem 1rem;border-top:1px solid var(--border);">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Run Observations &amp; Follow-Up Items</div>
@@ -1417,7 +1428,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
         <div class="ai-badge">OVERALL SUMMARY</div>
-        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Your section notes are pulled in automatically as a draft — edit as needed, then use AI to polish into professional report language.</div>
         <textarea id="rpt-summary-input" style="width:100%;min-height:120px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="Section notes will appear here automatically when you open the report. You can also type your own summary and use AI to polish it."></textarea>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
           <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt">✨ Polish with AI</button>
@@ -2074,6 +2084,28 @@ function saveRunField(id, value){
   if(typeof debouncedSave==='function') debouncedSave();
 }
 
+function handleRunPhotos(input){
+  const grid=document.getElementById('run-photo-grid');
+  if(!grid) return;
+  Array.from(input.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const src=e.target.result;
+      // Store in runPhotoStore
+      if(!window.runPhotoStore) window.runPhotoStore=[];
+      window.runPhotoStore.push(src);
+      // Show thumbnail
+      const wrap=document.createElement('div');
+      wrap.style.cssText='position:relative;display:inline-block;';
+      wrap.innerHTML=`<img src="${src}" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;" onclick="openLightbox('${src}')">
+        <button onclick="this.parentElement.remove();window.runPhotoStore=window.runPhotoStore.filter(s=>s!=='${src}')" style="position:absolute;top:-6px;right:-6px;background:#991B1B;color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>`;
+      grid.appendChild(wrap);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value=''; // reset so same file can be re-added
+}
+
 // ══ PARTS TRACKER ══
 let partRowId=0;
 function addPartsRow(){
@@ -2496,7 +2528,14 @@ function buildRunReport(){
         </table>
       </div>
     </div>
-    ${runNotes?`<div style="padding:.5rem .75rem;background:#FAFBFF;border-left:3px solid var(--navy);font-size:11px;color:#374151;"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Run Observations</span>${runNotes.replace(/\n/g,'<br>')}</div>`:''}
+    ${runNotes?`<div style="padding:.5rem .75rem;background:#FAFBFF;border-left:3px solid var(--navy);font-size:11px;color:#374151;margin-bottom:.5rem;"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Run Observations</span>${runNotes.replace(/\n/g,'<br>')}</div>`:''}
+    ${(window.runPhotoStore&&window.runPhotoStore.length)?`
+      <div style="margin-top:.5rem;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.375rem;">Post Break-In Photos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+          ${window.runPhotoStore.map(src=>`<img src="${src}" style="width:150px;height:110px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}
+        </div>
+      </div>`:''}
   `;
 }
 
