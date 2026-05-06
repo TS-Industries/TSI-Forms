@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.3</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -4023,6 +4023,7 @@ async function syncToCloud(jobId, state, opts = {}) {
   }
 
   setSyncStatus('Saving...');
+  console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Meas fields:', Object.keys(flat).filter(k=>k.startsWith('meas_val_') && flat[k]).map(k=>k+':'+flat[k]));
 
   // Tell realtime listener to ignore the echo of this save
   _realtimeIgnoreNext = true;
@@ -4162,6 +4163,8 @@ async function loadJob(silent = false) {
       restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} });
       setSyncStatus('New job — ready (form cleared)');
     } else {
+      const measLoaded = rows.filter(r => r.field_id.startsWith('meas_val_') && isPresent(r.field_value));
+      console.log('[loadJob] Loaded', rows.length, 'rows. Meas values:', measLoaded.map(r=>r.field_id+':'+r.field_value));
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
       setSyncStatus('✓ Loaded ' + rows.filter(r => isPresent(r.field_value)).length + ' values');
     }
