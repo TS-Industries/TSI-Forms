@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.8</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3089,56 +3089,19 @@ let _realtimeChannel = null;
 let _realtimeIgnoreNext = false; // prevent echo of our own saves
 
 function initRealtime() {
-  if (!window.supabase) { console.warn('Supabase client not loaded'); return; }
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  function connect() {
-    if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); }
-
-    _realtimeChannel = sb.channel('overhaul-sync')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'overhaul_data' },
-        handleRemoteChange
-      )
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'overhaul_data' },
-        handleRemoteChange
-      )
-      .subscribe((status) => {
-        const ind = document.getElementById('sync-live-indicator');
-        const txt = document.getElementById('sync-live-txt');
-        if (status === 'SUBSCRIBED') {
-          if (ind) ind.className = 'sync-live';
-          if (txt) txt.textContent = 'Live';
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          if (ind) ind.className = 'sync-live disconnected';
-          if (txt) txt.textContent = 'Reconnecting...';
-          // Auto-reconnect after 3s
-          setTimeout(connect, 3000);
-        } else {
-          if (ind) ind.className = 'sync-live disconnected';
-          if (txt) txt.textContent = status;
-        }
-      });
-  }
-
-  connect();
+  // Realtime sync disabled — was causing save overwrites on multi-field batch saves.
+  // Each field upsert triggered a change event, flooding handleRemoteChange and
+  // pulling stale data back from cloud before the save completed.
+  const ind = document.getElementById('sync-live-indicator');
+  const txt = document.getElementById('sync-live-txt');
+  if (ind) ind.className = 'sync-live';
+  if (txt) txt.textContent = 'Ready';
 }
 
 let _realtimeRefreshTimer = null;
 
 function handleRemoteChange(payload) {
-  // Only care about our current job
-  if (!CURRENT_JOB_ID) return;
-  if (!payload.new || payload.new.job_id !== CURRENT_JOB_ID) return;
-  // Ignore if we triggered this save ourselves
-  if (_realtimeIgnoreNext) { _realtimeIgnoreNext = false; return; }
-  // Debounce — if many fields come in rapid succession, only refresh once
-  clearTimeout(_realtimeRefreshTimer);
-  _realtimeRefreshTimer = setTimeout(() => {
-    setSyncStatus('📡 Update from another device — refreshing...');
-    silentReload();
-  }, 800);
+  // Disabled — realtime sync turned off to prevent save overwrites
 }
 
 async function silentReload() {
