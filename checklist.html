@@ -252,9 +252,9 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .report-meas-table th{background:var(--navy);color:white;padding:.4rem .625rem;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:left;}
 .report-meas-table td{padding:.35rem .625rem;border-bottom:1px solid var(--border);}
 .report-meas-table tr:nth-child(even) td{background:#F8FAFC;}
-.report-meas-table .r-pass{color:var(--pass);font-weight:700;font-family:'Barlow Condensed',sans-serif;}
-.report-meas-table .r-fail{color:var(--fail);font-weight:700;font-family:'Barlow Condensed',sans-serif;}
-.report-meas-table .r-pend{color:var(--gray);font-family:'Barlow Condensed',sans-serif;}
+.report-meas-table .r-pass{color:var(--pass);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;}
+.report-meas-table .r-fail{color:var(--fail);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;}
+.report-meas-table .r-pend{color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:11px;}
 .findings-list{list-style:none;margin-bottom:1rem;}
 .findings-list li{padding:.5rem .75rem;border-radius:6px;margin-bottom:.375rem;font-size:12px;display:flex;align-items:flex-start;gap:.5rem;}
 .findings-list li.finding-fail{background:var(--fail-bg);color:var(--fail);}
@@ -2006,7 +2006,7 @@ function openReport(){
           const col=f.pass?'#065F46':'#991B1B';
           const bg=f.pass?'#F0FDF4':'#FEF2F2';
           const word=f.pass?'PASS':'FAIL';
-          mt.innerHTML+=`<tr style="background:${bg};"><td style="font-size:10px;color:var(--gray);">${def.title}</td><td colspan="3" style="font-size:12px;">${f.label}</td><td style="font-weight:800;color:${col};font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.5px;">${word}</td><td></td></tr>`;
+          mt.innerHTML+=`<tr style="background:${bg};"><td style="font-size:10px;color:var(--gray);">${def.title}</td><td colspan="3" style="font-size:12px;">${f.label}</td><td style="font-weight:700;color:${col};font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;">${word}</td><td></td></tr>`;
         });
       }
     }
