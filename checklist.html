@@ -2034,10 +2034,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   if (savedJobId) {
     const inp = document.getElementById('job-id-input');
     if (inp) inp.value = savedJobId;
-    // Small delay to let the page fully render before loading
+    // Longer delay to ensure all dynamic tables are fully built before loading
     setTimeout(() => {
-      loadJob(true); // true = silent auto-load (no confirm dialog)
-    }, 300);
+      loadJob(true);
+    }, 800);
   }
 });
 
@@ -2074,7 +2074,7 @@ function buildMeasTable(tbodyId, rows){
       <td style="font-weight:600;font-size:12px;">${r.label}</td>
       <td><span class="mono">${r.spec}</span></td>
       <td style="font-size:11px;color:var(--gray);">${r.loc}</td>
-      <td><input class="meas-input" id="val-${r.id}" placeholder="tap to enter" readonly inputmode="none" style="cursor:pointer;" onclick="openNumpad(this,'${r.label.replace(/'/g,"\\'")}')"></td>
+      <td><input class="meas-input" id="val-${r.id}" placeholder="0.0000" oninput="validateMeas('${r.id}',${r.min},${r.max})"></td>
       <td><span class="status-cell status-pending" id="stat-${r.id}">—</span></td>
       <td><input class="meas-note" id="note-${r.id}" placeholder="Notes..."></td>
       <td class="photo-cell">
@@ -3163,18 +3163,28 @@ function npDone() {
 
 // Attach numpad to all measurement input fields
 function attachNumpadToMeasInputs() {
+  // Only activate numpad on touch devices (mobile/tablet)
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (!isTouch) return;
+
   document.querySelectorAll('.meas-input').forEach(inp => {
     if (inp.dataset.npAttached) return;
     inp.dataset.npAttached = '1';
     inp.readOnly = true;
     inp.inputMode = 'none';
+    inp.placeholder = 'tap to enter';
     inp.style.cursor = 'pointer';
-    // If no onclick already set via HTML, attach it
-    if (!inp.onclick) {
-      inp.addEventListener('click', function() {
-        openNumpad(inp, inp.closest('tr')?.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value');
-      });
-    }
+    inp.addEventListener('click', function() {
+      const row = inp.closest('tr');
+      const label = row ? (row.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value') : 'Enter Value';
+      openNumpad(inp, label);
+    });
+    inp.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      const row = inp.closest('tr');
+      const label = row ? (row.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value') : 'Enter Value';
+      openNumpad(inp, label);
+    }, {passive: false});
   });
 }
 
@@ -3748,11 +3758,11 @@ function restoreState(state) {
       const v = document.getElementById('val-'+id);
       const n = document.getElementById('note-'+id);
       if (v) {
-        // Temporarily remove readonly so mobile browsers accept the value assignment
+        // Temporarily lift readonly (for mobile numpad inputs) so value assignment works
         const wasReadOnly = v.readOnly;
-        v.readOnly = false;
+        if (wasReadOnly) v.readOnly = false;
         v.value = data.value || '';
-        v.readOnly = wasReadOnly;
+        if (wasReadOnly) v.readOnly = true;
       }
       if (n) n.value = data.note || '';
     });
@@ -3827,9 +3837,15 @@ function restoreState(state) {
 
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
-    // Small delay before un-suspending so any stray events from restore
-    // (e.g. dispatched by validateMeas) are dropped, not saved.
-    setTimeout(() => { _savesSuspended = false; }, 500);
+    // Longer delay before un-suspending to ensure all DOM changes settle
+    setTimeout(() => {
+      _savesSuspended = false;
+      // Force-save immediately after restore so the restored state
+      // is written to cloud before any stale autosave can overwrite it
+      if (CURRENT_JOB_ID && _lastServerSnapshot !== null) {
+        setTimeout(() => autoSave(), 200);
+      }
+    }, 1000);
   }
 }
 
