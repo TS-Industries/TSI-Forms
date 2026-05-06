@@ -2755,7 +2755,6 @@ function restoreState(state) {
   _savesSuspended = true;
   clearTimeout(_syncTimer);
   try {
-  try {
     Object.entries(state.meta || {}).forEach(([k,v]) => {
       const el = document.getElementById('uf-'+k);
       if (el) el.value = v || '';
