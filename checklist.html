@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.6</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist v2.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3945,7 +3945,7 @@ function restoreState(state) {
   } finally {
     setTimeout(() => {
       _savesSuspended = false;
-    }, 1000);
+    }, 2500);
   }
 }
 
@@ -4163,8 +4163,8 @@ async function loadJob(silent = false) {
     console.error('Load error:', e);
   }
 
-  // restoreState handles its own un-suspend; if it didn't run, un-suspend here
-  setTimeout(() => { _savesSuspended = false; }, 700);
+  // restoreState handles its own un-suspend via its finally block
+  // Do NOT unsuspend here — restoreState does it after DOM is fully populated
 }
 
 function setSyncStatus(msg) {
