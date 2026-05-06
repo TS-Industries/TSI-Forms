@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cummins C8.3G — Complete Engine Overhaul Checklist v3.0</title>
+<title>Cummins C8.3G — Complete Engine Overhaul Checklist</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --navy:#1A3A5C;--navy-mid:#1E4D7B;--navy-light:#2563EB;
@@ -63,11 +62,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .unit-field input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:5px 10px;color:white;font-family:'Barlow',sans-serif;font-size:12px;}
 .unit-field input:focus{outline:none;border-color:var(--gold);}
 .unit-field input::placeholder{color:rgba(255,255,255,0.3);}
-.run-field{display:flex;flex-direction:column;gap:4px;margin:0;}
-.run-field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:3px;}
-.run-field input,.run-field select{width:100%;background:white;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--dark);font-family:'Barlow',sans-serif;font-size:12px;}
-.run-field input:focus,.run-field select:focus{outline:none;border-color:var(--navy);}
-.run-field input::placeholder{color:#CBD5E1;font-style:italic;}
 
 /* ── PROGRESS CARD ── */
 .progress-card{background:white;border-radius:10px;padding:.875rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.25rem;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.06);}
@@ -352,33 +346,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .polish-btn .spin{display:inline-block;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── OFFLINE INDICATOR ── */
-.offline-bar{position:fixed;top:0;left:0;right:0;z-index:9000;background:#92400E;color:white;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.5px;padding:5px 1.5rem;display:flex;align-items:center;justify-content:space-between;transform:translateY(-100%);transition:transform .3s ease;}
-.offline-bar.visible{transform:translateY(0);}
-.offline-queue{font-size:11px;opacity:.8;}
-
-/* ── NUMPAD OVERLAY ── */
-.numpad-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
-.numpad-overlay.open{opacity:1;pointer-events:all;}
-.numpad{background:#1A3A5C;border-radius:16px 16px 0 0;padding:1rem 1rem 1.5rem;width:100%;max-width:420px;box-shadow:0 -8px 40px rgba(0,0,0,.4);}
-.numpad-display{background:#0D1B2A;border-radius:8px;padding:.6rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
-.numpad-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8BAAC8;}
-.numpad-value{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:white;letter-spacing:1px;min-width:120px;text-align:right;}
-.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;}
-.np-btn{background:#12263F;border:1px solid #1E4976;color:white;border-radius:8px;padding:1rem;font-size:24px;font-weight:700;font-family:'Barlow Condensed',sans-serif;cursor:pointer;text-align:center;transition:background .1s;-webkit-tap-highlight-color:transparent;user-select:none;min-height:60px;display:flex;align-items:center;justify-content:center;}
-.np-btn:active{background:#2563EB;}
-.np-btn.np-dot{font-size:24px;}
-.np-btn.np-del{background:#1A2A3A;font-size:16px;}
-.np-btn.np-clear{background:#3D1515;color:#EF4444;font-size:13px;letter-spacing:.3px;}
-.np-btn.np-done{background:#065F46;color:#86EFAC;font-size:14px;font-weight:800;letter-spacing:.5px;grid-column:span 2;}
-.np-btn.np-cancel{background:#1A2A3A;color:#8BAAC8;font-size:13px;}
-
-/* ── REAL-TIME SYNC INDICATOR ── */
-.sync-live{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.5px;color:#22C55E;}
-.sync-live-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;animation:pulse-dot 2s infinite;}
-@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.3;}}
-.sync-live.disconnected{color:#EF4444;}
-.sync-live.disconnected .sync-live-dot{background:#EF4444;animation:none;}
+/* ── AUTO-SAVE INDICATOR ── */
 .autosave-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:rgba(255,255,255,0.7);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 1.5rem;display:flex;align-items:center;justify-content:space-between;z-index:150;transform:translateY(100%);transition:transform .3s ease;}
 .autosave-bar.visible{transform:translateY(0);}
 .autosave-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:.375rem;animation:pulse-dot 1.5s ease infinite;}
@@ -422,38 +390,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 </style>
 </head>
 <body>
-<!-- OFFLINE BAR -->
-<div class="offline-bar" id="offline-bar">
-  <span>⚠ OFFLINE — Changes are being saved locally and will sync when connection returns</span>
-  <span class="offline-queue" id="offline-queue-count"></span>
-</div>
-
-<!-- NUMPAD OVERLAY -->
-<div class="numpad-overlay" id="numpad-overlay" onclick="if(event.target===this)closeNumpad()">
-  <div class="numpad">
-    <div class="numpad-display">
-      <div class="numpad-label" id="np-label">Enter Value</div>
-      <div class="numpad-value" id="np-display">—</div>
-    </div>
-    <div class="numpad-grid">
-      <button class="np-btn" onclick="npKey('7')">7</button>
-      <button class="np-btn" onclick="npKey('8')">8</button>
-      <button class="np-btn" onclick="npKey('9')">9</button>
-      <button class="np-btn" onclick="npKey('4')">4</button>
-      <button class="np-btn" onclick="npKey('5')">5</button>
-      <button class="np-btn" onclick="npKey('6')">6</button>
-      <button class="np-btn" onclick="npKey('1')">1</button>
-      <button class="np-btn" onclick="npKey('2')">2</button>
-      <button class="np-btn" onclick="npKey('3')">3</button>
-      <button class="np-btn np-dot" onclick="npKey('.')">·</button>
-      <button class="np-btn" onclick="npKey('0')">0</button>
-      <button class="np-btn np-del" onclick="npDel()">⌫</button>
-      <button class="np-btn np-clear" onclick="npClear()">Clear</button>
-      <button class="np-btn np-done" onclick="npDone()">✓ Done</button>
-      <button class="np-btn np-cancel" onclick="closeNumpad()">Cancel</button>
-    </div>
-  </div>
-</div>
 
 <!-- ══ STICKY HEADER ══ -->
 <header class="site-header">
@@ -464,9 +400,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="header-actions">
       <button class="btn btn-outline" onclick="saveJSON()">&#x1F4BE; Save</button>
-      <button class="btn btn-outline" onclick="exportBackup()" title="Download a local backup of all entered data" style="font-size:11px;">&#x2B07; Backup</button>
-      <button class="btn btn-outline" onclick="importBackup()" title="Restore from a local backup file" style="font-size:11px;">&#x2B06; Import</button>
-      <button class="btn btn-outline" onclick="fixPartsFromHistory()" title="Restore best parts save from history" style="font-size:11px;border-color:#22C55E;color:#22C55E;">&#x1F527; Fix Parts</button>
       <button class="btn btn-outline" onclick="setAIKey()" title="Set Anthropic API key for AI Polish feature" style="font-size:11px;border-color:#7C3AED;color:#7C3AED;">&#x2728; AI Key</button>
       <button class="btn btn-gold" onclick="openReport()">&#x1F4C4; Customer Report</button>
     </div>
@@ -520,7 +453,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="restore-btns">
       <button class="btn btn-gold" onclick="doRestore()">Restore Session</button>
-      <button class="btn btn-outline" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);" onclick="confirmDismissRestore()">Dismiss</button>
+      <button class="btn btn-outline" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);" onclick="dismissRestore()">Dismiss</button>
     </div>
   </div>
 
@@ -1236,187 +1169,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       SECTION 9 — BREAK-IN RUN RECORD
-  ═══════════════════════════════════════════════════════════ -->
-  <div class="section" id="sec-9">
-    <div class="section-header" onclick="toggleSection('sec-9')">
-      <div class="section-num">9</div>
-      <div class="section-title-wrap">
-        <div class="section-title">Break-In Run Record</div>
-        <div class="section-subtitle">4-Hour / 75% Load &nbsp;|&nbsp; Engine Parameters &amp; Load Bank &nbsp;|&nbsp; Record every 30 minutes</div>
-      </div>
-      <div class="section-badges"><span class="badge badge-gray" id="badge-sec-9">Run Log</span></div>
-      <span class="chevron">&#9660;</span>
-    </div>
-    <div class="section-body">
-
-      <!-- RUN INFO + LOAD BANK SETUP -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;padding:1rem 1.5rem;background:#F8FAFC;border-bottom:1px solid var(--border);">
-        <div class="run-field"><label>Run Date</label><input id="run-date" type="date"></div>
-        <div class="run-field"><label>Start Time</label><input id="run-start" type="time"></div>
-        <div class="run-field"><label>End Time</label><input id="run-end" type="time"></div>
-        <div class="run-field"><label>Ambient Temp (°C)</label><input id="run-ambient" placeholder="e.g. 22"></div>
-        <div class="run-field"><label>Generator Make</label><input id="run-gen-make" placeholder="e.g. Cummins Onan"></div>
-        <div class="run-field"><label>Generator Model</label><input id="run-gen-model" placeholder="e.g. DGDB"></div>
-        <div class="run-field"><label>Generator Serial #</label><input id="run-gen-sn" placeholder="Serial number"></div>
-        <div class="run-field"><label>Generator Rating (kW)</label><input id="run-lb-kw" type="number" placeholder="e.g. 150" oninput="calcRunTarget()"></div>
-        <div class="run-field"><label>Engine HP</label><input id="run-hp" type="number" placeholder="e.g. 240" oninput="calcRunTarget()"></div>
-        <div class="run-field"><label>Generator Voltage (V)</label><input id="run-volts" type="number" placeholder="e.g. 480" oninput="calcRunTarget()"></div>
-      </div>
-
-      <!-- BREAK-IN CALCULATOR -->
-      <div style="background:#12263F;border-top:2px solid #E87722;border-bottom:2px solid #E87722;padding:.75rem 1.5rem;">
-        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;color:white;">LOAD BANK BREAK-IN CALCULATOR</div>
-          <div style="font-size:12px;color:#8BAAC8;flex:1;">75% Engine Load Target — Resistive load bank (Power Factor = 1.0)</div>
-          <span style="background:#1E3A5F;color:#60A5FA;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;">PF = 1.0 Resistive</span>
-          <span style="background:#1A2E1A;color:#86EFAC;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:.5px;">75% Load</span>
-        </div>
-        <div style="font-size:12px;color:#8BAAC8;margin-bottom:.75rem;">Enter Engine HP, Generator Rating, and Voltage — dial your load bank to the <strong style="color:#E87722;">TARGET AMPS</strong> shown below.</div>
-        <!-- Calc result boxes -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:.75rem;margin-bottom:.75rem;">
-          <div style="background:#0D1B2A;border:1px solid #1E4976;border-radius:6px;padding:14px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#8BAAC8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Generator Rated Output</div>
-            <div id="run-calc-rated" style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:white;">—<span style="font-size:14px;"> kW</span></div>
-            <div style="font-size:11px;color:#8BAAC8;margin-top:4px;">Pulled from Generator Rating input</div>
-          </div>
-          <div style="background:#1A1000;border:2px solid #E87722;border-radius:6px;padding:14px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#8BAAC8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">75% Load Target</div>
-            <div id="run-calc-kw" style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#E87722;">—<span style="font-size:14px;"> kW</span></div>
-            <div style="font-size:11px;color:#8BAAC8;margin-top:4px;">HP × 0.75 × 0.746 kW/hp</div>
-          </div>
-          <div style="background:#001A0D;border:2px solid #22C55E;border-radius:6px;padding:14px;display:flex;flex-direction:column;justify-content:center;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#86EFAC;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">▶ Set Load Bank To</div>
-            <div id="run-calc-amps" style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:#22C55E;line-height:1;">—<span style="font-size:18px;"> AMPS</span></div>
-            <div style="font-size:11px;color:#86EFAC;margin-top:4px;">HP × 0.75 × 0.746 × 1000 ÷ (√3 × V)</div>
-          </div>
-        </div>
-        <div style="background:#0D1B2A;border-left:3px solid #F4A340;padding:10px 14px;border-radius:0 4px 4px 0;font-size:12px;color:#8BAAC8;line-height:1.5;">
-          <strong style="color:#F4A340;">Note:</strong> Power Factor is locked at 1.0 for resistive load banks. The 75% load target is based on Engine HP. Dial load bank amps to match the <strong style="color:#22C55E;">SET LOAD BANK TO</strong> value above. The kW column in the run log is auto-calculated: <code style="background:#1A3A5C;padding:1px 5px;border-radius:3px;color:#F4A340;font-family:monospace;">√3 × avg(V) × avg(A) ÷ 1000</code>
-        </div>
-      </div>
-
-      <!-- START CONDITIONS -->
-      <div style="padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:#FAFBFC;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Start-Up Conditions</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
-          <div class="run-field"><label>Cold Idle Oil Press (psi)</label><input id="run-cold-oil" placeholder="Before load applied"></div>
-          <div class="run-field"><label>Initial Coolant Temp (°F)</label><input id="run-cold-coolant" placeholder="At startup"></div>
-          <div class="run-field"><label>Oil Level at Start</label>
-            <select id="run-oil-level-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
-              <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low</option>
-            </select>
-          </div>
-          <div class="run-field"><label>Leaks at Startup</label>
-            <select id="run-leaks-start" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
-              <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- COMBINED RUN LOG TABLE -->
-      <div style="padding:.75rem 1.5rem;overflow-x:auto;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Combined Run Log — Engine Parameters &amp; Load Bank</div>
-        <table id="run-table" style="width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;">
-          <thead>
-            <tr style="background:var(--navy);color:white;">
-              <th rowspan="2" style="padding:.4rem .5rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.5px;border:1px solid #1E3A5C;white-space:nowrap;color:var(--gold);">Time</th>
-              <!-- Engine params group -->
-              <th colspan="7" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0F2942;color:#93C5FD;">ENGINE PARAMETERS</th>
-              <!-- Electrical group -->
-              <th colspan="6" style="padding:.3rem .5rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;">LOAD BANK — ELECTRICAL</th>
-            </tr>
-            <tr style="background:#1A3050;color:white;">
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">RPM</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Oil Press<br>(psi)</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Oil Temp<br>(°F)</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Coolant<br>(°F)</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Fuel<br>(in W.C.)</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Reg Press<br>(psi)</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;">Crankcase<br>Press</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L1-L2</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L2-L3</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">V L3-L1</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L1</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L2</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;">A L3</th>
-              <th style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;white-space:nowrap;background:#0A2A15;color:#86EFAC;">kW<br>(auto)</th>
-            </tr>
-          </thead>
-          <tbody id="run-log-tbody"></tbody>
-        </table>
-      </div>
-
-      <!-- EXHAUST TEMP PER CYLINDER -->
-      <div style="padding:.5rem 1.5rem 1rem;border-top:1px solid var(--border);">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Exhaust Manifold Temperature — Infrared Gun (°F) — End of Run</div>
-        <table style="border-collapse:collapse;font-size:11px;">
-          <thead>
-            <tr style="background:#E8ECF0;">
-              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Cylinder</th>
-              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Temp (°F)</th>
-              <th style="padding:.4rem .75rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--navy);border:1px solid var(--border);">Notes</th>
-            </tr>
-          </thead>
-          <tbody id="exh-temp-tbody"></tbody>
-        </table>
-      </div>
-
-      <!-- END CONDITIONS -->
-      <div style="padding:.75rem 1.5rem;border-top:1px solid var(--border);background:#FAFBFC;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">End-of-Run Conditions</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;">
-          <div class="run-field"><label>Total Run Time Achieved</label><input id="run-total-time" placeholder="e.g. 4hr 00min"></div>
-          <div class="run-field"><label>Oil Level After Run</label>
-            <select id="run-oil-level-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
-              <option value="">Select...</option><option>Full</option><option>3/4</option><option>1/2</option><option>Low — topped up</option>
-            </select>
-          </div>
-          <div class="run-field"><label>Leaks After Run</label>
-            <select id="run-leaks-end" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
-              <option value="">Select...</option><option>None observed</option><option>Minor — addressed</option><option>Leak present — noted below</option>
-            </select>
-          </div>
-          <div class="run-field"><label>Unusual Noises / Vibration</label>
-            <select id="run-noise" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;">
-              <option value="">Select...</option><option>None</option><option>Minor — noted below</option><option>Yes — see notes</option>
-            </select>
-          </div>
-          <div class="run-field"><label>Engine Approved for Service</label>
-            <select id="run-approved" style="width:100%;padding:.4rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;">
-              <option value="">Select...</option>
-              <option>✓ Yes — Approved for Return to Service</option>
-              <option>✗ No — Further Work Required</option>
-            </select>
-          </div>
-          <div class="run-field"><label>Return to Service Date</label><input id="run-rts-date" type="date"></div>
-          <div class="run-field"><label>Hours at Return to Service</label><input id="run-rts-hours" placeholder="Engine hours"></div>
-        </div>
-      </div>
-
-      <!-- POST RUN PHOTOS -->
-      <div style="padding:.75rem 1.5rem 1rem;border-top:1px solid var(--border);">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Post Break-In Photos</div>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem;">
-          <input type="file" id="run-photo-input" accept="image/*" multiple style="display:none;" onchange="handleRunPhotos(this)">
-          <button class="photo-btn" onclick="document.getElementById('run-photo-input').click()" style="padding:.4rem .9rem;font-size:12px;">📷 Add Photos</button>
-          <span style="font-size:11px;color:var(--gray);">Attach photos taken after the break-in run</span>
-        </div>
-        <div id="run-photo-grid" style="display:flex;flex-wrap:wrap;gap:.75rem;"></div>
-      </div>
-
-      <!-- RUN NOTES -->
-      <div style="padding:.75rem 1.5rem 1rem;border-top:1px solid var(--border);">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.5rem;">Run Observations &amp; Follow-Up Items</div>
-        <textarea id="run-notes" class="section-notes-input" placeholder="Record any observations during run — leaks, noises, parameter anomalies, follow-up work required..."></textarea>
-        <button class="polish-btn" id="polish-btn-sec9" onclick="polishNotes('run-notes')" style="margin-top:.5rem;">✨ Polish with AI</button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════
        PARTS TRACKER
   ═══════════════════════════════════════════════════════════ -->
   <div class="section" id="sec-parts">
@@ -1488,12 +1240,9 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
         <div class="ai-badge">OVERALL SUMMARY</div>
-        <textarea id="rpt-summary-input" style="width:100%;min-height:120px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="Section notes will appear here automatically when you open the report. You can also type your own summary and use AI to polish it."></textarea>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
-          <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt">✨ Polish with AI</button>
-          <button onclick="document.getElementById('rpt-summary-input').value=''" style="padding:.3rem .75rem;background:transparent;color:#94A3B8;border:1.5px solid #E2E8F0;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;">✕ Clear</button>
-          <button onclick="repopulateSummary()" style="padding:.3rem .75rem;background:transparent;color:#64748B;border:1.5px solid #E2E8F0;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;">↺ Re-pull Notes</button>
-        </div>
+        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">Write your summary below — then use AI to polish the language into professional report format.</div>
+        <textarea id="rpt-summary-input" style="width:100%;min-height:90px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="e.g. replaced all bearings, head was machined, all specs within range, ready for service..."></textarea>
+        <button class="polish-btn" onclick="polishNotes('rpt-summary-input')" id="polish-btn-rpt" style="margin-top:.5rem;">✨ Polish with AI</button>
       </div>
       <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
@@ -1505,8 +1254,6 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </table>
       <div class="report-section-title" id="rpt-photos-title" style="display:none;">Photo Documentation</div>
       <div id="rpt-photos-gallery"></div>
-      <div class="report-section-title">Break-In Run Record</div>
-      <div id="rpt-run-section"></div>
       <div class="report-section-title">Parts Installed</div>
       <table class="parts-report-table">
         <thead><tr><th>Description</th><th>Part Number</th><th>Qty</th><th>Supplier</th><th>Condition</th><th>Notes</th></tr></thead>
@@ -1517,6 +1264,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div class="signoff-grid">
           <div class="signoff-field"><label>Technician Signature</label><input class="signoff-line" type="text" placeholder="Sign here"></div>
           <div class="signoff-field"><label>Date Completed</label><input class="signoff-line" type="date"></div>
+          <div class="signoff-field"><label>Supervisor / QC Review</label><input class="signoff-line" type="text" placeholder="Reviewer name"></div>
+          <div class="signoff-field"><label>Reviewer Signature</label><input class="signoff-line" type="text" placeholder="Sign here"></div>
         </div>
         <div class="signoff-cert">I hereby certify that this engine overhaul was performed in accordance with Cummins Manual 3666206. All measurements recorded are accurate and were obtained using calibrated instruments. All torque values were applied using a calibrated torque wrench. This engine meets or exceeds factory specifications for continued natural gas service.</div>
       </div>
@@ -1545,7 +1294,6 @@ function injectJobUI() {
       style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);border-radius:5px;padding:4px 10px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;width:140px;max-width:45vw;">
     <button onclick="loadJob()" style="background:var(--gold);color:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">LOAD</button>
     <span id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Barlow',sans-serif;flex-basis:100%;text-align:center;"></span>
-    <span class="sync-live disconnected" id="sync-live-indicator" title="Real-time sync status"><span class="sync-live-dot"></span><span id="sync-live-txt">Connecting...</span></span>
   `;
   header.insertBefore(jobDiv, header.firstChild);
   const lastJob = localStorage.getItem('tsi_last_job_id');
@@ -1572,91 +1320,14 @@ function attachAutoSaveListeners() {
   });
 }
 
-// ── Smart restore check — compares local backup vs cloud before showing banner ──
-async function checkRestore() {
+// ── Check for unsaved local backup on startup ──
+function checkRestore() {
   try {
     const raw = localStorage.getItem('tsi_cummins_83g_v5');
-    if (!raw) return; // No local backup at all — nothing to do
-
-    const local = JSON.parse(raw);
-
-    // Count meaningful local fields
-    const localScore = scoreState(local);
-    if (localScore === 0) {
-      // Local backup is empty — clear it and move on
-      localStorage.removeItem('tsi_cummins_83g_v5');
-      return;
-    }
-
-    // Check if there's a job ID we can compare against
-    const jobId = localStorage.getItem('tsi_last_job_id');
-    if (!jobId) {
-      // No job to compare against — show banner as fallback
-      showRestoreBanner(localScore);
-      return;
-    }
-
-    // Silently fetch cloud record count for this job
-    try {
-      const resp = await fetch(
-        `${SUPABASE_URL}/rest/v1/overhaul_data?job_id=eq.${encodeURIComponent(jobId)}&select=field_id,field_value`,
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-      );
-      if (!resp.ok) throw new Error('fetch failed');
-      const cloudRows = await resp.json();
-
-      // Count meaningful cloud fields
-      const cloudScore = cloudRows.filter(r => r.field_value && r.field_value !== '' && r.field_value !== '[]').length;
-
-      // Also check cloud parts count vs local parts count
-      const cloudPartsRow = cloudRows.find(r => r.field_id === 'parts_list');
-      const cloudParts = cloudPartsRow ? (()=>{ try{ return JSON.parse(cloudPartsRow.field_value||'[]').length; }catch(e){ return 0; } })() : 0;
-      const localParts = Array.isArray(local.parts) ? local.parts.length : 0;
-
-      if (cloudScore >= localScore && cloudParts >= localParts) {
-        // Cloud has at least as much data — safe to auto-dismiss
-        localStorage.removeItem('tsi_cummins_83g_v5');
-        return;
-      }
-
-      // Local has MORE data than cloud — show banner
-      showRestoreBanner(localScore, cloudScore, localParts, cloudParts);
-
-    } catch(e) {
-      // Can't reach cloud — show banner as safe fallback
-      showRestoreBanner(localScore);
-    }
-
-  } catch(e) { /* ignore parse errors */ }
-}
-
-function scoreState(state) {
-  let score = 0;
-  if (state.meta) score += Object.values(state.meta).filter(v => v && v !== '').length;
-  if (state.meas) Object.values(state.meas).forEach(m => { if (m.value) score++; if (m.note) score++; });
-  if (state.vi)   score += Object.values(state.vi).filter(v => v === 'pass' || v === 'fail').length;
-  if (state.notes) score += Object.values(state.notes).filter(v => v && v !== '').length;
-  if (state.parts) score += state.parts.length;
-  return score;
-}
-
-function showRestoreBanner(localScore, cloudScore, localParts, cloudParts) {
-  const banner = document.getElementById('restore-banner');
-  if (!banner) return;
-  // Update banner text to explain why it's showing
-  const textEl = banner.querySelector('.restore-banner-text');
-  if (textEl) {
-    let msg = '<strong>&#x1F4BE; Local Backup Found</strong> ';
-    if (cloudScore !== undefined && localScore > cloudScore) {
-      msg += `Your local backup has <strong>${localScore}</strong> fields vs <strong>${cloudScore}</strong> in the cloud.`;
-      if (localParts > cloudParts) msg += ` Local has <strong>${localParts} parts</strong>, cloud has <strong>${cloudParts}</strong>.`;
-      msg += ' Your local copy may have more recent data.';
-    } else {
-      msg += 'A previous session was found. Would you like to restore it?';
-    }
-    textEl.innerHTML = msg;
-  }
-  banner.style.display = 'flex';
+    if (!raw) return;
+    const banner = document.getElementById('restore-banner');
+    if (banner) banner.style.display = 'flex';
+  } catch(e) { /* ignore */ }
 }
 
 function doRestore() {
@@ -1669,144 +1340,9 @@ function doRestore() {
   dismissRestore();
 }
 
-function confirmDismissRestore(){
-  if(confirm('Are you sure you want to dismiss?\n\nYour cloud data will be used instead. Click OK to dismiss.')){
-    localStorage.removeItem('tsi_cummins_83g_v5');
-    dismissRestore();
-  }
-}
-
 function dismissRestore() {
   const banner = document.getElementById('restore-banner');
   if (banner) banner.style.display = 'none';
-}
-
-function exportBackup(){
-  try{
-    const state=collectState();
-    const json=JSON.stringify({exported:new Date().toISOString(),jobId:CURRENT_JOB_ID,state},null,2);
-    const blob=new Blob([json],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    const wo=document.getElementById('uf-wo')?.value||'backup';
-    a.href=url;
-    a.download=`TSI-checklist-${wo}-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch(e){
-    alert('Export failed: '+e.message);
-  }
-}
-
-function importBackup(){
-  const inp=document.createElement('input');
-  inp.type='file';
-  inp.accept='.json';
-  inp.onchange=async(e)=>{
-    const file=e.target.files[0];
-    if(!file) return;
-    try{
-      const text=await file.text();
-      const data=JSON.parse(text);
-      const state=data.state||data;
-      const backupParts=Array.isArray(state.parts)?state.parts:[];
-      if(confirm('Import backup from '+(data.exported||'unknown date')+'?\n\nThis backup has '+backupParts.length+' parts and will be saved to cloud. Proceed?')){
-        // Always use backup parts — backup is the source of truth
-        restoreState(state);
-        setSyncStatus('Saving backup to cloud...');
-        // Force immediate save to cloud so LOAD gets correct data next time
-        setTimeout(async () => {
-          _savesSuspended = false;
-          await autoSave({ force: true });
-          setSyncStatus('✓ Backup imported & saved to cloud (' + backupParts.length + ' parts)');
-        }, 800);
-      }
-    } catch(e){
-      alert('Import failed — file may be corrupt: '+e.message);
-    }
-  };
-  inp.click();
-}
-
-async function fixPartsFromHistory(){
-  if(!CURRENT_JOB_ID){ alert('Click LOAD first to set the active job.'); return; }
-  setSyncStatus('Searching for best parts save...');
-  try{
-    // First check current record
-    const curPartsRaw = _lastServerSnapshot ? _lastServerSnapshot['parts_list'] : null;
-    let curParts = [];
-    try{ curParts = JSON.parse(curPartsRaw||'[]'); }catch(e){}
-
-    // Try history table
-    const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/overhaul_data_history?job_id=eq.${encodeURIComponent(CURRENT_JOB_ID)}&field_id=eq.parts_list&select=field_value,saved_at&order=saved_at.desc`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    );
-    const hist = await r.json();
-
-    let best={parts:[],raw:'',time:''};
-    if(Array.isArray(hist)){
-      hist.forEach(row=>{
-        let parts=[];
-        try{parts=JSON.parse(row.field_value||'[]');}catch(e){}
-        if(parts.length>best.parts.length) best={parts,raw:row.field_value,time:new Date(row.saved_at).toLocaleString()};
-      });
-    }
-
-    if(best.parts.length === 0){
-      // History empty or inaccessible — prompt manual entry of count
-      setSyncStatus('History not accessible from this browser');
-      alert('The parts history cannot be accessed from GitHub Pages due to browser security restrictions.\n\nPlease use the Netlify version to fix parts:\nhttps://triplespurindustries-checklist.netlify.app\n\nOr manually add the 7 missing parts to the parts tracker.');
-      return;
-    }
-
-    if(best.parts.length <= curParts.length){
-      setSyncStatus('Current parts ('+curParts.length+') already best — no fix needed');
-      alert('Current record already has '+curParts.length+' parts — no fix needed.');
-      return;
-    }
-
-    if(!confirm('Found '+best.parts.length+' parts from '+best.time+'.\n\nCurrent has '+curParts.length+'. Restore '+best.parts.length+'?')) return;
-
-    const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/overhaul_data?on_conflict=job_id,field_id`,
-      {
-        method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-        body:JSON.stringify([{job_id:CURRENT_JOB_ID,field_id:'parts_list',field_value:best.raw,updated_at:new Date().toISOString()}])
-      }
-    );
-    if(resp.ok){
-      if(_lastServerSnapshot) _lastServerSnapshot['parts_list'] = best.raw;
-      const partsTbody = document.getElementById('parts-tbody');
-      if(partsTbody) partsTbody.innerHTML='';
-      partRowId=0;
-      _addingPartsDuringRestore=true;
-      best.parts.forEach(p=>{
-        const id=addPartsRow();
-        const s=(f,v)=>{const el=document.getElementById('part-'+f+'-'+id);if(el)el.value=v||'';};
-        s('desc',p.desc);s('num',p.partNum);s('qty',p.qty);s('sup',p.sup);s('note',p.note);
-        const c=document.getElementById('part-cond-'+id);if(c&&p.cond)c.value=p.cond;
-      });
-      _addingPartsDuringRestore=false;
-      if(partsTbody) partsTbody.querySelectorAll('input,select').forEach(el=>{
-        el.addEventListener('input',()=>autoSave());
-        el.addEventListener('change',()=>autoSave());
-      });
-      setSyncStatus('✓ Restored '+best.parts.length+' parts');
-      alert('✅ '+best.parts.length+' parts restored! Click ⬇ Backup to save a new backup.');
-    } else {
-      setSyncStatus('Fix failed: '+resp.status);
-    }
-  }catch(e){
-    setSyncStatus('Fix failed: '+e.message);
-    alert('Error: '+e.message);
-  }
-}
-
-function getSyncStatus(){
-  const el=document.getElementById('sync-status');
-  return el?el.textContent:'';
 }
 
 
@@ -2017,8 +1553,10 @@ const viSec8=[
   'Idler gear teeth — no pitting, spalling, chipping, or visible wear',
   'Gear faces — no scoring or galling on either gear',
   'Drive shaft — no scoring or wear at bushing contact areas, splines intact',
+  'Relief valve bore — clean, no scoring; spring not collapsed or fatigued',
   'Pickup screen — clean, no holes, tears, or collapsed mesh',
   'Pump primed with clean engine oil before installation',
+  'Oil suction tube O-ring — new O-ring installed, fully seated in groove',
   'Oil pressure verified at idle and rated RPM after startup',
 ];
 
@@ -2105,24 +1643,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec8','vi8',viSec8);
 
   addPartsRow(); addPartsRow(); addPartsRow();
-  buildRunLog();
-  buildExhTempTable();
   updateProgress();
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('uf-date').value=today;
+  // Auto-save & restore
   attachAutoSaveListeners();
   checkRestore();
   updateAIKeyStatus();
-  initOfflineMode();
-  initRealtime();
-  setTimeout(attachNumpadToMeasInputs, 800);
 });
 
 function toggleSection(id){
   const s=document.getElementById(id);
   if(s) s.classList.toggle('open');
-  // Re-attach numpad to any newly visible measurement inputs
-  setTimeout(attachNumpadToMeasInputs, 100);
 }
 
 function switchTab(btn,contentId){
@@ -2157,7 +1689,7 @@ function buildMeasTable(tbodyId, rows){
       <td><span class="status-cell status-pending" id="stat-${r.id}">—</span></td>
       <td><input class="meas-note" id="note-${r.id}" placeholder="Notes..."></td>
       <td class="photo-cell">
-        <input type="file" accept="image/*" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
+        <input type="file" accept="image/*" capture="environment" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
         <button class="photo-btn" id="photo-btn-${r.id}" onclick="document.getElementById('photo-input-${r.id}').click()">&#128247; Add</button>
         <div class="photo-thumbs" id="photo-thumbs-${r.id}"></div>
       </td>`;
@@ -2208,7 +1740,7 @@ function buildVIItems(containerId,prefix,items){
       <div class="vi-btns">
         <button class="vi-btn vi-btn-pass" id="pass-${id}" onclick="setVI('${id}','pass')">PASS</button>
         <button class="vi-btn vi-btn-fail" id="fail-${id}" onclick="setVI('${id}','fail')">FAIL</button>
-        <input type="file" accept="image/*" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
+        <input type="file" accept="image/*" capture="environment" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
         <button class="photo-btn" id="photo-btn-${id}" onclick="document.getElementById('photo-input-${id}').click()" title="Attach photo">&#128247;</button>
         <div class="photo-thumbs" id="photo-thumbs-${id}"></div>
       </div>`;
@@ -2228,118 +1760,8 @@ function setVI(id,result){
 }
 
 
-// ══ SECTION 9 — BREAK-IN RUN RECORD ══
-const RUN_INTERVALS=[
-  'Start (0:00)','0:30','1:00','1:30','2:00','2:30','3:00','3:30','4:00 (End)'
-];
-const RUN_ENG_COLS=['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase'];
-const RUN_ELEC_COLS=['v1','v2','v3','a1','a2','a3'];
-
-function buildRunLog(){
-  const tb=document.getElementById('run-log-tbody');
-  if(!tb) return;
-  RUN_INTERVALS.forEach((label,i)=>{
-    const isEdge=(i===0||i===RUN_INTERVALS.length-1);
-    const bg=isEdge?'#EFF6FF':'white';
-    const tr=document.createElement('tr');
-    tr.style.background=bg;
-    tr.id=`run-row-${i}`;
-    // Time label cell
-    let html=`<td style="padding:.3rem .5rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;color:var(--navy);white-space:nowrap;background:${isEdge?'#DBEAFE':'#F8FAFC'};">${label}</td>`;
-    // Engine param inputs
-    RUN_ENG_COLS.forEach(col=>{
-      const id=`run-${i}-${col}`;
-      html+=`<td style="padding:1px;border:1px solid var(--border);"><input id="${id}" type="text" placeholder="—" style="width:100%;border:none;padding:.3rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;text-align:center;background:transparent;" oninput="saveRunField('${id}',this.value)"></td>`;
-    });
-    // Electrical inputs
-    RUN_ELEC_COLS.forEach(col=>{
-      const id=`run-${i}-${col}`;
-      html+=`<td style="padding:1px;border:1px solid var(--border);background:#F0FDF4;"><input id="${id}" type="text" placeholder="—" style="width:100%;border:none;padding:.3rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;text-align:center;background:transparent;" oninput="saveRunField('${id}',this.value);recalcRunKW(${i})"></td>`;
-    });
-    // kW auto-calc cell
-    html+=`<td id="run-${i}-kw" style="padding:.3rem .5rem;border:1px solid var(--border);background:#F0FDF4;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#065F46;text-align:center;">—</td>`;
-    tr.innerHTML=html;
-    tb.appendChild(tr);
-  });
-}
-
-function recalcRunKW(i){
-  const g=id=>{const el=document.getElementById(id);return parseFloat(el?el.value:'')||0;};
-  const v=(g(`run-${i}-v1`)+g(`run-${i}-v2`)+g(`run-${i}-v3`))/3;
-  const a=(g(`run-${i}-a1`)+g(`run-${i}-a2`)+g(`run-${i}-a3`))/3;
-  const kw=(v&&a)?(Math.sqrt(3)*v*a/1000).toFixed(1):'—';
-  const el=document.getElementById(`run-${i}-kw`);
-  if(el) el.textContent=kw!=='—'?kw+' kW':'—';
-}
-
-function buildExhTempTable(){
-  const tb=document.getElementById('exh-temp-tbody');
-  if(!tb) return;
-  for(let c=1;c<=6;c++){
-    const tr=document.createElement('tr');
-    tr.style.background=c%2===0?'#F8FAFC':'white';
-    tr.innerHTML=`
-      <td style="padding:.35rem .75rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;">Cyl ${c}</td>
-      <td style="padding:1px;border:1px solid var(--border);"><input id="exh-cyl-${c}" type="text" placeholder="°F" style="width:100%;border:none;padding:.3rem .5rem;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-align:center;" oninput="saveRunField('exh-cyl-${c}',this.value)"></td>
-      <td style="padding:1px;border:1px solid var(--border);"><input id="exh-cyl-${c}-note" type="text" placeholder="Notes..." style="width:100%;border:none;padding:.3rem .5rem;font-family:'Barlow',sans-serif;font-size:11px;" oninput="saveRunField('exh-cyl-${c}-note',this.value)"></td>`;
-    tb.appendChild(tr);
-  }
-}
-
-function calcRunTarget(){
-  const hp=parseFloat(document.getElementById('run-hp')?.value)||0;
-  const kw=parseFloat(document.getElementById('run-lb-kw')?.value)||0;
-  const v=parseFloat(document.getElementById('run-volts')?.value)||0;
-  const ratedEl=document.getElementById('run-calc-rated');
-  const kwEl=document.getElementById('run-calc-kw');
-  const aEl=document.getElementById('run-calc-amps');
-  // Generator Rated Output — from kW input
-  if(ratedEl) ratedEl.innerHTML=kw?`${kw}<span style="font-size:14px;"> kW</span>`:`—<span style="font-size:14px;"> kW</span>`;
-  // 75% target — based on HP
-  if(hp>0){
-    const kw75=(hp*0.75*0.746);
-    if(kwEl) kwEl.innerHTML=`${kw75.toFixed(1)}<span style="font-size:14px;"> kW</span>`;
-    if(v>0){
-      const amps=(kw75*1000)/(Math.sqrt(3)*v);
-      if(aEl) aEl.innerHTML=`${amps.toFixed(1)}<span style="font-size:18px;"> AMPS</span>`;
-    } else {
-      if(aEl) aEl.innerHTML=`Enter V<span style="font-size:18px;"> AMPS</span>`;
-    }
-  } else {
-    if(kwEl) kwEl.innerHTML=`—<span style="font-size:14px;"> kW</span>`;
-    if(aEl) aEl.innerHTML=`—<span style="font-size:18px;"> AMPS</span>`;
-  }
-}
-
-function saveRunField(id, value){
-  if (typeof autoSave === 'function') autoSave();
-}
-
-function handleRunPhotos(input){
-  const grid=document.getElementById('run-photo-grid');
-  if(!grid) return;
-  Array.from(input.files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const src=e.target.result;
-      // Store in runPhotoStore
-      if(!window.runPhotoStore) window.runPhotoStore=[];
-      window.runPhotoStore.push(src);
-      // Show thumbnail
-      const wrap=document.createElement('div');
-      wrap.style.cssText='position:relative;display:inline-block;';
-      wrap.innerHTML=`<img src="${src}" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;" onclick="openLightbox('${src}')">
-        <button onclick="this.parentElement.remove();window.runPhotoStore=window.runPhotoStore.filter(s=>s!=='${src}')" style="position:absolute;top:-6px;right:-6px;background:#991B1B;color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>`;
-      grid.appendChild(wrap);
-    };
-    reader.readAsDataURL(file);
-  });
-  input.value=''; // reset so same file can be re-added
-}
-
 // ══ PARTS TRACKER ══
 let partRowId=0;
-let _addingPartsDuringRestore = false;
 function addPartsRow(){
   const tb=document.getElementById('parts-tbody');
   if(!tb) return;
@@ -2359,17 +1781,15 @@ function addPartsRow(){
       <option>Reused — Marginal</option>
     </select></td>
     <td><input class="parts-input" id="part-note-${id}" placeholder="Notes..."></td>
-    <td><button class="parts-del-btn" onclick="delPartsRow(${id})">✕</button>`;
+    <td><button class="parts-del-btn" onclick="delPartsRow(${id})">✕</button></td>`;
   tb.appendChild(tr);
-  // Only attach autosave listeners when NOT restoring (avoids 42 spurious saves)
-  if (!_addingPartsDuringRestore) {
-    tr.querySelectorAll('input, select, textarea').forEach(el => {
-      const handler = () => { if (typeof autoSave === 'function') autoSave(); };
-      el.addEventListener('input',  handler);
-      el.addEventListener('change', handler);
-    });
-  }
-  return id;
+  // Attach autosave listeners to the new inputs (they weren't around
+  // when attachAutoSaveListeners ran at page load)
+  tr.querySelectorAll('input, select, textarea').forEach(el => {
+    const handler = () => { if (typeof autoSave === 'function') autoSave(); };
+    el.addEventListener('input',  handler);
+    el.addEventListener('change', handler);
+  });
 }
 function delPartsRow(id){
   const r=document.getElementById('part-row-'+id);
@@ -2622,237 +2042,7 @@ function openReport(){
   buildFlaggedPanel(sectionDefs);
   // Photo gallery
   buildPhotoGallery(sectionDefs);
-  // Break-in run record
-  buildRunReport();
-  // Open report first so user sees it immediately, then generate summary async
   document.getElementById('report-overlay').classList.add('open');
-  // Auto-generate AI summary from section notes (only if summary is currently empty)
-  generateReportSummary(false);
-}
-
-function buildRunReport(){
-  const wrap=document.getElementById('rpt-run-section');
-  if(!wrap) return;
-  const g=id=>document.getElementById(id)?.value||'—';
-  const runDate=g('run-date'); const runStart=g('run-start'); const runEnd=g('run-end');
-  const ambient=g('run-ambient'); const genMake=g('run-gen-make'); const genModel=g('run-gen-model');
-  const genSN=g('run-gen-sn'); const genKW=g('run-lb-kw'); const hp=g('run-hp');
-  const volts=g('run-volts');
-  const calcKWEl=document.getElementById('run-calc-kw');
-  const calcAEl=document.getElementById('run-calc-amps');
-  const calcRatedEl=document.getElementById('run-calc-rated');
-  const calcKW=calcKWEl?calcKWEl.textContent.replace(/\s+/g,' ').trim():'—';
-  const calcA=calcAEl?calcAEl.textContent.replace(/\s+/g,' ').trim():'—';
-  const calcRated=calcRatedEl?calcRatedEl.textContent.replace(/\s+/g,' ').trim():'—';
-
-  // Run log rows
-  const RUN_ENG=['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase'];
-  const RUN_ELEC=['v1','v2','v3','a1','a2','a3'];
-  const RUN_LABELS=['Start (0:00)','0:30','1:00','1:30','2:00','2:30','3:00','3:30','4:00 (End)'];
-  let logRows='';
-  RUN_LABELS.forEach((lbl,i)=>{
-    const isEdge=(i===0||i===RUN_LABELS.length-1);
-    const bg=isEdge?'#EFF6FF':'white';
-    let cells=`<td style="padding:.3rem .5rem;background:#F0F4FF;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;border:1px solid var(--border);white-space:nowrap;">${lbl}</td>`;
-    RUN_ENG.forEach(col=>{
-      const v=document.getElementById(`run-${i}-${col}`)?.value||'';
-      cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;border:1px solid var(--border);background:${bg};">${v||'—'}</td>`;
-    });
-    RUN_ELEC.forEach(col=>{
-      const v=document.getElementById(`run-${i}-${col}`)?.value||'';
-      cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;border:1px solid var(--border);background:${isEdge?'#F0FDF4':'#FAFFF8'};">${v||'—'}</td>`;
-    });
-    const kw=document.getElementById(`run-${i}-kw`)?.textContent||'—';
-    cells+=`<td style="padding:.3rem .4rem;text-align:center;font-size:11px;font-weight:700;color:#065F46;border:1px solid var(--border);background:#F0FDF4;">${kw}</td>`;
-    logRows+=`<tr>${cells}</tr>`;
-  });
-
-  // Exhaust temps
-  let exhRows='';
-  for(let c=1;c<=6;c++){
-    const temp=document.getElementById(`exh-cyl-${c}`)?.value||'—';
-    const note=document.getElementById(`exh-cyl-${c}-note`)?.value||'';
-    exhRows+=`<tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;">Cyl ${c}</td><td style="padding:.3rem .6rem;border:1px solid var(--border);text-align:center;font-weight:700;">${temp}</td><td style="padding:.3rem .6rem;border:1px solid var(--border);font-size:11px;color:var(--gray);">${note}</td></tr>`;
-  }
-
-  const approved=g('run-approved'); const rtsDate=g('run-rts-date'); const rtsHours=g('run-rts-hours');
-  const leaksStart=g('run-leaks-start'); const leaksEnd=g('run-leaks-end');
-  const oilStart=g('run-oil-level-start'); const oilEnd=g('run-oil-level-end');
-  const noise=g('run-noise'); const coldOil=g('run-cold-oil'); const coldCoolant=g('run-cold-coolant');
-  const runNotes=document.getElementById('run-notes')?.value||'';
-  const totalTime=g('run-total-time');
-
-  const approvedColor=approved.includes('Yes')?'#065F46':'#991B1B';
-
-  wrap.innerHTML=`
-    <!-- Unit info -->
-    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:.75rem;">
-      <tr style="background:#F0F4FF;">
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Run Date</span>${runDate}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Start</span>${runStart}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">End</span>${runEnd}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Total Time</span>${totalTime}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Ambient Temp</span>${ambient}°C</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Generator</span>${genMake} ${genModel}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Gen Serial #</span>${genSN}</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">Rating / HP</span>${genKW} kW / ${hp} HP</td>
-        <td style="padding:.4rem .6rem;border:1px solid var(--border);"><span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gray);display:block;">75% Target</span>${calcKW} @ ${calcA}</td>
-      </tr>
-    </table>
-
-    <!-- Combined run log -->
-    <div style="overflow-x:auto;margin-bottom:.75rem;">
-      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px;">
-        <thead>
-          <tr style="background:var(--navy);color:white;">
-            <th rowspan="2" style="padding:.35rem .5rem;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;color:var(--gold);">Time</th>
-            <th colspan="7" style="padding:.25rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0F2942;color:#93C5FD;letter-spacing:.5px;">ENGINE PARAMETERS</th>
-            <th colspan="6" style="padding:.25rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;letter-spacing:.5px;">LOAD BANK — ELECTRICAL</th>
-            <th rowspan="2" style="padding:.35rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;color:#86EFAC;text-align:center;">kW</th>
-          </tr>
-          <tr style="background:#1A3050;color:white;">
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">RPM</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Oil PSI</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Oil °F</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Coolant °F</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Fuel W.C.</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Reg PSI</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;">Crankcase</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L1-L2</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L2-L3</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">V L3-L1</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L1</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L2</th>
-            <th style="padding:.25rem .4rem;font-family:'Barlow Condensed',sans-serif;font-size:9px;border:1px solid #1E3A5C;background:#0A2A15;">A L3</th>
-          </tr>
-        </thead>
-        <tbody>${logRows}</tbody>
-      </table>
-    </div>
-
-    <!-- Exhaust temps + conditions side by side -->
-    <div style="display:grid;grid-template-columns:auto 1fr;gap:1rem;margin-bottom:.75rem;">
-      <div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.25rem;">Exhaust Temp — IR Gun (°F)</div>
-        <table style="border-collapse:collapse;font-size:11px;">
-          <thead><tr style="background:#E8ECF0;">
-            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Cylinder</th>
-            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Temp °F</th>
-            <th style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:9px;">Notes</th>
-          </tr></thead>
-          <tbody>${exhRows}</tbody>
-        </table>
-      </div>
-      <div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.25rem;">Start / End Conditions</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;">
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;width:40%;">Cold Idle Oil Press</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${coldOil} psi</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Initial Coolant Temp</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${coldCoolant}°F</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Oil Level — Start</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${oilStart}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Oil Level — End</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${oilEnd}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Leaks — Start</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${leaksStart}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Leaks — End</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${leaksEnd}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Noises / Vibration</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${noise}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Return to Service Date</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${rtsDate}</td></tr>
-          <tr><td style="padding:.3rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;background:#F8FAFC;">Hours at RTS</td><td style="padding:.3rem .6rem;border:1px solid var(--border);">${rtsHours}</td></tr>
-          <tr style="background:${approved.includes('Yes')?'#F0FDF4':'#FEF2F2'};">
-            <td style="padding:.4rem .6rem;border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:.5px;">APPROVED FOR SERVICE</td>
-            <td style="padding:.4rem .6rem;border:1px solid var(--border);font-weight:800;color:${approvedColor};">${approved||'—'}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    ${runNotes?`<div style="padding:.5rem .75rem;background:#FAFBFF;border-left:3px solid var(--navy);font-size:11px;color:#374151;margin-bottom:.5rem;"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:3px;">📝 Run Observations</span>${runNotes.replace(/\n/g,'<br>')}</div>`:''}
-    ${(window.runPhotoStore&&window.runPhotoStore.length)?`
-      <div style="margin-top:.5rem;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin-bottom:.375rem;">Post Break-In Photos</div>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
-          ${window.runPhotoStore.map(src=>`<img src="${src}" style="width:150px;height:110px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}
-        </div>
-      </div>`:''}
-  `;
-}
-
-async function generateReportSummary(force){
-  const summaryEl=document.getElementById('rpt-summary-input');
-  if(!summaryEl) return;
-  if(summaryEl.value.trim() && !force) return; // don't overwrite existing content unless forced
-  const sectionTitles={
-    '1':'Crankshaft','2':'Main Bearings','3':'Connecting Rod Bearings',
-    '4':'Cylinder Liner, Pistons & Rings','5':'Cylinder Head',
-    '6':'Head Bolt Torque','7':'Valvetrain','8':'Oil Pump'
-  };
-  const parts=[];
-  ['1','2','3','4','5','6','7','8'].forEach(n=>{
-    const el=document.getElementById('notes-sec'+n);
-    const val=el?el.value.trim():'';
-    if(val) parts.push(`${sectionTitles[n]}: ${val}`);
-  });
-  // Include break-in run observations
-  const runNotes=document.getElementById('run-notes')?.value.trim();
-  if(runNotes) parts.push(`Break-In Run (4hr/75% Load): ${runNotes}`);
-  if(!parts.length){
-    summaryEl.placeholder='No section notes found — write your summary here or add notes to each section first.';
-    return;
-  }
-  const apiKey=localStorage.getItem('tsi_ak');
-  if(!apiKey){
-    // No API key — just populate raw notes as fallback
-    summaryEl.value=parts.join('\n\n');
-    return;
-  }
-  // Show loading state
-  summaryEl.value='';
-  summaryEl.placeholder='⏳ Generating summary from section notes...';
-  const polishBtn=document.getElementById('polish-btn-rpt');
-  if(polishBtn){polishBtn.disabled=true;polishBtn.innerHTML='⏳ Generating...';}
-  try{
-    const wo=document.getElementById('uf-wo')?.value||'';
-    const customer=document.getElementById('uf-customer')?.value||'';
-    const unit=document.getElementById('uf-unit')?.value||'';
-    const tech=document.getElementById('uf-tech')?.value||'';
-    const context=[wo&&`Work Order: ${wo}`,customer&&`Customer: ${customer}`,unit&&`Unit: ${unit}`,tech&&`Technician: ${tech}`].filter(Boolean).join(', ');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing a professional executive summary for a customer service report on a Cummins C8.3G engine overhaul.${context?'\n'+context:''}
-
-Below are the raw technician notes from each section of the overhaul checklist. Combine them into a single flowing professional summary paragraph (or two short paragraphs if needed). Write in third-person past tense. Include all key findings and actions. Do not use bullet points. Do not add information not present in the notes. Be concise and professional.
-
-Section notes:
-${parts.join('\n\n')}
-
-Return only the summary text with no preamble or labels.`}]
-      })
-    });
-    if(resp.ok){
-      const data=await resp.json();
-      if(data.content&&data.content[0]&&data.content[0].text){
-        summaryEl.value=data.content[0].text.trim();
-        summaryEl.placeholder='';
-      } else {
-        summaryEl.value=parts.join('\n\n');
-      }
-    } else {
-      summaryEl.value=parts.join('\n\n');
-    }
-  } catch(e){
-    summaryEl.value=parts.join('\n\n');
-  }
-  summaryEl.placeholder='Edit summary here...';
-  if(polishBtn){polishBtn.disabled=false;polishBtn.innerHTML='✨ Polish with AI';}
-}
-
-function repopulateSummary(){
-  generateReportSummary(true);
 }
 
 function closeReport(){
@@ -3043,200 +2233,6 @@ async function polishNotes(textareaId){
     alert('Could not connect to Anthropic API. Check your internet connection and try again.');
   }
   if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
-}
-
-// ══ OFFLINE MODE ══
-let _isOnline = navigator.onLine;
-let _offlineQueue = []; // pending saves while offline
-
-function initOfflineMode() {
-  window.addEventListener('online',  () => { _isOnline=true;  updateOfflineBar(); flushOfflineQueue(); });
-  window.addEventListener('offline', () => { _isOnline=false; updateOfflineBar(); });
-  updateOfflineBar();
-}
-
-function updateOfflineBar() {
-  const bar = document.getElementById('offline-bar');
-  if (!bar) return;
-  if (!_isOnline) {
-    bar.classList.add('visible');
-    const qc = document.getElementById('offline-queue-count');
-    if (qc) qc.textContent = _offlineQueue.length > 0 ? _offlineQueue.length + ' save(s) queued' : '';
-  } else {
-    bar.classList.remove('visible');
-  }
-}
-
-async function flushOfflineQueue() {
-  if (_offlineQueue.length === 0) return;
-  setSyncStatus('Syncing ' + _offlineQueue.length + ' offline save(s)...');
-  // Take the latest queued state (no point sending all intermediate states)
-  const latest = _offlineQueue[_offlineQueue.length - 1];
-  _offlineQueue = [];
-  try {
-    await syncToCloud(latest.jobId, latest.state, { source: 'offline-flush' });
-    setSyncStatus('✓ Offline changes synced');
-  } catch(e) {
-    setSyncStatus('⚠ Sync failed after reconnect');
-  }
-}
-
-// Wrap syncToCloud to queue when offline
-const _origSyncToCloud = syncToCloud;
-
-// ══ REAL-TIME SYNC ══
-let _realtimeChannel = null;
-let _realtimeIgnoreNext = false; // prevent echo of our own saves
-
-function initRealtime() {
-  // Realtime sync disabled — was causing save overwrites on multi-field batch saves.
-  // Each field upsert triggered a change event, flooding handleRemoteChange and
-  // pulling stale data back from cloud before the save completed.
-  const ind = document.getElementById('sync-live-indicator');
-  const txt = document.getElementById('sync-live-txt');
-  if (ind) ind.className = 'sync-live';
-  if (txt) txt.textContent = 'Ready';
-}
-
-let _realtimeRefreshTimer = null;
-
-function handleRemoteChange(payload) {
-  // Disabled — realtime sync turned off to prevent save overwrites
-}
-
-async function silentReload() {
-  // Pull latest data from cloud and apply without disrupting the user
-  if (!CURRENT_JOB_ID) return;
-  try {
-    const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/overhaul_data?job_id=eq.${encodeURIComponent(CURRENT_JOB_ID)}&select=field_id,field_value`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-    );
-    if (!resp.ok) return;
-    const rows = await resp.json();
-    if (!rows || !rows.length) return;
-
-    // Build state from rows
-    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} };
-    rows.forEach(row => {
-      const { field_id, field_value } = row;
-      if (field_id.startsWith('meta_'))      state.meta[field_id.replace('meta_','')] = field_value;
-      else if (field_id.startsWith('meas_val_'))  { const id=field_id.replace('meas_val_',''); if(!state.meas[id]) state.meas[id]={value:'',note:''}; state.meas[id].value=field_value; }
-      else if (field_id.startsWith('meas_note_')) { const id=field_id.replace('meas_note_',''); if(!state.meas[id]) state.meas[id]={value:'',note:''}; state.meas[id].note=field_value; }
-      else if (field_id.startsWith('vi_'))    state.vi[field_id.replace('vi_','')] = field_value;
-      else if (field_id.startsWith('notes_')) state.notes[field_id.replace('notes_','')] = field_value;
-      else if (field_id === 'parts_list')     { try{ const p=JSON.parse(field_value||'[]'); if(Array.isArray(p)) state.parts=p; }catch(e){} }
-    });
-
-    // Only silently reload if we haven't saved recently (avoid stomping user work)
-    const lastSaveAge = Date.now() - (_lastSaveTime || 0);
-    if (lastSaveAge < 10000) {
-      console.log('[silentReload] Skipped — saved', Math.round(lastSaveAge/1000), 's ago');
-      return;
-    }
-    _savesSuspended = true;
-    restoreState(state);
-    // Don't unsuspend here — restoreState finally block handles it
-    setSyncStatus('✓ Synced from other device');
-  } catch(e) {
-    setSyncStatus('⚠ Remote refresh failed');
-  }
-}
-
-// ══ NUMPAD ══
-let _npTarget = null;   // the input element being edited
-let _npValue  = '';     // current string being built
-
-function openNumpad(inputEl, label) {
-  _npTarget = inputEl;
-  _npValue  = inputEl.value || '';
-  document.getElementById('np-label').textContent   = label || 'Enter Value';
-  document.getElementById('np-display').textContent = _npValue || '—';
-  document.getElementById('numpad-overlay').classList.add('open');
-  // Desktop keyboard support
-  document.addEventListener('keydown', _npKeyHandler);
-}
-
-function _npKeyHandler(e) {
-  if (!document.getElementById('numpad-overlay').classList.contains('open')) return;
-  if (e.key >= '0' && e.key <= '9') { npKey(e.key); e.preventDefault(); }
-  else if (e.key === '.') { npKey('.'); e.preventDefault(); }
-  else if (e.key === 'Backspace') { npDel(); e.preventDefault(); }
-  else if (e.key === 'Enter') { npDone(); e.preventDefault(); }
-  else if (e.key === 'Escape') { closeNumpad(); e.preventDefault(); }
-}
-
-function closeNumpad() {
-  document.getElementById('numpad-overlay').classList.remove('open');
-  document.removeEventListener('keydown', _npKeyHandler);
-  _npTarget = null;
-  _npValue  = '';
-}
-
-function npKey(k) {
-  // Prevent multiple decimal points
-  if (k === '.' && _npValue.includes('.')) return;
-  // Max reasonable length
-  if (_npValue.length >= 10) return;
-  _npValue += k;
-  document.getElementById('np-display').textContent = _npValue;
-}
-
-function npDel() {
-  _npValue = _npValue.slice(0, -1);
-  document.getElementById('np-display').textContent = _npValue || '—';
-}
-
-function npClear() {
-  _npValue = '';
-  document.getElementById('np-display').textContent = '—';
-}
-
-function npDone() {
-  if (_npTarget && _npValue !== '') {
-    // Temporarily remove readonly so value assignment works on all browsers
-    const wasReadOnly = _npTarget.readOnly;
-    _npTarget.readOnly = false;
-    _npTarget.value = _npValue;
-    _npTarget.readOnly = wasReadOnly;
-    // Trigger validation
-    const id = _npTarget.id ? _npTarget.id.replace('val-', '') : null;
-    if (id) {
-      const allMeas = [...sec1Meas,...sec2Meas,...sec3Meas,...sec4Meas,...sec5Meas,...sec7Meas,...sec8Meas];
-      const def = allMeas.find(r => r.id === id);
-      if (def) validateMeas(id, def.min, def.max);
-    }
-    _npTarget.dispatchEvent(new Event('input', { bubbles: true }));
-    _npTarget.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  closeNumpad();
-}
-
-// Attach numpad to all measurement input fields
-function attachNumpadToMeasInputs() {
-  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (!isTouch) return;
-
-  document.querySelectorAll('.meas-input').forEach(inp => {
-    if (inp.dataset.npAttached) return;
-    inp.dataset.npAttached = '1';
-    inp.readOnly = true;
-    inp.inputMode = 'none';
-    inp.placeholder = 'tap to enter';
-    inp.style.cursor = 'pointer';
-    inp.style.caretColor = 'transparent';
-
-    const openPad = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const row = inp.closest('tr');
-      const label = row ? (row.querySelector('td:first-child')?.textContent?.trim() || 'Enter Value') : 'Enter Value';
-      openNumpad(inp, label);
-    };
-
-    inp.addEventListener('touchend', openPad, { passive: false });
-    inp.addEventListener('click', openPad);
-  });
 }
 
 // ══ PHOTO ATTACHMENT ══
@@ -3631,7 +2627,6 @@ async function sbFetch(path, options = {}) {
 }
 
 let _savesSuspended = false;    // hard suspend (during load/restore) — no saves at all
-let _lastSaveTime = 0;           // timestamp of last successful cloud save
 let _lastServerSnapshot = null; // last-known DB state for this job, {field_id: field_value}
 let _syncTimer = null;          // debounce handle for autoSave
 
@@ -3651,14 +2646,6 @@ function isEffectiveDowngrade(oldVal, newVal) {
   if (isPresent(oldVal) && isBlank(newVal)) return true;
   // VI fields: pass/fail → pending is a downgrade that erases real work
   if ((oldVal === 'pass' || oldVal === 'fail') && (newVal === 'pending' || isBlank(newVal))) return true;
-  // parts_list: going from a populated JSON array to empty array [] is a downgrade
-  if (oldVal && newVal) {
-    try {
-      const oldParts = JSON.parse(oldVal);
-      const newParts = JSON.parse(newVal);
-      if (Array.isArray(oldParts) && oldParts.length > 0 && Array.isArray(newParts) && newParts.length === 0) return true;
-    } catch(e) {}
-  }
   return false;
 }
 // A value is a real measurement or note (text a user would type).
@@ -3666,13 +2653,12 @@ function isEffectiveDowngrade(oldVal, newVal) {
 function isCriticalField(fid) {
   return fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
          fid.startsWith('notes_')    || fid.startsWith('meta_')      ||
-         fid.startsWith('vi_')       || fid.startsWith('run_')       ||
-         fid === 'parts_list';
+         fid.startsWith('vi_');
 }
 
 // ── COLLECT STATE ──
 function collectState() {
-  const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, run:{} };
+  const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{} };
 
   ['wo','serial','model','unit','customer','tech','date','hours'].forEach(k => {
     const el = document.getElementById('uf-'+k);
@@ -3710,38 +2696,6 @@ function collectState() {
   document.querySelectorAll('[id^="notes-"]').forEach(el => {
     state.notes[el.id.replace('notes-','')] = el.value || '';
   });
-
-  // Section 9 — Break-In Run Record
-  state.run = {};
-  const runFields = [
-    'run-date','run-start','run-end','run-ambient',
-    'run-gen-make','run-gen-model','run-gen-sn',
-    'run-lb-kw','run-hp','run-volts',
-    'run-cold-oil','run-cold-coolant',
-    'run-oil-level-start','run-leaks-start',
-    'run-total-time','run-oil-level-end','run-leaks-end',
-    'run-noise','run-approved','run-rts-date','run-rts-hours',
-    'run-notes','run-lb-model'
-  ];
-  runFields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) state.run[id] = el.value || '';
-  });
-  // Run log rows (9 intervals × 13 cols)
-  const RUN_ALL_COLS = ['rpm','oil-press','oil-temp','coolant','fuel-wc','reg-psi','crankcase','v1','v2','v3','a1','a2','a3'];
-  for (let i = 0; i < 9; i++) {
-    RUN_ALL_COLS.forEach(col => {
-      const el = document.getElementById(`run-${i}-${col}`);
-      if (el && el.value) state.run[`run-${i}-${col}`] = el.value;
-    });
-  }
-  // Exhaust temps
-  for (let c = 1; c <= 6; c++) {
-    ['exh-cyl-'+c, 'exh-cyl-'+c+'-note'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el.value) state.run[id] = el.value;
-    });
-  }
 
   state.photos = {};
   const allIds = new Set([...Object.keys(photoStore), ...photoFieldsSeen]);
@@ -3789,7 +2743,6 @@ function flattenState(state) {
   });
   Object.entries(state.bolts||{}).forEach(([p,v])  => flat['bolt_'+p]    = v ? '1' : '0');
   Object.entries(state.notes||{}).forEach(([s,v])  => flat['notes_'+s]   = v);
-  Object.entries(state.run||{}).forEach(([k,v])    => flat['run_'+k]     = v);
   Object.entries(state.photos||{}).forEach(([id,u])=> flat['photos_'+id] = JSON.stringify(u || []));
   // Parts list serialized as a single JSON string
   flat['parts_list'] = JSON.stringify(state.parts || []);
@@ -3800,28 +2753,20 @@ function flattenState(state) {
 function restoreState(state) {
   if (!state) return;
   _savesSuspended = true;
+  clearTimeout(_syncTimer);
+  try {
   try {
     Object.entries(state.meta || {}).forEach(([k,v]) => {
       const el = document.getElementById('uf-'+k);
       if (el) el.value = v || '';
     });
 
-    let measSet = 0, measMissing = 0;
     Object.entries(state.meas || {}).forEach(([id,data]) => {
       const v = document.getElementById('val-'+id);
       const n = document.getElementById('note-'+id);
-      if (v) {
-        const wasReadOnly = v.readOnly;
-        if (wasReadOnly) v.readOnly = false;
-        v.value = data.value || '';
-        if (wasReadOnly) v.readOnly = true;
-        if (data.value) measSet++;
-      } else {
-        if (data.value) { measMissing++; console.warn('[restoreState] MISSING input for val-'+id, 'value='+data.value); }
-      }
+      if (v) v.value = data.value || '';
       if (n) n.value = data.note || '';
     });
-    console.log('[restoreState] Set', measSet, 'meas values. Missing inputs:', measMissing);
 
     // Re-run validators (no input events — we don't want to trigger saves)
     const allMeasV = [...sec1Meas,...sec2Meas,...sec3Meas,...sec4Meas,...sec5Meas,...sec7Meas,...sec8Meas];
@@ -3848,14 +2793,6 @@ function restoreState(state) {
       if (el) el.value = v || '';
     });
 
-    // Section 9 — Break-In Run Record restore
-    Object.entries(state.run || {}).forEach(([k,v]) => {
-      const el = document.getElementById(k);
-      if (el) el.value = v || '';
-    });
-    // Re-trigger calculator after restoring HP/voltage
-    if (typeof calcRunTarget === 'function') calcRunTarget();
-
     Object.keys(photoStore).forEach(k => delete photoStore[k]);
     photoFieldsSeen.clear();
     Object.entries(state.photos || {}).forEach(([id, urls]) => {
@@ -3872,54 +2809,30 @@ function restoreState(state) {
     partRowId = 0;
     const partsArr = Array.isArray(state.parts) ? state.parts : [];
     if (partsArr.length === 0) {
+      // No saved parts — give user 3 empty rows to start with
       addPartsRow(); addPartsRow(); addPartsRow();
     } else {
-      _addingPartsDuringRestore = true;
       partsArr.forEach(p => {
-        const id = addPartsRow();
-        // Set values directly after row is appended
-        const setVal = (field, val) => {
+        addPartsRow();
+        const id = partRowId;
+        const set = (field, val) => {
           const el = document.getElementById('part-'+field+'-'+id);
           if (el) el.value = val || '';
         };
-        setVal('desc', p.desc);
-        setVal('num',  p.partNum);
-        setVal('qty',  p.qty);
-        setVal('sup',  p.sup);
-        setVal('note', p.note);
-        // Select needs special handling
-        const condEl = document.getElementById('part-cond-'+id);
-        if (condEl && p.cond) {
-          // Try direct value set first
-          condEl.value = p.cond;
-          // If that didn't work (option not found), find matching option text
-          if (condEl.value !== p.cond) {
-            Array.from(condEl.options).forEach(opt => {
-              if (opt.text === p.cond || opt.value === p.cond) condEl.value = opt.value;
-            });
-          }
-        }
+        set('desc', p.desc);
+        set('num',  p.partNum);
+        set('qty',  p.qty);
+        set('sup',  p.sup);
+        set('cond', p.cond);
+        set('note', p.note);
       });
-      _addingPartsDuringRestore = false;
-      // Now attach autosave listeners to all restored rows
-      if (partsTbody) {
-        partsTbody.querySelectorAll('input, select, textarea').forEach(el => {
-          const handler = () => { if (typeof autoSave === 'function') autoSave(); };
-          el.addEventListener('input',  handler);
-          el.addEventListener('change', handler);
-        });
-      }
     }
 
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
-    setTimeout(() => {
-      // Verify parts are actually in DOM before unsuspending
-      const partsTbody = document.getElementById('parts-tbody');
-      const partRows = partsTbody ? partsTbody.querySelectorAll('tr').length : 0;
-      console.log('[restoreState] Unsuspending saves. Parts rows in DOM:', partRows);
-      _savesSuspended = false;
-    }, 3500);
+   // Small delay before un-suspending so any stray events from restore
+  // (e.g. dispatched by validateMeas) are dropped, not saved.
+  setTimeout(() => { clearTimeout(_syncTimer); _savesSuspended = false; }, 2000);
   }
 }
 
@@ -3956,43 +2869,39 @@ async function syncToCloud(jobId, state, opts = {}) {
     return;
   }
 
-  // OFFLINE: queue the save and bail out
-  if (!_isOnline && !opts.force) {
-    _offlineQueue.push({ jobId, state });
-    // Keep queue from growing unbounded — only keep latest 3
-    if (_offlineQueue.length > 3) _offlineQueue = _offlineQueue.slice(-3);
-    updateOfflineBar();
-    setSyncStatus('📴 Offline — save queued');
-    // Still save to localStorage as backup
-    try { localStorage.setItem('tsi_cummins_83g_v5', JSON.stringify(state)); } catch(e){}
-    return;
-  }
-
   const flat = flattenState(state);
   const source = opts.source || 'autosave';
 
-  // LAYER 2: Parts-only guard — only block if parts list would be wiped
+  // LAYER 2: Data-loss guard.
+  // Critical fields (measurements, notes, meta) get a strict threshold — we
+  // refuse to blank even 1 of them. Non-critical fields (VI pending/pass/fail, bolts)
+  // use the looser count.
   if (_lastServerSnapshot && !opts.force) {
-    const oldParts = (() => { try { return JSON.parse(_lastServerSnapshot['parts_list']||'[]'); } catch(e){ return []; } })();
-    const newParts = (() => { try { return JSON.parse(flat['parts_list']||'[]'); } catch(e){ return []; } })();
-    if (oldParts.length > 0 && newParts.length === 0) {
-      console.error('[save] REFUSED — would wipe', oldParts.length, 'parts');
-      setSyncStatus('⚠ Save refused — would wipe parts list');
-      showDataGuardBanner(oldParts.length, jobId, state);
+    let wouldBlankCritical = 0;
+    let wouldBlankTotal = 0;
+    const wouldBlankList = [];
+    for (const [fid, oldVal] of Object.entries(_lastServerSnapshot)) {
+      // Use "effective downgrade" check: catches blanking AND pass/fail → pending.
+      // Only check fields the new save actually writes — if a field is omitted
+      // from `flat`, it won't be updated in Supabase, so it's safe.
+      const newVal = flat[fid];
+      const willBeWritten = Object.prototype.hasOwnProperty.call(flat, fid);
+      if (willBeWritten && isEffectiveDowngrade(oldVal, newVal)) {
+        wouldBlankTotal++;
+        if (isCriticalField(fid)) wouldBlankCritical++;
+        if (wouldBlankList.length < 10) wouldBlankList.push(`${fid}: "${oldVal}" → "${newVal}"`);
+      }
+    }
+    // STRICT: refuse if ANY critical field would be downgraded
+    if (wouldBlankCritical >= 1 || wouldBlankTotal >= BLANK_OVERWRITE_REFUSE_COUNT) {
+      console.error('[save] REFUSED — would downgrade ' + wouldBlankTotal + ' values (' + wouldBlankCritical + ' critical):', wouldBlankList);
+      setSyncStatus('⚠ Save refused — would wipe ' + (wouldBlankCritical || wouldBlankTotal) + ' fields');
+      showDataGuardBanner(wouldBlankTotal, jobId, state);
       return;
     }
   }
 
   setSyncStatus('Saving...');
-  const s5fields = Object.keys(flat).filter(k=>k.startsWith('meas_val_s5-flat') || k.startsWith('meas_val_s5-rec'));
-  const savedParts = (() => { try { return JSON.parse(flat['parts_list']||'[]').length; } catch(e){ return 0; } })();
-  console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Parts:', savedParts, 'savesSuspended:', _savesSuspended);
-  const s5fields = Object.keys(flat).filter(k=>k.startsWith('meas_val_s5-flat') || k.startsWith('meas_val_s5-rec'));
-  console.log('[syncToCloud] s5-flat and s5-rec fields:', s5fields.map(k=>k+'='+flat[k]));
-  console.log('[syncToCloud] Saving', Object.keys(flat).length, 'fields. Meas fields:', Object.keys(flat).filter(k=>k.startsWith('meas_val_') && flat[k]).map(k=>k+':'+flat[k]));
-
-  // Tell realtime listener to ignore the echo of this save
-  _realtimeIgnoreNext = true;
 
   // Build the rows for overhaul_data
   const now = new Date().toISOString();
@@ -4019,7 +2928,6 @@ async function syncToCloud(jobId, state, opts = {}) {
   // LAYER 3: write to history (fire-and-forget, doesn't block UI)
   appendHistory(jobId, flat, source);
 
-  _lastSaveTime = Date.now();
   setSyncStatus('✓ Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
 }
 
@@ -4051,13 +2959,13 @@ async function forceNextSave() {
 }
 
 // ── LOAD JOB ──
-async function loadJob(silent = false) {
+async function loadJob() {
   const input = document.getElementById('job-id-input');
   const jobId = input ? input.value.trim() : '';
-  if (!jobId) { if (!silent) alert('Enter a job number first.'); return; }
+  if (!jobId) { alert('Enter a job number first.'); return; }
 
-  // If switching to a different job, warn (skip on silent auto-load)
-  if (!silent && CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId) {
+  // If switching to a different job, warn that the current form will be replaced
+  if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId) {
     if (!confirm(`Switch from job "${CURRENT_JOB_ID}" to "${jobId}"?\n\nAny unsaved changes on the current form will be replaced with "${jobId}" data (or cleared if it's a new job).`)) {
       return;
     }
@@ -4084,7 +2992,7 @@ async function loadJob(silent = false) {
 
     // Build snapshot + state
     const snapshot = {};
-    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} };
+    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] };
     rows.forEach(row => {
       const { field_id, field_value } = row;
       snapshot[field_id] = field_value;
@@ -4104,9 +3012,6 @@ async function loadJob(silent = false) {
         state.bolts[field_id.replace('bolt_','')] = field_value === '1';
       } else if (field_id.startsWith('notes_')) {
         state.notes[field_id.replace('notes_','')] = field_value;
-      } else if (field_id.startsWith('run_')) {
-        if (!state.run) state.run = {};
-        state.run[field_id.replace('run_','')] = field_value;
       } else if (field_id.startsWith('photos_')) {
         const id = field_id.replace('photos_','');
         try {
@@ -4127,11 +3032,9 @@ async function loadJob(silent = false) {
     if (rows.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data
       // into this one on the next autosave.
-      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], run:{} });
+      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] });
       setSyncStatus('New job — ready (form cleared)');
     } else {
-      const measLoaded = rows.filter(r => r.field_id.startsWith('meas_val_') && isPresent(r.field_value));
-      console.log('[loadJob] Loaded', rows.length, 'rows. Meas values:', measLoaded.map(r=>r.field_id+':'+r.field_value));
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
       setSyncStatus('✓ Loaded ' + rows.filter(r => isPresent(r.field_value)).length + ' values');
     }
@@ -4141,8 +3044,8 @@ async function loadJob(silent = false) {
     console.error('Load error:', e);
   }
 
-  // restoreState handles its own un-suspend via its finally block
-  // Do NOT unsuspend here — restoreState does it after DOM is fully populated
+  // restoreState handles its own un-suspend; if it didn't run, un-suspend here
+  setTimeout(() => { _savesSuspended = false; }, 2200);
 }
 
 function setSyncStatus(msg) {
@@ -4151,20 +3054,26 @@ function setSyncStatus(msg) {
 }
 
 // ── AUTO-SAVE (debounced, suspend-aware) ──
-function autoSave(opts={}) {
-  if (_savesSuspended && !opts.force) return;
+function autoSave() {
+  if (_savesSuspended) return;
   clearTimeout(_syncTimer);
   setSyncStatus('Saving...');
   _syncTimer = setTimeout(async () => {
-    if (_savesSuspended && !opts.force) return;
+    if (_savesSuspended) return;
     if (!CURRENT_JOB_ID) {
-      // No active job — only save to localStorage if there's real data worth keeping
+      // No active job. Check if user has typed a Job # but hasn't LOADed it yet.
       const input = document.getElementById('job-id-input');
       const typed = input ? input.value.trim() : '';
       if (typed) {
         setSyncStatus('⚠ Click LOAD to start syncing "' + typed + '"');
+      } else {
+        // Genuinely no job — fall back to localStorage for browser-recovery
+        try {
+          const state = collectState();
+          localStorage.setItem('tsi_cummins_83g_v5', JSON.stringify(state));
+          setSyncStatus('Saved locally (no job # entered)');
+        } catch(e) {}
       }
-      // Do NOT save blank state to localStorage — this was overwriting real data
       return;
     }
     // SAFETY: if a job is active but we have no server snapshot, refuse.
@@ -4183,16 +3092,4 @@ setInterval(() => {
     syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'periodic' });
   }
 }, 30000);
-
-// ── PRE-FILL JOB ID ON PAGE OPEN ──
-window.addEventListener('load', () => {
-  const savedJobId = localStorage.getItem('tsi_last_job_id');
-  if (!savedJobId) return;
-  const inp = document.getElementById('job-id-input');
-  if (inp) inp.value = savedJobId;
-  // Block saves until user clicks LOAD
-  _savesSuspended = true;
-  clearTimeout(_syncTimer);
-  setSyncStatus('Click LOAD to restore your data');
-});
 </script>
