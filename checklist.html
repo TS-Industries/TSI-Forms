@@ -1733,30 +1733,44 @@ function importBackup(){
 
 async function fixPartsFromHistory(){
   if(!CURRENT_JOB_ID){ alert('Click LOAD first to set the active job.'); return; }
-  setSyncStatus('Searching history for best parts save...');
+  setSyncStatus('Searching for best parts save...');
   try{
+    // First check current record
+    const curPartsRaw = _lastServerSnapshot ? _lastServerSnapshot['parts_list'] : null;
+    let curParts = [];
+    try{ curParts = JSON.parse(curPartsRaw||'[]'); }catch(e){}
+
+    // Try history table
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/overhaul_data_history?job_id=eq.${encodeURIComponent(CURRENT_JOB_ID)}&field_id=eq.parts_list&select=field_value,saved_at&order=saved_at.desc`,
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
     );
     const hist = await r.json();
-    if(!hist||!hist.length){ setSyncStatus('No parts history found'); return; }
+
     let best={parts:[],raw:'',time:''};
-    hist.forEach(row=>{
-      let parts=[];
-      try{parts=JSON.parse(row.field_value||'[]');}catch(e){}
-      if(parts.length>best.parts.length) best={parts,raw:row.field_value,time:new Date(row.saved_at).toLocaleString()};
-    });
-    if(!best.parts.length){ setSyncStatus('No parts found in history'); return; }
-    // Check current
-    const curParts = Array.isArray(_lastServerSnapshot) ? 0 :
-      (()=>{ try{ return JSON.parse(_lastServerSnapshot['parts_list']||'[]').length; }catch(e){ return 0; } })();
-    if(best.parts.length <= curParts){
-      setSyncStatus('Current parts ('+curParts+') already best — no fix needed');
+    if(Array.isArray(hist)){
+      hist.forEach(row=>{
+        let parts=[];
+        try{parts=JSON.parse(row.field_value||'[]');}catch(e){}
+        if(parts.length>best.parts.length) best={parts,raw:row.field_value,time:new Date(row.saved_at).toLocaleString()};
+      });
+    }
+
+    if(best.parts.length === 0){
+      // History empty or inaccessible — prompt manual entry of count
+      setSyncStatus('History not accessible from this browser');
+      alert('The parts history cannot be accessed from GitHub Pages due to browser security restrictions.\n\nPlease use the Netlify version to fix parts:\nhttps://triplespurindustries-checklist.netlify.app\n\nOr manually add the 7 missing parts to the parts tracker.');
       return;
     }
-    if(!confirm('Found '+best.parts.length+' parts from '+best.time+'.\n\nCurrent record has '+curParts+' parts.\n\nRestore '+best.parts.length+' parts?')) return;
-    // Write to cloud
+
+    if(best.parts.length <= curParts.length){
+      setSyncStatus('Current parts ('+curParts.length+') already best — no fix needed');
+      alert('Current record already has '+curParts.length+' parts — no fix needed.');
+      return;
+    }
+
+    if(!confirm('Found '+best.parts.length+' parts from '+best.time+'.\n\nCurrent has '+curParts.length+'. Restore '+best.parts.length+'?')) return;
+
     const resp = await fetch(
       `${SUPABASE_URL}/rest/v1/overhaul_data?on_conflict=job_id,field_id`,
       {
@@ -1766,9 +1780,7 @@ async function fixPartsFromHistory(){
       }
     );
     if(resp.ok){
-      // Update snapshot and restore parts in UI
       if(_lastServerSnapshot) _lastServerSnapshot['parts_list'] = best.raw;
-      // Restore parts rows
       const partsTbody = document.getElementById('parts-tbody');
       if(partsTbody) partsTbody.innerHTML='';
       partRowId=0;
@@ -1784,8 +1796,8 @@ async function fixPartsFromHistory(){
         el.addEventListener('input',()=>autoSave());
         el.addEventListener('change',()=>autoSave());
       });
-      setSyncStatus('✓ Restored '+best.parts.length+' parts from history');
-      alert('✅ '+best.parts.length+' parts restored! Click ⬇ Backup to save a new backup file.');
+      setSyncStatus('✓ Restored '+best.parts.length+' parts');
+      alert('✅ '+best.parts.length+' parts restored! Click ⬇ Backup to save a new backup.');
     } else {
       setSyncStatus('Fix failed: '+resp.status);
     }
@@ -4217,15 +4229,9 @@ window.addEventListener('load', () => {
   if (!savedJobId) return;
   const inp = document.getElementById('job-id-input');
   if (inp) inp.value = savedJobId;
-  // Auto-click LOAD after a short delay
-  setTimeout(() => {
-    // Block ALL saves before load
-    _savesSuspended = true;
-    clearTimeout(_syncTimer);
-    loadJob(true).catch(e => {
-      console.error('Auto-load failed:', e);
-      _savesSuspended = false;
-    });
-  }, 1000);
+  // Block saves until user clicks LOAD
+  _savesSuspended = true;
+  clearTimeout(_syncTimer);
+  setSyncStatus('Click LOAD to restore your data');
 });
 </script>
