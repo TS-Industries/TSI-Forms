@@ -458,10 +458,11 @@ function addRow(){
   const placeholders = ['00:00','V L1-L2','V L2-L3','V L3-L1','A L1','A L2','A L3','Hz','PSI','°F'];
   let cells = '';
   cols.forEach((c,i)=>{
-    const id = `row-${n}-${c}`;
+    const id = 'row-' + n + '-' + c;
     const cls = c==='time'?' class="time-cell"':'';
-    cells += `<td${cls}><input id="${id}" type="text" placeholder="${placeholders[i]}"
-      oninput="autoSave('${id}',this.value);${['v1','v2','v3','a1','a2','a3'].includes(c)?`recalcKW(${n});`:''}"/></td>`;
+    const recalc = ['v1','v2','v3','a1','a2','a3'].includes(c) ? 'recalcKW(' + n + ');' : '';
+    cells += '<td' + cls + '><input id="' + id + '" type="text" placeholder="' + placeholders[i] + '"'
+           + ' oninput="autoSave(\'' + id + '\',this.value);' + recalc + '"/></td>';
   });
   cells += `<td class="kw-cell" id="kw-${n}">—</td>`;
   cells += `<td style="text-align:center;"><button onclick="removeRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;">✕</button></td>`;
