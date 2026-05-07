@@ -34,6 +34,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
 /* Mobile header — stack cleanly, no overlap */
 @media (max-width: 768px){
+  /* ── Header ── */
   .site-header{padding:.5rem .75rem;position:relative;}
   .header-inner{flex-direction:column;align-items:stretch;min-height:0;gap:.5rem;}
   .header-center{order:1;text-align:center;padding:.25rem 0;}
@@ -41,11 +42,53 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   .header-subtitle{font-size:10px;}
   .header-job{order:2;justify-content:center;flex-wrap:wrap;gap:.4rem .5rem;padding:.25rem 0;}
   .header-job > label{flex:0 0 auto;}
-  #job-id-input{flex:1 1 180px!important;width:auto!important;max-width:none!important;min-width:0!important;font-size:16px!important;padding:8px 10px!important;min-height:38px;}
-  .header-job button{flex:0 0 auto;min-height:38px;padding:8px 14px!important;font-size:13px!important;}
-  #sync-status{flex-basis:100%!important;}
+  #job-id-input{flex:1 1 180px!important;width:auto!important;max-width:none!important;min-width:0!important;font-size:16px!important;padding:8px 10px!important;min-height:44px;}
+  .header-job button{flex:0 0 auto;min-height:44px;padding:10px 16px!important;font-size:14px!important;}
+  #sync-status{flex-basis:100%!important;text-align:center;}
   .header-actions{order:3;justify-content:center;}
-  .header-actions .btn{flex:1 1 auto;max-width:200px;font-size:12px;padding:.5rem .75rem;min-height:38px;}
+  .header-actions .btn{flex:1 1 auto;max-width:200px;font-size:12px;padding:.5rem .75rem;min-height:44px;}
+
+  /* ── Layout ── */
+  .container{padding:.75rem .75rem;}
+
+  /* ── Unit card inputs — prevent iOS zoom (must be 16px+) ── */
+  .unit-field input{font-size:16px!important;}
+
+  /* ── Section headers — larger touch target ── */
+  .section-header{padding:1rem 1rem;min-height:56px;}
+  .section-num{width:34px;height:34px;font-size:15px;}
+
+  /* ── Measurement tables — horizontal scroll on mobile ── */
+  .meas-table{font-size:11px;}
+  .meas-table th,.meas-table td{padding:.4rem .5rem;}
+  .meas-input{font-size:16px!important;width:80px;max-width:80px;padding:6px 4px;}
+  .section-body .procedure-panel{padding:.875rem .875rem;}
+  .spec-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem;}
+
+  /* ── Wrap all measurement tables in a scroll container ── */
+  .meas-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.875rem;padding:0 .875rem;}
+
+  /* ── VI pass/fail buttons — bigger touch targets ── */
+  .vi-btn{min-height:40px;min-width:56px;font-size:12px;}
+
+  /* ── Notes textareas ── */
+  .section-notes-input{font-size:16px!important;min-height:80px;}
+
+  /* ── Parts table ── */
+  .parts-table{font-size:11px;}
+  .parts-input{font-size:16px!important;}
+
+  /* ── Progress card ── */
+  .progress-card{flex-direction:column;gap:.75rem;}
+  .progress-stats{justify-content:center;}
+
+  /* ── Torque sequence ── */
+  .torque-steps{gap:.375rem;}
+  .torque-step{min-width:90px;padding:.5rem .625rem;}
+  .torque-step-val{font-size:22px;}
+
+  /* ── Section 9 load bank table ── */
+  #lb-tbody td input{font-size:14px!important;}
 }
 .btn{padding:6px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.5px;cursor:pointer;border:none;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
 .btn-gold{background:var(--gold);color:var(--navy);}
@@ -412,6 +455,14 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
 <div class="container">
 
+  <!-- ── MOBILE: Add to Home Screen tip (dismissible) ── -->
+  <div id="mobile-tip-banner" style="display:none;background:linear-gradient(135deg,#1A3A5C,#1E4D7B);border:1px solid rgba(217,119,6,0.4);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;color:rgba(255,255,255,0.85);line-height:1.5;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
+      <div>&#128241; <strong style="color:var(--gold);">Using on mobile?</strong> Tap <strong>Share &#8594; Add to Home Screen</strong> (iOS) or <strong>&#8942; &#8594; Add to Home Screen</strong> (Android) to use this checklist like an app &#8212; full screen, no browser bar.</div>
+      <button onclick="document.getElementById('mobile-tip-banner').style.display='none';localStorage.setItem('tsi_mobile_tip_dismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:18px;padding:0;flex-shrink:0;line-height:1;">&#10005;</button>
+    </div>
+  </div>
+
   <!-- UNIT INFO CARD -->
   <div class="unit-card">
     <div class="unit-field"><label>Work Order #</label><input id="uf-wo" placeholder="WO-XXXXX"></div>
@@ -533,7 +584,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </div>
       <div class="meas-panel">
         <div class="proc-title" style="margin-bottom:.75rem;">Crankshaft Measurements</div>
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-1"></tbody>
         </table>
@@ -543,6 +594,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec1"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Crankshaft</div>
         <textarea class="section-notes-input" id="notes-sec1" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec1" onclick="polishNotes('notes-sec1')">&#10024; Polish with AI</button>
@@ -619,7 +671,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </div>
       <div class="meas-panel">
         <div class="proc-title" style="margin-bottom:.75rem;">Main Bearing Measurements</div>
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-2"></tbody>
         </table>
@@ -629,6 +681,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec2"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Main Bearings</div>
         <textarea class="section-notes-input" id="notes-sec2" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec2" onclick="polishNotes('notes-sec2')">&#10024; Polish with AI</button>
@@ -710,7 +763,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       </div>
       <div class="meas-panel">
         <div class="proc-title" style="margin-bottom:.75rem;">Connecting Rod Measurements</div>
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-3"></tbody>
         </table>
@@ -720,6 +773,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec3"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Connecting Rod Bearings</div>
         <textarea class="section-notes-input" id="notes-sec3" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec3" onclick="polishNotes('notes-sec3')">&#10024; Polish with AI</button>
@@ -799,7 +853,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         </div>
       </div>
       <div class="meas-panel">
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-4"></tbody>
         </table>
@@ -809,6 +863,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec4"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Cylinder Liner, Pistons &amp; Rings</div>
         <textarea class="section-notes-input" id="notes-sec4" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec4" onclick="polishNotes('notes-sec4')">&#10024; Polish with AI</button>
@@ -881,7 +936,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         </div>
       </div>
       <div class="meas-panel">
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-5"></tbody>
         </table>
@@ -891,6 +946,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec5"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Cylinder Head</div>
         <textarea class="section-notes-input" id="notes-sec5" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec5" onclick="polishNotes('notes-sec5')">&#10024; Polish with AI</button>
@@ -971,6 +1027,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         </div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Head Bolt Torque</div>
         <textarea class="section-notes-input" id="notes-sec6" placeholder="Record any observations about bolt condition, torque anomalies, or additional findings..."></textarea>
         <button class="polish-btn" id="polish-btn-sec6" onclick="polishNotes('notes-sec6')">&#10024; Polish with AI</button>
@@ -1056,7 +1113,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         </div>
       </div>
       <div class="meas-panel">
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-7"></tbody>
         </table>
@@ -1066,6 +1123,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
         <div id="vi-sec7"></div>
       </div>
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Valvetrain</div>
         <textarea class="section-notes-input" id="notes-sec7" placeholder="Record any observations, measurements of concern, or additional findings for this section..."></textarea>
         <button class="polish-btn" id="polish-btn-sec7" onclick="polishNotes('notes-sec7')">&#10024; Polish with AI</button>
@@ -1151,7 +1209,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <!-- MEASUREMENT TABLE -->
       <div class="meas-panel">
         <div class="proc-title" style="margin-bottom:.75rem;">Oil Pump Measurements</div>
-        <table class="meas-table">
+        <div class="meas-table-wrap"><table class="meas-table">
           <thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead>
           <tbody id="tbody-8"></tbody>
         </table>
@@ -1165,6 +1223,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
       <!-- TECH NOTES -->
       <div class="section-notes-panel">
+        </div><!-- end meas-table-wrap -->
         <div class="section-notes-label">Technician Notes — Oil Pump</div>
         <textarea class="section-notes-input" id="notes-sec8" placeholder="Record any observations, pump condition, pressure readings after startup, or additional findings..."></textarea>
         <button class="polish-btn" id="polish-btn-sec8" onclick="polishNotes('notes-sec8')">&#10024; Polish with AI</button>
@@ -1386,7 +1445,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
         <!-- ── TECHNICIAN NOTES ── -->
         <div style="margin-bottom:1.25rem;">
-          <div class="section-notes-label">Technician Notes — Load Bank Run</div>
+          </div><!-- end meas-table-wrap -->
+        <div class="section-notes-label">Technician Notes — Load Bank Run</div>
           <textarea class="section-notes-input" id="notes-sec9" placeholder="Record observations during the run: any alarms, parameter trends, adjustments made, leaks found, timing adjustments, shutdown events, or general engine behaviour..."></textarea>
           <button class="polish-btn" id="polish-btn-sec9" onclick="polishNotes('notes-sec9')">&#10024; Polish with AI</button>
         </div>
@@ -1892,6 +1952,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateAIKeyStatus();
   // Release startup suspend — nothing before LOAD should ever save
   setTimeout(() => { clearTimeout(_syncTimer); _savesSuspended = false; }, 1000);
+
+  // Show mobile tip banner on small screens (if not already dismissed)
+  if (window.innerWidth <= 768 && !localStorage.getItem('tsi_mobile_tip_dismissed')) {
+    const tipBanner = document.getElementById('mobile-tip-banner');
+    if (tipBanner) tipBanner.style.display = 'block';
+  }
 });
 
 function toggleSection(id){
@@ -3809,4 +3875,94 @@ setInterval(() => {
     syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'periodic' });
   }
 }, 30000);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SAFETY PROTECTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// 1. BEFOREUNLOAD WARNING — warn if there's an active job and unsaved changes
+//    (The 1.5s autosave debounce means a fast page close can lose the last input)
+let _lastSaveTime = Date.now();
+const _origSetSyncStatus = setSyncStatus;
+function setSyncStatus(msg) {
+  _origSetSyncStatus(msg);
+  if (msg && msg.startsWith('✓ Saved')) _lastSaveTime = Date.now();
+}
+
+window.addEventListener('beforeunload', (e) => {
+  // Only warn if: a job is loaded AND there's been recent input (within 3 seconds)
+  if (!CURRENT_JOB_ID) return;
+  const timeSinceLastSave = Date.now() - _lastSaveTime;
+  // If a save happened within the last 5 seconds, we're fine
+  if (timeSinceLastSave < 5000) return;
+  // If _syncTimer is pending, there's a debounced save waiting
+  if (_syncTimer !== null) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Wait a moment for the autosave to complete before leaving.';
+    return e.returnValue;
+  }
+});
+
+// 2. VISIBILITY CHANGE — force-save when user switches away from the tab
+//    (covers mobile: switching apps, locking screen, opening another tab)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // Page is being hidden (tab switch, app switch, screen lock)
+    // Force an immediate save if there's a pending debounced save
+    if (CURRENT_JOB_ID && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
+      clearTimeout(_syncTimer);
+      _syncTimer = null;
+      // Fire the save synchronously (best-effort — mobile may kill it mid-flight)
+      syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'visibility-hide' });
+    }
+  }
+});
+
+// 3. PAGEHIDE — same as visibilitychange but fires on iOS when closing a tab
+window.addEventListener('pagehide', () => {
+  if (CURRENT_JOB_ID && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
+    clearTimeout(_syncTimer);
+    _syncTimer = null;
+    syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'pagehide' });
+  }
+});
+
+// 4. ONLINE/OFFLINE STATUS — show a banner when connection is lost
+window.addEventListener('offline', () => {
+  setSyncStatus('⚠ No internet — changes will save when reconnected');
+  showOfflineBanner();
+});
+window.addEventListener('online', () => {
+  hideOfflineBanner();
+  // Re-sync when connection restored
+  if (CURRENT_JOB_ID && !_savesSuspended && _lastServerSnapshot !== null) {
+    syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'reconnect' });
+  }
+});
+
+function showOfflineBanner() {
+  let banner = document.getElementById('offline-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'offline-banner';
+    banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9998;background:#92400E;color:white;padding:10px 20px;font-family:Barlow,sans-serif;font-weight:600;font-size:13px;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,0.3);';
+    banner.innerHTML = '📵 No internet connection — your data is safe locally. Changes will sync when you reconnect.';
+    document.body.appendChild(banner);
+  }
+  banner.style.display = 'block';
+}
+
+function hideOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (banner) banner.style.display = 'none';
+  setSyncStatus('✓ Reconnected — syncing...');
+}
+
+// 5. ADD TO HOME SCREEN support — PWA manifest meta tags are already in place
+//    via the viewport meta. The no-cache headers ensure fresh loads.
+//    On iOS: user can tap Share → Add to Home Screen for app-like experience.
+
+// ══════════════════════════════════════════════════════════════════════════════
+// END SAFETY PROTECTIONS
+// ══════════════════════════════════════════════════════════════════════════════
 </script>
