@@ -3883,10 +3883,14 @@ setInterval(() => {
 // 1. BEFOREUNLOAD WARNING — warn if there's an active job and unsaved changes
 //    (The 1.5s autosave debounce means a fast page close can lose the last input)
 let _lastSaveTime = Date.now();
-const _origSetSyncStatus = setSyncStatus;
-function setSyncStatus(msg) {
-  _origSetSyncStatus(msg);
-  if (msg && msg.startsWith('✓ Saved')) _lastSaveTime = Date.now();
+// Track save time by watching the sync-status element — avoids redefining setSyncStatus
+const _syncStatusEl = document.getElementById('sync-status');
+if (_syncStatusEl) {
+  new MutationObserver(() => {
+    if (_syncStatusEl.textContent && _syncStatusEl.textContent.startsWith('✓ Saved')) {
+      _lastSaveTime = Date.now();
+    }
+  }).observe(_syncStatusEl, { childList: true, subtree: true, characterData: true });
 }
 
 window.addEventListener('beforeunload', (e) => {
