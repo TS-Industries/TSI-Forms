@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!-- Force browsers to always check for the latest version -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Load Bank Run Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap"/>
@@ -138,6 +142,44 @@ code{font-family:'JetBrains Mono',monospace;font-size:11px;background:#1A3A5C;pa
   z-index:-1;
 }
 
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px){
+  /* Header */
+  .header{padding:10px 12px;flex-wrap:wrap;gap:8px;}
+  .brand-title{font-size:18px;}
+  .brand-sub{font-size:10px;}
+  .header-actions{margin-left:0;width:100%;justify-content:flex-start;gap:6px;}
+  .btn{padding:8px 12px;font-size:12px;min-height:44px;}
+
+  /* Job bar */
+  .job-bar{padding:8px 12px;gap:8px;}
+  .job-bar input{width:100%;max-width:none;font-size:16px!important;min-height:44px;padding:8px 10px;}
+  .job-bar .btn{min-height:44px;}
+
+  /* Container */
+  .container{padding:12px;}
+
+  /* Unit info grid */
+  .info-grid{grid-template-columns:1fr 1fr;}
+  .field input,.field select{font-size:16px!important;min-height:44px;}
+
+  /* Data table — horizontal scroll */
+  .table-wrap{-webkit-overflow-scrolling:touch;}
+  table{font-size:11px;}
+  th{padding:6px 4px;font-size:10px;}
+  td input{font-size:14px!important;padding:5px 3px;}
+
+  /* Calculator */
+  .calc-grid{grid-template-columns:1fr 1fr;}
+  .calc-result.target{grid-column:span 2;}
+  .calc-value{font-size:18px;}
+  .calc-result.target .calc-value{font-size:24px;}
+
+  /* Row controls */
+  .row-ctrl{flex-direction:column;align-items:flex-start;gap:8px;}
+  .row-ctrl .btn{width:100%;justify-content:center;}
+}
+
 @media print{
   .header-actions,.job-bar,.row-ctrl,#pdf-overlay{display:none!important;}
   body{background:#fff;color:#000;}
@@ -153,9 +195,6 @@ code{font-family:'JetBrains Mono',monospace;font-size:11px;background:#1A3A5C;pa
   <div class="header-brand">
     <div class="brand-text">
       <div class="brand-title">Load Bank Run Report</div>
-      <div class="brand-sub">Post-Overhaul Generator Acceptance Testing</div>
-    </div>
-  </div>
       <div class="brand-sub">Post-Overhaul Generator Acceptance Testing</div>
     </div>
   </div>
@@ -293,9 +332,24 @@ code{font-family:'JetBrains Mono',monospace;font-size:11px;background:#1A3A5C;pa
     </div>
   </div>
 
+  <!-- TECHNICIAN NOTES -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num">3</div>
+      <div class="card-title">TECHNICIAN NOTES</div>
+      <div style="margin-left:12px;font-size:12px;color:var(--text2);">Observations, issues found, adjustments made, and overall assessment</div>
+    </div>
+    <div class="card-body">
+      <textarea id="f-notes" rows="5"
+        style="width:100%;background:#0D1B2A;border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:10px 12px;resize:vertical;line-height:1.6;"
+        placeholder="Record observations during the run: engine behaviour, any alarms, parameter trends, adjustments made (timing, fuel pressure), leaks found, shutdown events, final assessment..."
+        oninput="autoSave('f-notes',this.value)"></textarea>
+    </div>
+  </div>
+
 </div>
 
-<div class="page-footer">LOAD BANK RUN REPORT &nbsp;·&nbsp; Rev: March 22, 2026 &nbsp;·&nbsp; Triple Spur Industries</div>
+<div class="page-footer">LOAD BANK RUN REPORT &nbsp;·&nbsp; Rev: May 6, 2026 &nbsp;·&nbsp; Triple Spur Industries</div>
 
 <!-- PDF OVERLAY -->
 <div id="pdf-overlay">
@@ -350,7 +404,19 @@ async function loadFromCloud(){
   const jid = getJobId();
   if(!jid || jid === '_lb'){ alert('Enter a Job # first.'); return; }
   setSyncStatus('Loading…');
-  const { data, error } = await sb.from(TABLE).select('field_id,field_value').eq('job_id', jid);
+  // ORDER BY updated_at DESC + client-side dedup — prevents stale data from duplicate rows
+  const { data: rawData, error } = await sb.from(TABLE)
+    .select('field_id,field_value,updated_at')
+    .eq('job_id', jid)
+    .order('updated_at', { ascending: false })
+    .limit(5000);
+  // Deduplicate: keep first (most recent) occurrence of each field_id
+  const seen = new Set();
+  const data = rawData ? rawData.filter(r => {
+    if (seen.has(r.field_id)) return false;
+    seen.add(r.field_id);
+    return true;
+  }) : [];
   if(error){ setSyncStatus('Load error','err'); return; }
   if(!data || data.length === 0){ setSyncStatus('No data found'); return; }
 
@@ -360,7 +426,7 @@ async function loadFromCloud(){
 
   data.forEach(r => {
     const { field_id, field_value } = r;
-    // Unit info fields
+    // Unit info fields (including notes)
     const el = document.getElementById(field_id);
     if(el){ el.value = field_value; if(field_id.startsWith('c-')) calcBreakIn(); return; }
     // Row data: row-{n}-{col}
@@ -456,7 +522,7 @@ function clearAll(){
   if(!confirm('Clear all data on this page? This will not delete saved cloud data.')) return;
   document.getElementById('data-body').innerHTML = '';
   rowCount = 0;
-  ['f-date','f-brand','f-rating','f-engine','f-eserial','f-gserial','f-hours','f-tech','c-hp','c-kw','c-volts'].forEach(id=>{
+  ['f-date','f-brand','f-rating','f-engine','f-eserial','f-gserial','f-hours','f-tech','c-hp','c-kw','c-volts','f-notes'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -465,6 +531,99 @@ function clearAll(){
   updateRowCount();
   setSyncStatus('Cleared');
 }
+
+// ═══════════════════════════════════════════════════════
+// SAFETY PROTECTIONS
+// ═══════════════════════════════════════════════════════
+let _lastLbSaveTime = Date.now();
+
+// Track last save time
+const _origSetSyncStatus = setSyncStatus;
+function setSyncStatus(msg, cls='') {
+  _origSetSyncStatus(msg, cls);
+  if (msg && msg.startsWith('Saved')) _lastLbSaveTime = Date.now();
+}
+
+// Warn on page close if there's a pending save
+window.addEventListener('beforeunload', (e) => {
+  if (!getJobId() || getJobId() === '_lb') return;
+  if (saveTimer !== null) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Wait for the save to complete before leaving.';
+    return e.returnValue;
+  }
+});
+
+// Force-save when switching apps/tabs on mobile
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && saveTimer !== null) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    // Collect all current values and save them
+    const jid = getJobId();
+    if (!jid || jid === '_lb') return;
+    const fields = ['f-date','f-brand','f-rating','f-engine','f-eserial','f-gserial','f-hours','f-tech','c-hp','c-kw','c-volts','f-notes'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) {
+        sb.from(TABLE).upsert(
+          { job_id: jid, field_id: id, field_value: String(el.value), updated_at: new Date().toISOString() },
+          { onConflict: 'job_id,field_id' }
+        );
+      }
+    });
+  }
+});
+
+// Same for iOS tab close
+window.addEventListener('pagehide', () => {
+  if (saveTimer !== null) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const jid = getJobId();
+    if (!jid || jid === '_lb') return;
+    const fields = ['f-date','f-brand','f-rating','f-engine','f-eserial','f-gserial','f-hours','f-tech','c-hp','c-kw','c-volts','f-notes'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) {
+        sb.from(TABLE).upsert(
+          { job_id: jid, field_id: id, field_value: String(el.value), updated_at: new Date().toISOString() },
+          { onConflict: 'job_id,field_id' }
+        );
+      }
+    });
+  }
+});
+
+// Offline/online detection
+window.addEventListener('offline', () => {
+  setSyncStatus('⚠ No internet — reconnect to save', 'err');
+  let banner = document.getElementById('lb-offline-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'lb-offline-banner';
+    banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9998;background:#92400E;color:white;padding:10px 20px;font-family:Barlow,sans-serif;font-weight:600;font-size:13px;text-align:center;';
+    banner.textContent = '📵 No internet connection — your data is safe. Changes will sync when you reconnect.';
+    document.body.appendChild(banner);
+  }
+  banner.style.display = 'block';
+});
+window.addEventListener('online', () => {
+  const banner = document.getElementById('lb-offline-banner');
+  if (banner) banner.style.display = 'none';
+  setSyncStatus('✓ Reconnected', 'ok');
+});
+
+// Add to Home Screen tip on mobile
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.innerWidth <= 768 && !localStorage.getItem('lb_mobile_tip_dismissed')) {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'background:linear-gradient(135deg,#12263F,#1A3A5C);border:1px solid rgba(232,119,34,0.4);border-radius:8px;padding:10px 14px;margin:12px 20px 0;font-size:12px;color:rgba(255,255,255,0.85);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;';
+    tip.innerHTML = '<div>📱 <strong style="color:#E87722;">Using on mobile?</strong> Tap <strong>Share → Add to Home Screen</strong> (iOS) or <strong>⋮ → Add to Home Screen</strong> (Android) for a full-screen app experience.</div><button onclick="this.parentElement.remove();localStorage.setItem('lb_mobile_tip_dismissed','1')" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>';
+    const container = document.querySelector('.container');
+    if (container) container.insertBefore(tip, container.firstChild);
+  }
+});
 
 // ═══════════════════════════════════════════════════════
 // PDF EXPORT
@@ -493,6 +652,7 @@ async function generatePDF(){
   const gserial= document.getElementById('f-gserial').value || '—';
   const hours  = document.getElementById('f-hours').value || '—';
   const tech   = document.getElementById('f-tech').value || '—';
+  const notes  = document.getElementById('f-notes')?.value || '';
   const hp     = document.getElementById('c-hp').value || '—';
   const calcKw = document.getElementById('c-kw').value || '—';
   const volts  = document.getElementById('c-volts').value || '—';
@@ -622,6 +782,12 @@ async function generatePDF(){
         <tbody>${tableRowsHtml}</tbody>
       </table>
     </div>
+
+    <!-- TECHNICIAN NOTES -->
+    ${notes ? `<div style="padding:20px 32px;border-bottom:2px solid #E8F0F7;">
+      <div style="font-size:11px;font-weight:700;color:#1A3A5C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-family:'Barlow Condensed',Arial,sans-serif;">3 — Technician Notes</div>
+      <div style="font-size:13px;color:#374151;line-height:1.6;padding:12px 16px;background:#F8FAFC;border-left:4px solid #1A3A5C;border-radius:0 4px 4px 0;">${notes.replace(/\n/g,'<br>')}</div>
+    </div>` : ''}
 
     <!-- BREAK-IN RESULTS -->
     <div style="padding:20px 32px;border-bottom:2px solid #E8F0F7;">
