@@ -537,11 +537,16 @@ function clearAll(){
 // ═══════════════════════════════════════════════════════
 let _lastLbSaveTime = Date.now();
 
-// Track last save time
-const _origSetSyncStatus = setSyncStatus;
-function setSyncStatus(msg, cls='') {
-  _origSetSyncStatus(msg, cls);
-  if (msg && msg.startsWith('Saved')) _lastLbSaveTime = Date.now();
+// Patch the existing setSyncStatus to track save times
+// (done by wrapping the sync-status element update, not redefining the function)
+const _lbSyncEl = document.getElementById('sync-status');
+if (_lbSyncEl) {
+  const _lbObserver = new MutationObserver(() => {
+    if (_lbSyncEl.textContent && _lbSyncEl.textContent.startsWith('Saved')) {
+      _lastLbSaveTime = Date.now();
+    }
+  });
+  _lbObserver.observe(_lbSyncEl, { childList: true, subtree: true, characterData: true });
 }
 
 // Warn on page close if there's a pending save
