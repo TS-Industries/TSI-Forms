@@ -625,7 +625,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.innerWidth <= 768 && !localStorage.getItem('lb_mobile_tip_dismissed')) {
     const tip = document.createElement('div');
     tip.style.cssText = 'background:linear-gradient(135deg,#12263F,#1A3A5C);border:1px solid rgba(232,119,34,0.4);border-radius:8px;padding:10px 14px;margin:12px 20px 0;font-size:12px;color:rgba(255,255,255,0.85);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;';
-    tip.innerHTML = '<div>📱 <strong style="color:#E87722;">Using on mobile?</strong> Tap <strong>Share → Add to Home Screen</strong> (iOS) or <strong>⋮ → Add to Home Screen</strong> (Android) for a full-screen app experience.</div><button onclick="this.parentElement.remove();localStorage.setItem('lb_mobile_tip_dismissed','1')" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>';
+    const msg = document.createElement('div');
+    msg.innerHTML = '&#128241; <strong style="color:#E87722;">Using on mobile?</strong> Tap <strong>Share &rarr; Add to Home Screen</strong> (iOS) or <strong>&#8942; &rarr; Add to Home Screen</strong> (Android) for a full-screen app experience.';
+    const btn = document.createElement('button');
+    btn.textContent = '\u2715';
+    btn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;';
+    btn.onclick = function() { this.parentElement.remove(); localStorage.setItem('lb_mobile_tip_dismissed','1'); };
+    tip.appendChild(msg);
+    tip.appendChild(btn);
     const container = document.querySelector('.container');
     if (container) container.insertBefore(tip, container.firstChild);
   }
