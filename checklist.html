@@ -1610,6 +1610,17 @@ function injectJobUI() {
   if (jobInput) {
     jobInput.addEventListener('input', () => {
       if (typeof checkRestore === 'function') checkRestore();
+      // If the typed job # no longer matches the currently loaded job,
+      // immediately block autoSave by nulling the snapshot and cancelling
+      // any pending save timer. This prevents stale DOM state from the
+      // previous job being written to the new job # before LOAD is clicked.
+      const typed = jobInput.value.trim();
+      if (typed !== CURRENT_JOB_ID) {
+        _lastServerSnapshot = null;
+        clearTimeout(_syncTimer);
+        _syncTimer = null;
+        if (typed) setSyncStatus('Click LOAD to switch to "' + typed + '"');
+      }
     });
   }
 }
