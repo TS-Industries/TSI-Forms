@@ -3331,6 +3331,13 @@ function restoreState(state) {
       if (typeof validateMeas === 'function') validateMeas(r.id, r.min, r.max);
     });
 
+    // Clear ALL VI button states first, then re-apply from state.
+    // Without this, switching to an empty job leaves the previous job's
+    // selected-pass / selected-fail classes on the buttons, causing a
+    // phantom pass/fail count on what should be a 0-check blank form.
+    document.querySelectorAll('.vi-btn-pass').forEach(b => b.classList.remove('selected-pass'));
+    document.querySelectorAll('.vi-btn-fail').forEach(b => b.classList.remove('selected-fail'));
+
     Object.entries(state.vi || {}).forEach(([id, result]) => {
       const pb = document.getElementById('pass-'+id);
       const fb = document.getElementById('fail-'+id);
