@@ -3524,20 +3524,41 @@ async function forceNextSave() {
 }
 
 // ── LOAD JOB ──
+let _loadInFlight = false; // prevents overlapping loadJob() calls (double-tap/click race)
+
 async function loadJob() {
+  if (_loadInFlight) {
+    setSyncStatus('⏳ Already loading — please wait...');
+    return;
+  }
   const input = document.getElementById('job-id-input');
   const jobId = input ? input.value.trim() : '';
   if (!jobId) { alert('Enter a job number first.'); return; }
+  _loadInFlight = true;
+  const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
+  if (loadBtn) { loadBtn.disabled = true; loadBtn.style.opacity = '0.5'; loadBtn.style.cursor = 'not-allowed'; }
 
-  // If switching to a different job, warn that the current form will be replaced
-  if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId) {
-    if (!confirm(`Switch from job "${CURRENT_JOB_ID}" to "${jobId}"?\n\nAny unsaved changes on the current form will be replaced with "${jobId}" data (or cleared if it's a new job).`)) {
-      return;
+  // NOTE: this used to show a native confirm() popup before switching jobs.
+  // confirm() is unreliable on mobile browsers and standalone/PWA "Add to
+  // Home Screen" installs — many silently auto-dismiss it and return false
+  // immediately, causing loadJob() to bail out before ever switching, which
+  // looks exactly like "the app reverted to the old WO and the new one never
+  // loaded." Removed entirely. Pending changes are now properly flushed
+  // (saved) to the OLD job below instead of just being discarded, so no
+  // confirmation step is needed for safety.
+  if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId
+      && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
+    clearTimeout(_syncTimer);
+    setSyncStatus('Saving "' + CURRENT_JOB_ID + '" before switching...');
+    try {
+      await syncToCloud(CURRENT_JOB_ID, collectState());
+    } catch(e) {
+      console.error('Flush before job switch failed:', e);
     }
+  } else {
+    // Flush any pending save FIRST so we don't race a stale save after we switch jobs.
+    clearTimeout(_syncTimer);
   }
-
-  // Flush any pending save FIRST so we don't race a stale save after we switch jobs.
-  clearTimeout(_syncTimer);
 
  _savesSuspended = true;
   CURRENT_JOB_ID = jobId;
@@ -3569,8 +3590,7 @@ async function loadJob() {
     if (!Array.isArray(rows)) {
       setSyncStatus('Load failed — see console');
       console.error('Load response not an array:', rows);
-      _savesSuspended = false;
-      return;
+      throw new Error('Load response not an array');
     }
 
     // Build snapshot + state
@@ -3633,12 +3653,15 @@ async function loadJob() {
     }
 
   } catch(e) {
-    setSyncStatus('Load failed');
+    setSyncStatus('Load failed — tap LOAD to retry');
     console.error('Load error:', e);
+  } finally {
+    // restoreState handles its own un-suspend; if it didn't run, un-suspend here
+    setTimeout(() => { _savesSuspended = false; }, 2200);
+    _loadInFlight = false;
+    const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
+    if (loadBtn) { loadBtn.disabled = false; loadBtn.style.opacity = ''; loadBtn.style.cursor = ''; }
   }
-
-  // restoreState handles its own un-suspend; if it didn't run, un-suspend here
-  setTimeout(() => { _savesSuspended = false; }, 2200);
 }
 
 function setSyncStatus(msg) {
