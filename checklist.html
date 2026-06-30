@@ -511,7 +511,23 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <button class="btn btn-outline" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2);" onclick="dismissRestore()">Dismiss</button>
     </div>
   </div>
-
+<!-- ═══════════════════════════════════════════════════════════
+     PRE-OVERHAUL CONDITION PHOTOS
+═══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-preoverhaul">
+  <div class="section-header" onclick="toggleSection('sec-preoverhaul')">
+    <div class="section-num" style="background:#475569;">P</div>
+    <div class="section-title-wrap">
+      <div class="section-title">Pre-Overhaul Condition Photos</div>
+      <div class="section-subtitle">Captured before teardown &nbsp;|&nbsp; Grouped by component &nbsp;|&nbsp; Included in Customer Report</div>
+    </div>
+    <div class="section-badges"><span class="badge badge-gray" id="badge-sec-preoverhaul">0 photos</span></div>
+    <span class="chevron">&#9660;</span>
+  </div>
+  <div class="section-body">
+    <div style="padding:1.25rem 1.5rem;" id="preoverhaul-groups"></div>
+  </div>
+</div>
   <!-- ═══════════════════════════════════════════════════════════
        SECTION 1 — CRANKSHAFT INSPECTION & MEASUREMENT
   ═══════════════════════════════════════════════════════════ -->
@@ -1526,8 +1542,11 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
           <button class="polish-btn" style="background:#FEF2F2;color:#991B1B;border-color:#FECACA;" onclick="clearSummaryNotes()">&#10005; Clear Summary</button>
         </div>
       </div>
-      <!-- FLAGGED ITEMS PANEL -->
+    <!-- FLAGGED ITEMS PANEL -->
       <div id="flagged-panel-wrap"></div>
+
+      <div class="report-section-title" id="rpt-preoverhaul-title" style="display:none;">Pre-Overhaul Condition Photos</div>
+      <div id="rpt-preoverhaul-section"></div>
 
       <div class="report-section-title">Measurement &amp; Inspection Details</div>
       <table class="report-meas-table">
@@ -1579,14 +1598,21 @@ function injectJobUI() {
     <button onclick="loadJob()" style="background:var(--gold);color:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">LOAD</button>
     <span id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Barlow',sans-serif;flex-basis:100%;text-align:center;"></span>
   `;
-  header.insertBefore(jobDiv, header.firstChild);
+ header.insertBefore(jobDiv, header.firstChild);
   const lastJob = localStorage.getItem('tsi_last_job_id');
   if (lastJob) {
     const el = document.getElementById('job-id-input');
     if (el) el.value = lastJob;
   }
+  // Live-update the restore banner as the user types a different WO#,
+  // so it never shows backup data for the wrong job.
+  const jobInput = document.getElementById('job-id-input');
+  if (jobInput) {
+    jobInput.addEventListener('input', () => {
+      if (typeof checkRestore === 'function') checkRestore();
+    });
+  }
 }
-
 // ── Wire every input to trigger debounced autosave ──
 function attachAutoSaveListeners() {
   const handler = () => { if (typeof autoSave === 'function') autoSave(); };
@@ -1607,8 +1633,16 @@ function attachAutoSaveListeners() {
 // ── Check for unsaved local backup on startup ──
 function checkRestore() {
   try {
-    const raw = localStorage.getItem('tsi_cummins_83g_v5');
-    if (!raw) return;
+    const key = getLocalBackupKey();
+    if (!key) {
+      dismissRestore();
+      return;
+    }
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      dismissRestore();
+      return;
+    }
     const banner = document.getElementById('restore-banner');
     if (banner) banner.style.display = 'flex';
   } catch(e) { /* ignore */ }
@@ -1616,19 +1650,19 @@ function checkRestore() {
 
 function doRestore() {
   try {
-    const raw = localStorage.getItem('tsi_cummins_83g_v5');
+    const key = getLocalBackupKey();
+    if (!key) return;
+    const raw = localStorage.getItem(key);
     if (!raw) return;
     const state = JSON.parse(raw);
     if (typeof restoreState === 'function') restoreState(state);
   } catch(e) { console.error('Restore failed', e); }
   dismissRestore();
 }
-
 function dismissRestore() {
   const banner = document.getElementById('restore-banner');
   if (banner) banner.style.display = 'none';
 }
-
 
 // ══ SECTION 1 — CRANKSHAFT ══
 const sec1Meas=[
@@ -1926,7 +1960,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec5','vi5',viSec5);
   buildVIItems('vi-sec7','vi7',viSec7);
   buildVIItems('vi-sec8','vi8',viSec8);
-
+buildVIItems('vi-sec8','vi8',viSec8);
+  buildPreOverhaulSection();
   // Pre-populate Section 9 with 8 empty rows (one per 30-min interval)
   for (let i = 0; i < 8; i++) { if (typeof lbAddRow === 'function') lbAddRow(); }
 
@@ -3194,7 +3229,8 @@ function collectState() {
   if (typeof collectLbState === 'function') {
     state.lb = collectLbState();
   }
-
+// Pre-overhaul condition photos (serialized as single JSON blob)
+  state.preOverhaulPhotos = JSON.parse(JSON.stringify(preOverhaulPhotos));
   // Parts — serialize the whole list as one array (rows grow/shrink, not a fixed schema)
   state.parts = [];
   for (let i = 1; i <= partRowId; i++) {
@@ -3241,7 +3277,7 @@ function flattenState(state) {
   flat['lb_data'] = JSON.stringify(state.lb || {});
   return flat;
 }
-
+flat['preoverhaul_photos'] = JSON.stringify(state.preOverhaulPhotos || {});
 // ── RESTORE STATE ──
 function restoreState(state) {
   if (!state) return;
@@ -3299,7 +3335,12 @@ function restoreState(state) {
     if (typeof restoreLbState === 'function') {
       restoreLbState(state.lb || null);
     }
-
+// Restore pre-overhaul condition photos
+    Object.keys(preOverhaulPhotos).forEach(k => delete preOverhaulPhotos[k]);
+    Object.entries(state.preOverhaulPhotos || {}).forEach(([gid, arr]) => {
+      preOverhaulPhotos[gid] = Array.isArray(arr) ? arr.slice() : [];
+    });
+    if (typeof buildPreOverhaulSection === 'function') buildPreOverhaulSection();
     // Parts — clear existing rows, then recreate from saved state
     const partsTbody = document.getElementById('parts-tbody');
     if (partsTbody) partsTbody.innerHTML = '';
@@ -3468,9 +3509,13 @@ async function loadJob() {
   // Flush any pending save FIRST so we don't race a stale save after we switch jobs.
   clearTimeout(_syncTimer);
 
-  _savesSuspended = true;
+ _savesSuspended = true;
   CURRENT_JOB_ID = jobId;
   localStorage.setItem('tsi_last_job_id', jobId);
+  // Cloud data is now authoritative for this job — purge any stale local
+  // backup for this WO# and hide the restore banner.
+  try { localStorage.removeItem('tsi_local_backup_' + jobId); } catch(e) {}
+  dismissRestore();
   setSyncStatus('Loading...');
 
   try {
@@ -3500,7 +3545,7 @@ async function loadJob() {
 
     // Build snapshot + state
     const snapshot = {};
-    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] };
+   const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} };
     rows.forEach(row => {
       const { field_id, field_value } = row;
       snapshot[field_id] = field_value;
@@ -3531,10 +3576,15 @@ async function loadJob() {
           const list = JSON.parse(field_value || '[]');
           if (Array.isArray(list)) state.parts = list;
         } catch(e) { /* ignore */ }
-      } else if (field_id === 'lb_data') {
+    } else if (field_id === 'lb_data') {
         try {
           const lb = JSON.parse(field_value || '{}');
           if (lb && typeof lb === 'object') state.lb = lb;
+        } catch(e) { /* ignore */ }
+      } else if (field_id === 'preoverhaul_photos') {
+        try {
+          const po = JSON.parse(field_value || '{}');
+          if (po && typeof po === 'object') state.preOverhaulPhotos = po;
         } catch(e) { /* ignore */ }
       }
     });
@@ -3545,7 +3595,7 @@ async function loadJob() {
     if (rows.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data
       // into this one on the next autosave.
-      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[] });
+      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
       setSyncStatus('New job — ready (form cleared)');
     } else {
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
@@ -3574,18 +3624,21 @@ function autoSave() {
   _syncTimer = setTimeout(async () => {
     if (_savesSuspended) return;
     if (!CURRENT_JOB_ID) {
-      // No active job. Check if user has typed a Job # but hasn't LOADed it yet.
+      // No active job loaded yet. If a Job # has been typed, save a local
+      // backup KEYED TO THAT JOB # so it can never bleed into another WO.
       const input = document.getElementById('job-id-input');
       const typed = input ? input.value.trim() : '';
       if (typed) {
-        setSyncStatus('⚠ Click LOAD to start syncing "' + typed + '"');
-      } else {
-        // Genuinely no job — fall back to localStorage for browser-recovery
         try {
           const state = collectState();
-          localStorage.setItem('tsi_cummins_83g_v5', JSON.stringify(state));
-          setSyncStatus('Saved locally (no job # entered)');
+          localStorage.setItem('tsi_local_backup_' + typed, JSON.stringify(state));
+          setSyncStatus('⚠ Saved locally for "' + typed + '" — click LOAD to sync to cloud');
         } catch(e) {}
+      } else {
+        // No job # typed at all — nothing to key the backup to, so don't save.
+        // (This is intentional: a generic/shared key is what caused the
+        // WO-2026-001 / WO-2026-002 data-bleed bug.)
+        setSyncStatus('Enter a Job # to begin');
       }
       return;
     }
@@ -3948,3 +4001,109 @@ function hideOfflineBanner() {
 // END SAFETY PROTECTIONS
 // ══════════════════════════════════════════════════════════════════════════════
 </script>
+// ══ PRE-OVERHAUL CONDITION PHOTOS ══
+const preOverhaulPhotos = {}; // { sectionId: [{url, caption}] }
+
+function buildPreOverhaulSection() {
+  const wrap = document.getElementById('preoverhaul-groups');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  sectionDefs.forEach(def => {
+    const gid = def.id;
+    if (!preOverhaulPhotos[gid]) preOverhaulPhotos[gid] = [];
+    const card = document.createElement('div');
+    card.style.cssText = 'margin-bottom:1.25rem;background:white;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;';
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--navy);flex:1;">${def.title}</div>
+        <button class="photo-btn" onclick="document.getElementById('po-input-${gid}').click()">&#128247; Add Photos</button>
+        <input type="file" accept="image/*" capture="environment" id="po-input-${gid}" style="display:none;" multiple onchange="handlePreOverhaulUpload('${gid}',this)">
+      </div>
+      <div class="po-photo-grid" id="po-grid-${gid}" style="display:flex;flex-wrap:wrap;gap:.75rem;"></div>
+    `;
+    wrap.appendChild(card);
+  });
+  renderAllPreOverhaulThumbs();
+  updatePreOverhaulBadge();
+}
+
+async function handlePreOverhaulUpload(gid, input) {
+  if (!input.files || !input.files.length) return;
+  if (!CURRENT_JOB_ID) {
+    alert('Enter a Job # and click LOAD before adding photos.');
+    input.value = '';
+    return;
+  }
+  if (!preOverhaulPhotos[gid]) preOverhaulPhotos[gid] = [];
+  setSyncStatus('Uploading photo…');
+  const files = Array.from(input.files);
+  for (const file of files) {
+    try {
+      const compressed = await compressImage(file);
+      const publicUrl = await uploadPhotoToStorage(CURRENT_JOB_ID, 'preoverhaul-' + gid, compressed);
+      preOverhaulPhotos[gid].push({ url: publicUrl, caption: '' });
+      renderPreOverhaulThumbs(gid);
+    } catch (err) {
+      console.error('Pre-overhaul photo upload failed', err);
+      alert('Photo upload failed: ' + err.message);
+    }
+  }
+  input.value = '';
+  updatePreOverhaulBadge();
+  autoSave();
+}
+
+function renderPreOverhaulThumbs(gid) {
+  const grid = document.getElementById('po-grid-' + gid);
+  if (!grid) return;
+  const photos = preOverhaulPhotos[gid] || [];
+  grid.innerHTML = photos.map((p, idx) => `
+    <div class="po-photo-item" style="width:130px;">
+      <img src="${p.url}" style="width:130px;height:95px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;display:block;" onclick="openLightbox_report('${p.url}')">
+      <input class="po-caption-input" value="${(p.caption||'').replace(/"/g,'&quot;')}" placeholder="Caption..."
+        style="width:130px;margin-top:4px;font-size:10px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;font-family:'Barlow',sans-serif;"
+        oninput="updatePreOverhaulCaption('${gid}',${idx},this.value)">
+      <button onclick="deletePreOverhaulPhoto('${gid}',${idx})" style="font-size:10px;color:var(--fail);background:none;border:none;cursor:pointer;margin-top:2px;padding:0;">&#10005; Remove</button>
+    </div>
+  `).join('');
+}
+
+function renderAllPreOverhaulThumbs() {
+  sectionDefs.forEach(def => renderPreOverhaulThumbs(def.id));
+}
+
+function updatePreOverhaulCaption(gid, idx, val) {
+  if (!preOverhaulPhotos[gid] || !preOverhaulPhotos[gid][idx]) return;
+  preOverhaulPhotos[gid][idx].caption = val;
+  autoSave();
+}
+
+function updatePreOverhaulBadge() {
+  const badge = document.getElementById('badge-sec-preoverhaul');
+  if (!badge) return;
+  const total = Object.values(preOverhaulPhotos).reduce((sum, arr) => sum + arr.length, 0);
+  badge.textContent = total + ' photo' + (total === 1 ? '' : 's');
+  badge.className = total > 0 ? 'badge badge-gold' : 'badge badge-gray';
+}
+
+async function deletePreOverhaulPhoto(gid, idx) {
+  const photos = preOverhaulPhotos[gid] || [];
+  const photo = photos[idx];
+  if (!photo) return;
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const i = photo.url.indexOf(marker);
+  if (i !== -1) {
+    const path = decodeURI(photo.url.substring(i + marker.length));
+    try {
+      await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+    } catch(e) { console.warn('Storage delete failed (continuing anyway):', e); }
+  }
+  photos.splice(idx, 1);
+  renderPreOverhaulThumbs(gid);
+  updatePreOverhaulBadge();
+  autoSave();
+}
