@@ -1960,7 +1960,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildVIItems('vi-sec5','vi5',viSec5);
   buildVIItems('vi-sec7','vi7',viSec7);
   buildVIItems('vi-sec8','vi8',viSec8);
-buildVIItems('vi-sec8','vi8',viSec8);
   buildPreOverhaulSection();
   // Pre-populate Section 9 with 8 empty rows (one per 30-min interval)
   for (let i = 0; i < 8; i++) { if (typeof lbAddRow === 'function') lbAddRow(); }
@@ -3305,9 +3304,9 @@ function flattenState(state) {
   flat['parts_list'] = JSON.stringify(state.parts || []);
   // Section 9 load bank data serialized as single JSON blob
   flat['lb_data'] = JSON.stringify(state.lb || {});
+  flat['preoverhaul_photos'] = JSON.stringify(state.preOverhaulPhotos || {});
   return flat;
 }
-flat['preoverhaul_photos'] = JSON.stringify(state.preOverhaulPhotos || {});
 // ── RESTORE STATE ──
 function restoreState(state) {
   if (!state) return;
