@@ -1956,6 +1956,12 @@ const sectionDefs=[
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
   _savesSuspended = true;
+  // CRITICAL: always reset job state on page load. CURRENT_JOB_ID and
+  // _lastServerSnapshot may survive in JS heap from a previous session
+  // (especially in incognito/PWA). Without this, autoSave fires 1 second
+  // after load and writes stale DOM state to the last-open job, contaminating it.
+  CURRENT_JOB_ID = null;
+  _lastServerSnapshot = null;
   injectJobUI();
   buildMeasTable('tbody-1', sec1Meas);
   buildMeasTable('tbody-2', sec2Meas);
