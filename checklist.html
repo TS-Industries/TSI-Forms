@@ -3639,15 +3639,17 @@ async function loadJob() {
       }
     });
 
-    // Cache snapshot for the data-loss guard
-    _lastServerSnapshot = snapshot;
-
+    // Cache snapshot for the data-loss guard — but only if the job has actual data.
+    // For empty/new jobs we want null so the server-wins merge in autoSave()
+    // never fills blank fields from a previous job's snapshot.
     if (rows.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data
-      // into this one on the next autosave.
+      _lastServerSnapshot = {};
       restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
-      setSyncStatus('New job — ready (form cleared)');
+      updateProgress();
+      setSyncStatus('✓ New job — form cleared and ready');
     } else {
+      _lastServerSnapshot = snapshot;
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
       setSyncStatus('✓ Loaded ' + rows.filter(r => isPresent(r.field_value)).length + ' values');
     }
