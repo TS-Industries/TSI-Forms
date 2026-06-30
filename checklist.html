@@ -3561,6 +3561,7 @@ async function loadJob() {
 
  _savesSuspended = true;
   CURRENT_JOB_ID = jobId;
+  _lastServerSnapshot = null; // clear immediately — must not carry stale WO data into the new job
   localStorage.setItem('tsi_last_job_id', jobId);
   // Cloud data is now authoritative for this job — purge any stale local
   // backup for this WO# and hide the restore banner.
