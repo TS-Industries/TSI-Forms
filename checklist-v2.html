@@ -1583,6 +1583,13 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 </div>
 
 <script>
+// ── Core state variables — declared first so DOMContentLoaded reset works ──
+let CURRENT_JOB_ID = null;
+let _lastServerSnapshot = null;
+let _savesSuspended = false;
+let _syncTimer = null;
+let _loadInFlight = false;
+
 const PASS_C='#065F46', FAIL_C='#991B1B', GOLD='#D97706';
 
 // ── Job ID UI (injected into header) ──
@@ -3175,7 +3182,7 @@ const BLANK_OVERWRITE_REFUSE_COUNT = 5; // refuse save that blanks this many exi
 const SUPABASE_URL = 'https://skbdamrynkzxdfjhmawj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrYmRhbXJ5bmt6eGRmamhtYXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODU5MjAsImV4cCI6MjA5MTk2MTkyMH0.JSIr-FKc-u3vqEhFdDNVt_9Y_tKiRCSAguDM7H0LSOQ';
 const TABLE = 'overhaul_data';
-let CURRENT_JOB_ID = null;
+// CURRENT_JOB_ID declared at top of script
 
 // Wrapper for all Supabase REST calls — auth headers applied last so caller options
 // can't accidentally clobber them.
@@ -3193,9 +3200,8 @@ async function sbFetch(path, options = {}) {
   return res;
 }
 
-let _savesSuspended = false;    // hard suspend (during load/restore) — no saves at all
-let _lastServerSnapshot = null; // last-known DB state for this job, {field_id: field_value}
-let _syncTimer = null;          // debounce handle for autoSave
+// ── Core state (declared at top of script) ──
+// CURRENT_JOB_ID, _lastServerSnapshot, _savesSuspended, _syncTimer, _loadInFlight
 
 // ── helpers ──
 // A value is "blank" only if it's null/undefined or empty string.
@@ -3547,8 +3553,6 @@ async function forceNextSave() {
 }
 
 // ── LOAD JOB ──
-let _loadInFlight = false; // prevents overlapping loadJob() calls (double-tap/click race)
-
 async function loadJob() {
   if (_loadInFlight) {
     setSyncStatus('⏳ Already loading — please wait...');
