@@ -3666,7 +3666,7 @@ async function loadJob() {
     console.error('Load error:', e);
   } finally {
     // restoreState handles its own un-suspend; if it didn't run, un-suspend here
-    setTimeout(() => { _savesSuspended = false; }, 2200);
+    setTimeout(() => { _savesSuspended = false; }, 5000);
     _loadInFlight = false;
     const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
     if (loadBtn) { loadBtn.disabled = false; loadBtn.style.opacity = ''; loadBtn.style.cursor = ''; }
@@ -3707,6 +3707,14 @@ function autoSave() {
     // SAFETY: if a job is active but we have no server snapshot, refuse.
     if (_lastServerSnapshot === null) {
       setSyncStatus('⚠ Click LOAD first — no snapshot to compare against');
+      return;
+    }
+    // SAFETY: if the typed Job # doesn't match the loaded job, refuse.
+    // This prevents stale DOM state from a previous job being saved to the
+    // new job during the transition window between switching work orders.
+    const typedJobId = (document.getElementById('job-id-input') || {}).value || '';
+    if (typedJobId.trim() && typedJobId.trim() !== CURRENT_JOB_ID) {
+      setSyncStatus('⚠ Job # changed — click LOAD to switch jobs');
       return;
     }
     const state = collectState();
