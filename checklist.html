@@ -5047,7 +5047,7 @@ function buildLbReport() {
         <div class="rpt-photo-grid">
           ${lbPhotos.map((src, i) => `
             <div class="rpt-photo-item">
-              <img src="${src}" onclick="openLightbox_report('${src}')" title="Load Bank Run Photo ${i+1}">
+              <img src="${src}" crossorigin="anonymous" onclick="openLightbox_report('${src}')" title="Load Bank Run Photo ${i+1}">
               <div class="rpt-photo-caption">Load Bank Run<br><span style="color:var(--navy);">Photo ${i+1} of ${lbPhotos.length}</span></div>
             </div>`).join('')}
         </div>
@@ -5191,35 +5191,17 @@ async function exportReportPDF(){
   try {
     await new Promise(r => setTimeout(r, 150));
 
-    // ── PHOTO QUALITY FIX: enlarge photos to natural size before capture ──
-    // html2canvas screenshots whatever is on screen. If photos are tiny
-    // thumbnails (150px), they get stretched in the PDF and look blurry.
-    // Temporarily set each photo to its natural full resolution before capture.
-    const photoImgs = [...modal.querySelectorAll('.rpt-photo-item img, .rpt-photo-grid img')];
-    const photoStyles = photoImgs.map(img => ({
-      width: img.style.width, height: img.style.height,
-      maxWidth: img.style.maxWidth, maxHeight: img.style.maxHeight
-    }));
-    photoImgs.forEach(img => {
-      img.style.width = img.naturalWidth + 'px';
-      img.style.height = img.naturalHeight + 'px';
-      img.style.maxWidth = 'none';
-      img.style.maxHeight = 'none';
-    });
-    await new Promise(r => setTimeout(r, 200)); // let layout settle
-
+    const scale = 2;
+    // Base capture: normal thumbnail sizes. This gives correct layout/pagination.
+    // Photo sharpness is fixed afterward by overlaying full-res images (see below) —
+    // we intentionally do NOT resize the on-screen <img> elements here, because
+    // .rpt-photo-item has max-width:160px and blowing photos up to their natural
+    // size (often 1600px, per MAX_DIM in compressImage()) would overflow that box
+    // and wreck the grid layout across every page.
     const canvas = await html2canvas(modal, {
-      scale: 2, useCORS: true, allowTaint: true,
+      scale, useCORS: true, allowTaint: true,
       backgroundColor: '#ffffff', logging: false,
       windowWidth: modal.scrollWidth, windowHeight: modal.scrollHeight
-    });
-
-    // Restore photo sizes
-    photoImgs.forEach((img, i) => {
-      img.style.width = photoStyles[i].width;
-      img.style.height = photoStyles[i].height;
-      img.style.maxWidth = photoStyles[i].maxWidth;
-      img.style.maxHeight = photoStyles[i].maxHeight;
     });
 
     const { jsPDF } = window.jspdf;
@@ -5227,7 +5209,7 @@ async function exportReportPDF(){
     const margins = 10;
     const pageW = pdf.internal.pageSize.getWidth() - margins * 2;
     const pageH = pdf.internal.pageSize.getHeight() - margins * 2;
-    const ratio = canvas.width / pageW;
+    const ratio = canvas.width / pageW;   // canvas px per mm
     const pageHeightPx = pageH * ratio;
     let yPos = 0, pageNum = 0;
     while (yPos < canvas.height) {
@@ -5239,6 +5221,53 @@ async function exportReportPDF(){
       pdf.addImage(pc.toDataURL('image/jpeg', 0.98), 'JPEG', margins, margins, pageW, sliceH / ratio);
       yPos += sliceH; pageNum++;
     }
+    const totalPages = pageNum;
+
+    // ── HIGH-RESOLUTION PHOTO OVERLAY ──
+    // The base capture above rasterizes each thumbnail at low pixel density
+    // (that's why photos looked blurry). Paint the real, full-resolution photo
+    // directly on top at the exact same position/size so printed photos are
+    // sharp, without touching page layout or pagination.
+    function offsetRel(el, ancestor) {
+      let top = 0, left = 0, node = el;
+      while (node && node !== ancestor) { top += node.offsetTop || 0; left += node.offsetLeft || 0; node = node.offsetParent; }
+      return { top, left };
+    }
+    const photoImgs = [...modal.querySelectorAll('.rpt-photo-item img')];
+    for (const img of photoImgs) {
+      if (!img.complete || !img.naturalWidth) continue;
+      const { top, left } = offsetRel(img, modal);
+      const dispW = img.offsetWidth, dispH = img.offsetHeight;
+      const canvasX = left * scale, canvasY = top * scale, canvasW = dispW * scale, canvasH = dispH * scale;
+      const pIdx = Math.floor(canvasY / pageHeightPx);
+      const yOnPage = canvasY - pIdx * pageHeightPx;
+      if (pIdx < 0 || pIdx >= totalPages) continue;
+      if (yOnPage + canvasH > pageHeightPx) continue; // photo straddles a page break — keep base render as fallback
+
+      // Crop the natural image to match the displayed aspect ratio (object-fit: cover)
+      const targetAR = dispW / dispH;
+      const srcAR = img.naturalWidth / img.naturalHeight;
+      let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+      if (srcAR > targetAR) { sw = img.naturalHeight * targetAR; sx = (img.naturalWidth - sw) / 2; }
+      else if (srcAR < targetAR) { sh = img.naturalWidth / targetAR; sy = (img.naturalHeight - sh) / 2; }
+
+      const outW = Math.min(sw, 900), outH = outW / targetAR; // cap output size to keep PDF file size reasonable
+      try {
+        const oc = document.createElement('canvas');
+        oc.width = outW; oc.height = outH;
+        oc.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+        const dataUrl = oc.toDataURL('image/jpeg', 0.92);
+        pdf.setPage(pIdx + 1);
+        const xMm = margins + canvasX / ratio, yMm = margins + yOnPage / ratio;
+        const wMm = canvasW / ratio, hMm = canvasH / ratio;
+        pdf.addImage(dataUrl, 'JPEG', xMm, yMm, wMm, hMm);
+      } catch (e) {
+        // CORS-tainted canvas (e.g. viewing a cached copy of this file that predates
+        // the crossorigin fix on the <img> tags) — leave the base thumbnail as-is.
+        console.warn('High-res photo overlay skipped (likely CORS):', e.message);
+      }
+    }
+
     const wo = (document.getElementById('uf-wo') || {}).value || CURRENT_JOB_ID || 'Report';
     pdf.save(('TSI-' + wo + '-Overhaul-Report.pdf').replace(/[^a-zA-Z0-9\-_.]/g, '-'));
   } catch(err) {
@@ -5629,7 +5658,7 @@ function buildPreOverhaulReportSection(){
     photos.forEach(p => {
       const caption = (p.caption || 'Pre-overhaul condition').replace(/"/g,'&quot;');
       html += `<div class="rpt-photo-item">
-        <img src="${p.url}" onclick="openLightbox_report('${p.url}')" title="${caption}">
+        <img src="${p.url}" crossorigin="anonymous" onclick="openLightbox_report('${p.url}')" title="${caption}">
         <div class="rpt-photo-caption">${caption}</div>
       </div>`;
     });
@@ -5699,7 +5728,7 @@ function buildPhotoGallery(sectionDefs){
     let html=`<div class="rpt-photo-section-title">${def.title} — ${sectionPhotos.length} photo${sectionPhotos.length>1?'s':''}</div><div class="rpt-photo-grid">`;
     sectionPhotos.forEach(p=>{
       html+=`<div class="rpt-photo-item">
-        <img src="${p.src}" onclick="openLightbox_report('${p.src}')" title="${p.label}">
+        <img src="${p.src}" crossorigin="anonymous" onclick="openLightbox_report('${p.src}')" title="${p.label}">
         <div class="rpt-photo-caption">${p.label}<br><span class="${p.statusCls}">${p.status}</span></div>
       </div>`;
     });
