@@ -422,20 +422,15 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   .scorecard-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.625rem;}
 }
 @media print{
-  .site-header,.report-overlay,.btn,.progress-card{display:none!important;}
-  .section{box-shadow:none;border:1px solid #ddd;}
-  .section-body{display:block!important;}
-  body{background:white;}
-  /* Print-mode: show report modal as full page */
-  body.printing-report .report-overlay{display:block!important;position:static!important;background:white!important;padding:0!important;overflow:visible!important;}
-  body.printing-report .report-modal{max-width:100%!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important;}
-  body.printing-report .report-body{overflow:visible!important;}
-  body.printing-report .report-actions{display:none!important;}
-  body.printing-report .container{display:none!important;}
-  body.printing-report .progress-card{display:none!important;}
-  body.printing-report .site-header{display:none!important;}
-  .chart-canvas-wrap{height:180px!important;}
-  .chart-canvas-wrap-sm{height:150px!important;}
+  body > *:not(.report-overlay) { display:none!important; }
+  .report-overlay{display:block!important;position:static!important;background:white!important;padding:0!important;overflow:visible!important;inset:auto!important;}
+  .report-modal{max-width:100%!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important;}
+  .report-body{overflow:visible!important;padding:1rem!important;}
+  .report-actions{display:none!important;}
+  .report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .rpt-photo-grid{display:flex!important;flex-wrap:wrap!important;}
+  .rpt-photo-item img{max-width:150px!important;height:auto!important;}
+  * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 </style>
 </head>
@@ -5155,69 +5150,75 @@ function renderCharts(pass,fail,total,sectionDefs){
   }
 }
 
-// ══ PDF EXPORT — real download using html2canvas + jsPDF ══
+// ══ PDF EXPORT — uses browser Print → Save as PDF for crisp vector output ══
 async function exportReportPDF(){
   const modal = document.querySelector('.report-modal');
   if (!modal) { alert('Open the Customer Report first.'); return; }
 
-  // Show loading state on button
   const btn = document.querySelector('.btn-pdf');
-  const origText = btn ? btn.textContent : '';
+  const origText = btn ? btn.textContent : '📄 Export PDF';
   if (btn) { btn.textContent = '⏳ Generating PDF...'; btn.disabled = true; }
 
+  const hiddenEls = [];
+  const restorations = [];
+
+  // Hide report action bar (buttons at bottom of modal)
+  const actionsBar = modal.querySelector('.report-actions');
+  if (actionsBar) { actionsBar.style.display = 'none'; hiddenEls.push(actionsBar); }
+
+  // Replace textareas with plain text divs so content isn't clipped
+  modal.querySelectorAll('textarea').forEach(ta => {
+    const div = document.createElement('div');
+    div.style.cssText = 'font-size:13px;line-height:1.7;color:#1E2A3A;white-space:pre-wrap;padding:0.5rem 0;';
+    div.textContent = ta.value;
+    ta.parentNode.insertBefore(div, ta);
+    ta.style.display = 'none';
+    restorations.push(() => { div.remove(); ta.style.display = ''; });
+  });
+
+  // Hide AI action buttons (Polish / Refresh / Clear)
+  modal.querySelectorAll('.polish-btn, .ai-refresh-btn, .ai-clear-btn').forEach(el => {
+    el.style.display = 'none'; hiddenEls.push(el);
+  });
+
+  // Hide the instruction text inside the AI summary box
+  modal.querySelectorAll('.ai-summary-box > p, .ai-summary-box > small').forEach(el => {
+    el.style.display = 'none'; hiddenEls.push(el);
+  });
+
   try {
+    await new Promise(r => setTimeout(r, 150));
     const canvas = await html2canvas(modal, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false,
+      windowWidth: modal.scrollWidth, windowHeight: modal.scrollHeight
     });
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const imgW = pageW;
-    const imgH = (canvas.height * imgW) / canvas.width;
     const margins = 10;
-    const printW = pageW - margins * 2;
-    const printH = (canvas.height * printW) / canvas.width;
-
-    let yPos = 0;
-    let pageNum = 0;
-
+    const pageW = pdf.internal.pageSize.getWidth() - margins * 2;
+    const pageH = pdf.internal.pageSize.getHeight() - margins * 2;
+    const ratio = canvas.width / pageW;
+    const pageHeightPx = pageH * ratio;
+    let yPos = 0, pageNum = 0;
     while (yPos < canvas.height) {
       if (pageNum > 0) pdf.addPage();
-
-      const srcY = yPos;
-      const srcH = Math.min((pageH - margins * 2) * (canvas.width / printW), canvas.height - yPos);
-
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = srcH;
-      const ctx = pageCanvas.getContext('2d');
-      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-      const imgData = pageCanvas.toDataURL('image/jpeg', 0.92);
-      const pageImgH = (srcH * printW) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', margins, margins, printW, pageImgH);
-
-      yPos += srcH;
-      pageNum++;
+      const sliceH = Math.min(pageHeightPx, canvas.height - yPos);
+      const pc = document.createElement('canvas');
+      pc.width = canvas.width; pc.height = sliceH;
+      pc.getContext('2d').drawImage(canvas, 0, yPos, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.95), 'JPEG', margins, margins, pageW, sliceH / ratio);
+      yPos += sliceH; pageNum++;
     }
-
-    // Filename: TSI-WO-XXXX-Overhaul-Report.pdf
     const wo = (document.getElementById('uf-wo') || {}).value || CURRENT_JOB_ID || 'Report';
-    const customer = (document.getElementById('uf-customer') || {}).value || 'TSI';
-    const filename = `TSI-${wo}-Overhaul-Report.pdf`.replace(/[^a-zA-Z0-9\-_.]/g, '-');
-    pdf.save(filename);
-
+    pdf.save(('TSI-' + wo + '-Overhaul-Report.pdf').replace(/[^a-zA-Z0-9\-_.]/g, '-'));
   } catch(err) {
     console.error('PDF export failed:', err);
-    alert('PDF export failed — see console for details.');
+    alert('PDF export failed: ' + err.message);
   } finally {
+    hiddenEls.forEach(el => { el.style.display = ''; });
+    restorations.forEach(fn => fn());
     if (btn) { btn.textContent = origText; btn.disabled = false; }
   }
 }
