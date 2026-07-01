@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <!-- COMMIT: b6a2e79b580bd1e446f669af1e05159ac0b665ed -->
-<!-- saved from url=(0059)https://ts-industries.github.io/TSI-Forms/checklist-v2.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3945,7 +3944,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   <button id="lb-delete-btn" onclick="event.stopPropagation();deleteCurrentPhoto()" style="position:absolute;top:1rem;left:1.5rem;background:rgba(220,38,38,0.9);color:white;border:none;border-radius:6px;padding:8px 14px;font-family:&#39;Barlow Condensed&#39;,sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
     🗑️ DELETE PHOTO
   </button>
-  <img id="lb-img" src="https://ts-industries.github.io/TSI-Forms/checklist-v2.html" alt="Photo" onclick="event.stopPropagation()">
+  <img id="lb-img" src="" alt="Photo" onclick="event.stopPropagation()">
 </div>
 
 <!-- ══ AUTO-SAVE BAR ══ -->
@@ -6167,46 +6166,52 @@ async function loadJob() {
     setSyncStatus('⏳ Already loading — please wait...');
     return;
   }
+
   const input = document.getElementById('job-id-input');
   const jobId = input ? input.value.trim() : '';
-  if (!jobId) { alert('Enter a job number first.'); return; }
-  _loadInFlight = true;
   const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
-  if (loadBtn) { loadBtn.disabled = true; loadBtn.style.opacity = '0.5'; loadBtn.style.cursor = 'not-allowed'; }
 
-  // NOTE: this used to show a native confirm() popup before switching jobs.
-  // confirm() is unreliable on mobile browsers and standalone/PWA "Add to
-  // Home Screen" installs — many silently auto-dismiss it and return false
-  // immediately, causing loadJob() to bail out before ever switching, which
-  // looks exactly like "the app reverted to the old WO and the new one never
-  // loaded." Removed entirely. Pending changes are now properly flushed
-  // (saved) to the OLD job below instead of just being discarded, so no
-  // confirmation step is needed for safety.
-  if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId
-      && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
-    clearTimeout(_syncTimer);
-    setSyncStatus('Saving "' + CURRENT_JOB_ID + '" before switching...');
-    try {
-      await syncToCloud(CURRENT_JOB_ID, collectState());
-    } catch(e) {
-      console.error('Flush before job switch failed:', e);
-    }
-  } else {
-    // Flush any pending save FIRST so we don't race a stale save after we switch jobs.
-    clearTimeout(_syncTimer);
+  if (!jobId) {
+    alert('Enter a job number first.');
+    return;
   }
 
- _savesSuspended = true;
-  CURRENT_JOB_ID = jobId;
-  _lastServerSnapshot = null; // clear immediately — must not carry stale WO data into the new job
-  localStorage.setItem('tsi_last_job_id', jobId);
-  // Cloud data is now authoritative for this job — purge any stale local
-  // backup for this WO# and hide the restore banner.
-  try { localStorage.removeItem('tsi_local_backup_' + jobId); } catch(e) {}
-  dismissRestore();
-  setSyncStatus('Loading...');
+  _loadInFlight = true;
+  if (loadBtn) { loadBtn.disabled = true; loadBtn.style.opacity = '0.5'; loadBtn.style.cursor = 'not-allowed'; }
 
   try {
+    // NOTE: this used to show a native confirm() popup before switching jobs.
+    // confirm() is unreliable on mobile browsers and standalone/PWA "Add to
+    // Home Screen" installs — many silently auto-dismiss it and return false
+    // immediately, causing loadJob() to bail out before ever switching, which
+    // looks exactly like "the app reverted to the old WO and the new one never
+    // loaded." Removed entirely. Pending changes are now properly flushed
+    // (saved) to the OLD job below instead of just being discarded, so no
+    // confirmation step is needed for safety.
+    if (CURRENT_JOB_ID && CURRENT_JOB_ID !== jobId
+        && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
+      clearTimeout(_syncTimer);
+      setSyncStatus('Saving "' + CURRENT_JOB_ID + '" before switching...');
+      try {
+        await syncToCloud(CURRENT_JOB_ID, collectState());
+      } catch(e) {
+        console.error('Flush before job switch failed:', e);
+      }
+    } else {
+      // Flush any pending save FIRST so we don't race a stale save after we switch jobs.
+      clearTimeout(_syncTimer);
+    }
+
+    _savesSuspended = true;
+    CURRENT_JOB_ID = jobId;
+    _lastServerSnapshot = null; // clear immediately — must not carry stale WO data into the new job
+    localStorage.setItem('tsi_last_job_id', jobId);
+    // Cloud data is now authoritative for this job — purge any stale local
+    // backup for this WO# and hide the restore banner.
+    try { localStorage.removeItem('tsi_local_backup_' + jobId); } catch(e) {}
+    dismissRestore();
+    setSyncStatus('Loading...');
+
     // FIX B: ORDER BY updated_at DESC so newest rows come first; raise limit to 10 000
     // to cover worst-case duplicate accumulation from missing UNIQUE constraint.
     // Then deduplicate client-side — first occurrence per field_id = most recent value.
@@ -6232,7 +6237,7 @@ async function loadJob() {
 
     // Build snapshot + state
     const snapshot = {};
-   const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} };
+    const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} };
     rows.forEach(row => {
       const { field_id, field_value } = row;
       snapshot[field_id] = field_value;
@@ -6263,7 +6268,7 @@ async function loadJob() {
           const list = JSON.parse(field_value || '[]');
           if (Array.isArray(list)) state.parts = list;
         } catch(e) { /* ignore */ }
-    } else if (field_id === 'lb_data') {
+      } else if (field_id === 'lb_data') {
         try {
           const lb = JSON.parse(field_value || '{}');
           if (lb && typeof lb === 'object') state.lb = lb;
@@ -6292,7 +6297,6 @@ async function loadJob() {
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
       setSyncStatus('✓ Loaded ' + rows.filter(r => isPresent(r.field_value)).length + ' values');
     }
-
   } catch(e) {
     setSyncStatus('Load failed — tap LOAD to retry');
     console.error('Load error:', e);
@@ -6300,7 +6304,6 @@ async function loadJob() {
     // restoreState handles its own un-suspend; if it didn't run, un-suspend here
     setTimeout(() => { _savesSuspended = false; }, 500);
     _loadInFlight = false;
-    const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
     if (loadBtn) { loadBtn.disabled = false; loadBtn.style.opacity = ''; loadBtn.style.cursor = ''; }
   }
 }
@@ -6677,6 +6680,11 @@ window.addEventListener('online', () => {
     syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'reconnect' });
   }
 });
+
+function setSyncStatus(msg) {
+  const el = document.getElementById('sync-status');
+  if (el) el.textContent = msg;
+}
 
 function showOfflineBanner() {
   let banner = document.getElementById('offline-banner');
