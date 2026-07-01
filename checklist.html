@@ -5229,9 +5229,9 @@ async function exportReportPDF(){
     // directly on top at the exact same position/size so printed photos are
     // sharp, without touching page layout or pagination.
     function offsetRel(el, ancestor) {
-      let top = 0, left = 0, node = el;
-      while (node && node !== ancestor) { top += node.offsetTop || 0; left += node.offsetLeft || 0; node = node.offsetParent; }
-      return { top, left };
+      const elRect = el.getBoundingClientRect();
+      const ancRect = ancestor.getBoundingClientRect();
+      return { top: elRect.top - ancRect.top, left: elRect.left - ancRect.left };
     }
     const photoImgs = [...modal.querySelectorAll('.rpt-photo-item img')];
     for (const img of photoImgs) {
@@ -5322,11 +5322,16 @@ async function polishNotes(textareaId){
   }
 
   if(btn){btn.disabled=true;btn.innerHTML='⏳ Polishing...';}
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
+  try {
+  await new Promise(r => setTimeout(r, 150));
+
+  const scale = 2;
+  // Ensure modal and inner scroll positions are at top so html2canvas captures
+  // elements at their expected offsets (prevents overlapping photos).
+  modal.scrollTop = 0;
+  modal.querySelectorAll('*').forEach(el => { if (el.scrollTop) el.scrollTop = 0; });
+
+  // Base capture: normal thumbnail sizes. This gives correct layout/pagination.
         'x-api-key':apiKey,
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
