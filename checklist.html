@@ -4750,6 +4750,7 @@ function saveJSON(){
   a.download=`${wo||'NoWO'}_Checklist.json`;
   a.click();
 }
+window.saveJSON = saveJSON;
 
 // ══ REPORT ══
 function openReport(){
@@ -5321,17 +5322,12 @@ async function polishNotes(textareaId){
     apiKey=apiKey.trim();
   }
 
-  if(btn){btn.disabled=true;btn.innerHTML='⏳ Polishing...';}
-  try {
-  await new Promise(r => setTimeout(r, 150));
-
-  const scale = 2;
-  // Ensure modal and inner scroll positions are at top so html2canvas captures
-  // elements at their expected offsets (prevents overlapping photos).
-  modal.scrollTop = 0;
-  modal.querySelectorAll('*').forEach(el => { if (el.scrollTop) el.scrollTop = 0; });
-
-  // Base capture: normal thumbnail sizes. This gives correct layout/pagination.
+  if(btn){btn.disabled=true;btn.innerHTML='ΓÅ│ Polishing...';}
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
         'x-api-key':apiKey,
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
@@ -5344,15 +5340,15 @@ async function polishNotes(textareaId){
     });
     if(resp.status===401){
       localStorage.removeItem('tsi_ak');
-      alert('Invalid API key — key has been cleared. Please click Set Key and re-enter.');
-      if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
+      alert('Invalid API key ΓÇö key has been cleared. Please click Set Key and re-enter.');
+      if(btn){btn.disabled=false;btn.innerHTML='Γ£¿ Polish with AI';}
       return;
     }
     if(!resp.ok){
       const errData=await resp.json().catch(()=>({}));
       console.error('Anthropic HTTP '+resp.status, errData);
       alert('API error '+resp.status+': '+(errData.error?.message||'Unknown error'));
-      if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
+      if(btn){btn.disabled=false;btn.innerHTML='Γ£¿ Polish with AI';}
       return;
     }
     const data=await resp.json();
@@ -5360,12 +5356,12 @@ async function polishNotes(textareaId){
       ta.value=data.content[0].text;
     } else {
       console.error('Anthropic response:', JSON.stringify(data));
-      alert('AI polish failed — Error: '+(data.error?.message||data.type||JSON.stringify(data)));
+      alert('AI polish failed ΓÇö Error: '+(data.error?.message||data.type||JSON.stringify(data)));
     }
   } catch(e){
     alert('Could not connect to Anthropic API. Check your internet connection and try again.');
   }
-  if(btn){btn.disabled=false;btn.innerHTML='✨ Polish with AI';}
+  if(btn){btn.disabled=false;btn.innerHTML='Γ£¿ Polish with AI';}
 }
 
 // ══ PHOTO ATTACHMENT ══
@@ -6312,6 +6308,7 @@ async function loadJob() {
     if (loadBtn) { loadBtn.disabled = false; loadBtn.style.opacity = ''; loadBtn.style.cursor = ''; }
   }
 }
+window.loadJob = loadJob;
 // ── AUTO-SAVE (debounced, suspend-aware) ──
 function autoSave() {
   if (_savesSuspended) {
