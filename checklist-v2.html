@@ -4040,6 +4040,26 @@ const PASS_C='#065F46', FAIL_C='#991B1B', GOLD='#D97706';
 function injectJobUI() {
   const header = document.querySelector('.header-inner');
   if (!header) return;
+
+  // Fix applied: Guard at top of injectJobUI() — if job-id-input already exists in DOM,
+  // skip injection and only attach the input listener.
+  if (document.getElementById('job-id-input')) {
+    const jobInput = document.getElementById('job-id-input');
+    if (jobInput) {
+      jobInput.addEventListener('input', () => {
+        if (typeof checkRestore === 'function') checkRestore();
+        const typed = jobInput.value.trim();
+        if (typed !== CURRENT_JOB_ID) {
+          _lastServerSnapshot = null;
+          clearTimeout(_syncTimer);
+          _syncTimer = null;
+          if (typed) setSyncStatus('Click LOAD to switch to "' + typed + '"');
+        }
+      });
+    }
+    return;
+  }
+
   const jobDiv = document.createElement('div');
   jobDiv.className = 'header-job';
   jobDiv.innerHTML = `
@@ -4049,7 +4069,7 @@ function injectJobUI() {
     <button onclick="loadJob()" style="background:var(--gold);color:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">LOAD</button>
     <span id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Barlow',sans-serif;flex-basis:100%;text-align:center;"></span>
   `;
- header.insertBefore(jobDiv, header.firstChild);
+  header.insertBefore(jobDiv, header.firstChild);
   const lastJob = localStorage.getItem('tsi_last_job_id');
   if (lastJob) {
     const el = document.getElementById('job-id-input');
@@ -5999,7 +6019,8 @@ function dismissGuardBanner() {
 async function forceNextSave() {
   dismissGuardBanner();
   if (!CURRENT_JOB_ID) return;
-  if (!confirm('You are about to overwrite existing values with blanks. This is usually a mistake. Proceed?')) return;
+  // Fix applied: Removed confirm() as it is unreliable on mobile/PWA.
+  // The user has already clicked through the data-loss guard banner to get here.
   await syncToCloud(CURRENT_JOB_ID, collectState(), { force: true, source: 'manual-force' });
 }
 
@@ -6123,7 +6144,8 @@ async function loadJob() {
     // never fills blank fields from a previous job's snapshot.
     if (rows.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data
-      _lastServerSnapshot = {};
+      // Fix applied: _lastServerSnapshot = null for empty jobs so server-wins merge doesn't contaminate them.
+      _lastServerSnapshot = null;
       restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
       updateProgress();
       setSyncStatus('✓ New job — form cleared and ready');
