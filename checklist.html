@@ -5202,7 +5202,7 @@ async function exportReportPDF(){
     const canvas = await html2canvas(modal, {
       scale, useCORS: true, allowTaint: true,
       backgroundColor: '#ffffff', logging: false,
-      windowWidth: modal.scrollWidth, windowHeight: modal.scrollHeight
+      windowHeight: modal.scrollHeight
     });
 
     const { jsPDF } = window.jspdf;
@@ -5252,12 +5252,12 @@ async function exportReportPDF(){
       if (srcAR > targetAR) { sw = img.naturalHeight * targetAR; sx = (img.naturalWidth - sw) / 2; }
       else if (srcAR < targetAR) { sh = img.naturalWidth / targetAR; sy = (img.naturalHeight - sh) / 2; }
 
-      const outW = Math.min(sw, 900), outH = outW / targetAR; // cap output size to keep PDF file size reasonable
+      const outW = Math.min(sw, 1200), outH = outW / targetAR; // cap output size while keeping embedded photos sharp
       try {
         const oc = document.createElement('canvas');
         oc.width = outW; oc.height = outH;
         oc.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
-        const dataUrl = oc.toDataURL('image/jpeg', 0.92);
+        const dataUrl = oc.toDataURL('image/jpeg', 0.96);
         pdf.setPage(pIdx + 1);
         const xMm = margins + canvasX / ratio, yMm = margins + yOnPage / ratio;
         const wMm = canvasW / ratio, hMm = canvasH / ratio;
@@ -6280,9 +6280,10 @@ async function loadJob() {
     // For empty/new jobs we want null so the server-wins merge in autoSave()
     // never fills blank fields from a previous job's snapshot.
     if (rows.length === 0) {
-      // New/empty job — clear the form so we don't carry over the previous job's data
-      // Fix applied: _lastServerSnapshot = null for empty jobs so server-wins merge doesn't contaminate them.
-      _lastServerSnapshot = null;
+      // New/empty job — clear the form so we don't carry over the previous job's data.
+      // Use an empty snapshot object so autosave is allowed for this freshly loaded
+      // blank job, while still preventing stale server values from overwriting.
+      _lastServerSnapshot = {};
       restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
       updateProgress();
       setSyncStatus('✓ New job — form cleared and ready');
@@ -6297,21 +6298,22 @@ async function loadJob() {
     console.error('Load error:', e);
   } finally {
     // restoreState handles its own un-suspend; if it didn't run, un-suspend here
-    setTimeout(() => { _savesSuspended = false; }, 5000);
+    setTimeout(() => { _savesSuspended = false; }, 500);
     _loadInFlight = false;
     const loadBtn = document.querySelector('.header-job button[onclick="loadJob()"]');
     if (loadBtn) { loadBtn.disabled = false; loadBtn.style.opacity = ''; loadBtn.style.cursor = ''; }
   }
 }
-
-function setSyncStatus(msg) {
-  const el = document.getElementById('sync-status');
-  if (el) el.textContent = msg;
-}
-
 // ── AUTO-SAVE (debounced, suspend-aware) ──
 function autoSave() {
-  if (_savesSuspended) return;
+  if (_savesSuspended) {
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(() => {
+      _syncTimer = null;
+      if (!_savesSuspended) autoSave();
+    }, 500);
+    return;
+  }
   clearTimeout(_syncTimer);
   setSyncStatus('Saving...');
   _syncTimer = setTimeout(async () => {
@@ -6337,7 +6339,7 @@ function autoSave() {
     }
     // SAFETY: if a job is active but we have no server snapshot, refuse.
     if (_lastServerSnapshot === null) {
-      setSyncStatus('⚠ Click LOAD first — no snapshot to compare against');
+      setSyncStatus('⚠ Click LOAD first — this Job # is not loaded yet. After loading it, changes will save to cloud.');
       return;
     }
     // SAFETY: if the typed Job # doesn't match the loaded job, refuse.
@@ -6345,7 +6347,7 @@ function autoSave() {
     // new job during the transition window between switching work orders.
     const typedJobId = (document.getElementById('job-id-input') || {}).value || '';
     if (typedJobId.trim() && typedJobId.trim() !== CURRENT_JOB_ID) {
-      setSyncStatus('⚠ Job # changed — click LOAD to switch jobs');
+      setSyncStatus('⚠ Job # changed since loading — click LOAD to switch jobs before saving.');
       return;
     }
     const state = collectState();
