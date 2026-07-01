@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- COMMIT: zoom-fix-v1 -->
+<!-- COMMIT: self-contained-html-v1 -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5152,7 +5152,7 @@ function renderCharts(pass,fail,total,sectionDefs){
 }
 
 // ══ PDF EXPORT — uses browser Print → Save as PDF for crisp vector output ══
-function exportReportHTML(){
+async function exportReportHTML(){
   // Ensure the report is open and populated
   const modal = document.querySelector('.report-modal');
   if (!modal) { alert('Open the Customer Report first.'); return; }
@@ -5192,26 +5192,56 @@ function exportReportHTML(){
     if (d.textContent.includes('automatically pulled')) d.remove();
   });
   // Make all photo images clickable via lightbox in the exported HTML
+    // Convert any image URL (Supabase https:// or data:) to a base64 data URI
+  // so the exported HTML is fully self-contained — works offline and in email clients
+  async function toDataURI(src) {
+    if (!src) return '';
+    if (src.startsWith('data:')) return src;
+    try {
+      const resp = await fetch(src);
+      const blob = await resp.blob();
+      return await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(blob);
+      });
+    } catch(e) {
+      console.warn('Could not embed photo as base64:', src, e);
+      return src;
+    }
+  }
+
+  const allPhotoImgs = Array.from(tempDiv.querySelectorAll(
+    '.rpt-photo-item img, .po-photo-item img, .rpt-lb-photo img, [onclick*="openLightbox_report"]'
+  ));
+
+  // Show progress indicator while photos are being embedded
+  const exportBtn = document.querySelector('[onclick="exportReportHTML()"]');
+  const origBtnText = exportBtn ? exportBtn.textContent : '';
+  if (exportBtn) { exportBtn.textContent = '\u23f3 Embedding photos (' + allPhotoImgs.length + ')...'; exportBtn.disabled = true; }
+
+  // Fetch and convert all photos to base64 in parallel
+  const b64Results = await Promise.all(
+    allPhotoImgs.map(img => toDataURI(img.src || img.getAttribute('src') || ''))
+  );
+
+  if (exportBtn) { exportBtn.textContent = origBtnText; exportBtn.disabled = false; }
+
   let photoIdx = 0;
   const photoData = [];
-  // Collect ALL photos: pre-overhaul (po-photo-item), measurement section (rpt-photo-item),
-  // and load bank photos. Wire each one to openLB(idx) for the exported lightbox.
-  const allPhotoImgs = tempDiv.querySelectorAll(
-    '.rpt-photo-item img, .po-photo-item img, .rpt-lb-photo img, [onclick*="openLightbox_report"]'
-  );
-  allPhotoImgs.forEach(img => {
-    const src = img.src || img.getAttribute('src') || '';
-    if (!src) return;
-    // Get caption from nearest caption element or title attribute
+  allPhotoImgs.forEach((img, i) => {
+    const b64src = b64Results[i];
+    if (!b64src) return;
     const captionEl = img.closest('.rpt-photo-item')?.querySelector('.rpt-photo-caption')
                    || img.closest('.po-photo-item')?.querySelector('div:last-child');
     const caption = captionEl?.textContent?.trim() || img.title || img.alt || '';
-    photoData.push({ src, caption });
+    photoData.push({ src: b64src, caption });
     const idx = photoIdx++;
+    img.setAttribute('src', b64src); // embed base64 directly in the img tag
     img.style.cursor = 'pointer';
     img.setAttribute('onclick', 'openLB(' + idx + ')');
-    img.removeAttribute('title'); // avoid tooltip competing with lightbox
-    // Ensure consistent sizing for rpt-photo-item images
+    img.removeAttribute('title');
     if (img.closest('.rpt-photo-item')) {
       img.style.width = '210px';
       img.style.height = '154px';
