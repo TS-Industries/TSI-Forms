@@ -5328,7 +5328,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;color:var(--
   </div>
 </div>
 
-<script>
+<scr'+'ipt>
 const _photos = ${photoDataJSON};
 let _idx = 0;
 function openLB(i){ _idx=i; _updateLB(); document.getElementById('lb').classList.add('open'); document.body.style.overflow='hidden'; }
@@ -5336,7 +5336,7 @@ function closeLB(){ document.getElementById('lb').classList.remove('open'); docu
 function navLB(d){ _idx=(_idx+d+_photos.length)%_photos.length; _updateLB(); }
 function _updateLB(){ const p=_photos[_idx]; document.getElementById('lb-img').src=p.src; document.getElementById('lb-cap').textContent=p.caption; document.getElementById('lb-ctr').textContent=(_idx+1)+' / '+_photos.length; }
 document.addEventListener('keydown',e=>{ if(!document.getElementById('lb').classList.contains('open'))return; if(e.key==='ArrowLeft')navLB(-1); if(e.key==='ArrowRight')navLB(1); if(e.key==='Escape')closeLB(); });
-</script>
+</'+'script>
 </body>
 </html>`;
 
