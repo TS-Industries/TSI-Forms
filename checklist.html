@@ -5182,16 +5182,44 @@ async function exportReportPDF(){
   });
 
   // Hide the instruction text inside the AI summary box
-  modal.querySelectorAll('.ai-summary-box > p, .ai-summary-box > small').forEach(el => {
-    el.style.display = 'none'; hiddenEls.push(el);
+  modal.querySelectorAll('.ai-summary-box > p, .ai-summary-box > small, .ai-summary-box > div:not(.ai-badge)').forEach(el => {
+    if (el.textContent.includes('automatically pulled') || el.textContent.includes('Edit freely')) {
+      el.style.display = 'none'; hiddenEls.push(el);
+    }
   });
 
   try {
     await new Promise(r => setTimeout(r, 150));
+
+    // ── PHOTO QUALITY FIX: enlarge photos to natural size before capture ──
+    // html2canvas screenshots whatever is on screen. If photos are tiny
+    // thumbnails (150px), they get stretched in the PDF and look blurry.
+    // Temporarily set each photo to its natural full resolution before capture.
+    const photoImgs = [...modal.querySelectorAll('.rpt-photo-item img, .rpt-photo-grid img')];
+    const photoStyles = photoImgs.map(img => ({
+      width: img.style.width, height: img.style.height,
+      maxWidth: img.style.maxWidth, maxHeight: img.style.maxHeight
+    }));
+    photoImgs.forEach(img => {
+      img.style.width = img.naturalWidth + 'px';
+      img.style.height = img.naturalHeight + 'px';
+      img.style.maxWidth = 'none';
+      img.style.maxHeight = 'none';
+    });
+    await new Promise(r => setTimeout(r, 200)); // let layout settle
+
     const canvas = await html2canvas(modal, {
       scale: 2, useCORS: true, allowTaint: true,
       backgroundColor: '#ffffff', logging: false,
       windowWidth: modal.scrollWidth, windowHeight: modal.scrollHeight
+    });
+
+    // Restore photo sizes
+    photoImgs.forEach((img, i) => {
+      img.style.width = photoStyles[i].width;
+      img.style.height = photoStyles[i].height;
+      img.style.maxWidth = photoStyles[i].maxWidth;
+      img.style.maxHeight = photoStyles[i].maxHeight;
     });
 
     const { jsPDF } = window.jspdf;
@@ -5208,7 +5236,7 @@ async function exportReportPDF(){
       const pc = document.createElement('canvas');
       pc.width = canvas.width; pc.height = sliceH;
       pc.getContext('2d').drawImage(canvas, 0, yPos, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-      pdf.addImage(pc.toDataURL('image/jpeg', 0.95), 'JPEG', margins, margins, pageW, sliceH / ratio);
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.98), 'JPEG', margins, margins, pageW, sliceH / ratio);
       yPos += sliceH; pageNum++;
     }
     const wo = (document.getElementById('uf-wo') || {}).value || CURRENT_JOB_ID || 'Report';
