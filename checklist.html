@@ -8,8 +8,10 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Cummins C8.3G — Complete Engine Overhaul Checklist</title>
-<link href="./Cummins C8.3G — Complete Engine Overhaul Checklist_files/css2" rel="stylesheet">
-<script src="./Cummins C8.3G — Complete Engine Overhaul Checklist_files/chart.umd.min.js.download"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --navy:#1A3A5C;--navy-mid:#1E4D7B;--navy-light:#2563EB;
@@ -5153,20 +5155,71 @@ function renderCharts(pass,fail,total,sectionDefs){
   }
 }
 
-// ══ PDF EXPORT ══
-function exportReportPDF(){
-  // Ensure report overlay is open and visible
-  const overlay = document.getElementById('report-overlay');
-  if (!overlay || !overlay.classList.contains('open')) {
-    alert('Please open the Customer Report first, then click Export PDF.');
-    return;
+// ══ PDF EXPORT — real download using html2canvas + jsPDF ══
+async function exportReportPDF(){
+  const modal = document.querySelector('.report-modal');
+  if (!modal) { alert('Open the Customer Report first.'); return; }
+
+  // Show loading state on button
+  const btn = document.querySelector('.btn-pdf');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳ Generating PDF...'; btn.disabled = true; }
+
+  try {
+    const canvas = await html2canvas(modal, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const margins = 10;
+    const printW = pageW - margins * 2;
+    const printH = (canvas.height * printW) / canvas.width;
+
+    let yPos = 0;
+    let pageNum = 0;
+
+    while (yPos < canvas.height) {
+      if (pageNum > 0) pdf.addPage();
+
+      const srcY = yPos;
+      const srcH = Math.min((pageH - margins * 2) * (canvas.width / printW), canvas.height - yPos);
+
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = srcH;
+      const ctx = pageCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+      const imgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+      const pageImgH = (srcH * printW) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', margins, margins, printW, pageImgH);
+
+      yPos += srcH;
+      pageNum++;
+    }
+
+    // Filename: TSI-WO-XXXX-Overhaul-Report.pdf
+    const wo = (document.getElementById('uf-wo') || {}).value || CURRENT_JOB_ID || 'Report';
+    const customer = (document.getElementById('uf-customer') || {}).value || 'TSI';
+    const filename = `TSI-${wo}-Overhaul-Report.pdf`.replace(/[^a-zA-Z0-9\-_.]/g, '-');
+    pdf.save(filename);
+
+  } catch(err) {
+    console.error('PDF export failed:', err);
+    alert('PDF export failed — see console for details.');
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
   }
-  document.body.classList.add('printing-report');
-  // Longer delay to ensure DOM and styles are fully applied before print dialog opens
-  setTimeout(()=>{
-    window.print();
-    setTimeout(()=>document.body.classList.remove('printing-report'), 1000);
-  }, 600);
 }
 
 function updateAIKeyStatus(){
