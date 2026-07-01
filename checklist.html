@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- COMMIT: lightbox-fix-v2 -->
+<!-- COMMIT: zoom-fix-v1 -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5299,9 +5299,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;color:var(--
 .badge-pass{background:var(--pass-bg);color:var(--pass);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;}
 .badge-fail{background:var(--fail-bg);color:var(--fail);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;}
 .badge-gray{background:rgba(0,0,0,0.06);color:var(--gray);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;}
-.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;padding:1rem;}
 .lightbox.open{display:flex;flex-direction:column;}
-.lb-img{max-width:95vw;max-height:82vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
+.lb-img{max-width:95vw;max-height:82vh;border-radius:8px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,0.6);cursor:zoom-in;transition:transform .2s ease;transform-origin:center center;}
 .rpt-photo-item{position:relative;}
 .rpt-photo-item::after{content:"🔍 Click to enlarge";position:absolute;bottom:28px;left:0;right:0;text-align:center;background:rgba(26,58,92,0);color:transparent;font-size:10px;font-weight:700;transition:all .2s;pointer-events:none;padding:4px;}
 .rpt-photo-item:hover::after{background:rgba(26,58,92,0.7);color:white;}
@@ -5339,24 +5339,31 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;color:var(--
   <span class="lb-close" onclick="closeLB()">×</span>
   <img class="lb-img" id="lb-img" src="" alt="">
   <div class="lb-cap" id="lb-cap"></div>
-  <div class="lb-nav">
+    <div class="lb-nav">
     <button class="lb-btn" onclick="navLB(-1)">← Prev</button>
     <span class="lb-counter" id="lb-ctr"></span>
     <button class="lb-btn" onclick="navLB(1)">Next →</button>
+    <button class="lb-btn" onclick="zoomLB(-1)" title="Zoom out">−</button>
+    <button class="lb-btn" onclick="zoomLB(1)" title="Zoom in">+</button>
+    <button class="lb-btn" onclick="resetZoom()" title="Reset zoom">⊙</button>
   </div>
+  <div style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:.4rem;">Scroll to zoom  ·  Click image to toggle zoom  ·  ← → to navigate  ·  Esc to close</div>
 </div>
-
 </body>
 </html>`;
   // Build lightbox script block - script tags are split to avoid breaking HTML parser
   const lbLines = [
     'const _photos = ' + photoDataJSON + ';',
-    'let _idx = 0;',
-    'function openLB(i){_idx=i;_updateLB();document.getElementById("lb").classList.add("open");document.body.style.overflow="hidden";}',
-    'function closeLB(){document.getElementById("lb").classList.remove("open");document.body.style.overflow="";}',
-    'function navLB(d){_idx=(_idx+d+_photos.length)%_photos.length;_updateLB();}',
-    'function _updateLB(){var p=_photos[_idx];document.getElementById("lb-img").src=p.src;document.getElementById("lb-cap").textContent=p.caption;document.getElementById("lb-ctr").textContent=(_idx+1)+" / "+_photos.length;}',
-    'document.addEventListener("keydown",function(e){if(!document.getElementById("lb").classList.contains("open"))return;if(e.key==="ArrowLeft")navLB(-1);if(e.key==="ArrowRight")navLB(1);if(e.key==="Escape")closeLB();});'
+    'let _idx = 0, _zoom = 1;',
+    'function openLB(i){_idx=i;_zoom=1;_updateLB();document.getElementById("lb").classList.add("open");document.body.style.overflow="hidden";}',
+    'function closeLB(){document.getElementById("lb").classList.remove("open");document.body.style.overflow="";_zoom=1;var img=document.getElementById("lb-img");if(img)img.style.transform="scale(1)";}',
+    'function navLB(d){_idx=(_idx+d+_photos.length)%_photos.length;_zoom=1;_updateLB();}',
+    'function _updateLB(){var p=_photos[_idx];var img=document.getElementById("lb-img");img.src=p.src;img.style.transform="scale(1)";img.style.cursor="zoom-in";document.getElementById("lb-cap").textContent=p.caption;document.getElementById("lb-ctr").textContent=(_idx+1)+" / "+_photos.length;}',
+    'function zoomLB(dir){_zoom=Math.min(4,Math.max(0.5,_zoom+(dir*0.25)));var img=document.getElementById("lb-img");img.style.transform="scale("+_zoom+")";img.style.cursor=_zoom>1?"zoom-out":"zoom-in";}',
+    'function resetZoom(){_zoom=1;var img=document.getElementById("lb-img");if(img){img.style.transform="scale(1)";img.style.cursor="zoom-in";}}',
+    'document.addEventListener("keydown",function(e){if(!document.getElementById("lb").classList.contains("open"))return;if(e.key==="ArrowLeft")navLB(-1);if(e.key==="ArrowRight")navLB(1);if(e.key==="Escape")closeLB();if(e.key==="+"||e.key==="=")zoomLB(1);if(e.key==="-")zoomLB(-1);if(e.key==="0")resetZoom();});',
+    'document.addEventListener("wheel",function(e){if(!document.getElementById("lb").classList.contains("open"))return;e.preventDefault();zoomLB(e.deltaY<0?1:-1);},{passive:false});',
+    'document.getElementById && document.addEventListener("DOMContentLoaded",function(){var img=document.getElementById("lb-img");if(img)img.addEventListener("click",function(e){e.stopPropagation();if(_zoom>1)resetZoom();else zoomLB(1);});});'
   ];
   const lbScript = '<scr' + 'ipt>' + lbLines.join('\n') + '<\/scr' + 'ipt>';
   const finalHtml = html.replace('<\/body>', lbScript + '<\/body>');
