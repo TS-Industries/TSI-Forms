@@ -3976,10 +3976,9 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     <div class="report-body" id="report-body">
       <div class="ai-summary-box">
         <div class="ai-badge">OVERALL SUMMARY</div>
-        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">All technician notes from every section are automatically pulled in below. Edit freely — then use AI to polish into professional report language. Click <strong>Refresh Notes</strong> to re-pull notes after making changes.</div>
+        <div style="font-size:11px;color:#64748B;margin-bottom:.5rem;">All technician notes from every section are automatically pulled in below. Click <strong>Refresh Notes</strong> to re-pull notes after making changes.</div>
         <textarea id="rpt-summary-input" style="width:100%;min-height:140px;padding:.6rem .75rem;border:1.5px solid rgba(37,99,235,0.25);border-radius:7px;font-family:&#39;Barlow&#39;,sans-serif;font-size:13px;line-height:1.6;color:var(--dark);resize:vertical;background:white;" placeholder="Technician notes from all sections will appear here when you open the report..."></textarea>
         <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;">
-          <button class="polish-btn" onclick="polishNotes(&#39;rpt-summary-input&#39;)" id="polish-btn-rpt">✨ Polish with AI</button>
           <button class="polish-btn" style="background:#F1F5F9;color:#475569;border-color:#CBD5E1;" onclick="refreshSummaryNotes()">↻ Refresh Notes</button>
           <button class="polish-btn" style="background:#FEF2F2;color:#991B1B;border-color:#FECACA;" onclick="clearSummaryNotes()">✕ Clear Summary</button>
         </div>
@@ -5935,6 +5934,9 @@ function restoreState(state) {
       if (n) n.value = '';
     });
     document.querySelectorAll('.section-notes-input').forEach(el => { el.value = ''; });
+    // Clear the report summary textarea so it doesn't carry over from the previous job
+    const summaryReset = document.getElementById('rpt-summary-input');
+    if (summaryReset) summaryReset.value = '';
     document.querySelectorAll('.bolt-cb').forEach(cb => { cb.checked = false; });
 
     Object.entries(state.meta || {}).forEach(([k,v]) => {
