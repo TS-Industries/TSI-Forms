@@ -426,7 +426,8 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
   body{background:white;}
   /* Print-mode: show report modal as full page */
   body.printing-report .report-overlay{display:block!important;position:static!important;background:white!important;padding:0!important;overflow:visible!important;}
-  body.printing-report .report-modal{max-width:100%!important;box-shadow:none!important;border-radius:0!important;}
+  body.printing-report .report-modal{max-width:100%!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important;}
+  body.printing-report .report-body{overflow:visible!important;}
   body.printing-report .report-actions{display:none!important;}
   body.printing-report .container{display:none!important;}
   body.printing-report .progress-card{display:none!important;}
@@ -4019,7 +4020,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="report-actions">
       <button class="btn btn-pdf" onclick="exportReportPDF()">📄 Export PDF</button>
-      <button class="btn btn-gold" onclick="window.print()">🖨 Print</button>
+      <button class="btn btn-gold" onclick="exportReportPDF()">🖨 Print</button>
       <button class="btn btn-navy" onclick="saveJSON()">💾 Save Data (JSON)</button>
       <button class="btn btn-outline" style="color:var(--dark);border-color:var(--border);" onclick="closeReport()">✕ Close</button>
     </div>
@@ -5154,12 +5155,18 @@ function renderCharts(pass,fail,total,sectionDefs){
 
 // ══ PDF EXPORT ══
 function exportReportPDF(){
+  // Ensure report overlay is open and visible
+  const overlay = document.getElementById('report-overlay');
+  if (!overlay || !overlay.classList.contains('open')) {
+    alert('Please open the Customer Report first, then click Export PDF.');
+    return;
+  }
   document.body.classList.add('printing-report');
-  // Small delay to let charts render at print size
+  // Longer delay to ensure DOM and styles are fully applied before print dialog opens
   setTimeout(()=>{
     window.print();
-    setTimeout(()=>document.body.classList.remove('printing-report'),500);
-  },300);
+    setTimeout(()=>document.body.classList.remove('printing-report'), 1000);
+  }, 600);
 }
 
 function updateAIKeyStatus(){
