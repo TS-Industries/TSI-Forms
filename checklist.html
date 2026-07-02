@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- COMMIT: self-contained-html-v1 -->
+<!-- COMMIT: shareable-link-v1 -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4016,7 +4016,7 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
     </div>
     <div class="report-actions">
       <button class="btn btn-pdf" onclick="exportReportPDF()">📄 Export PDF</button>
-      <button class="btn" style="background:linear-gradient(135deg,#1E4D7B,#1A3A5C);color:white;border:none;" onclick="exportReportHTML()">🌐 Export HTML</button>
+      <button class="btn" style="background:linear-gradient(135deg,#1E4D7B,#1A3A5C);color:white;border:none;" onclick="exportReportHTML()">🔗 Share Report</button>
       <button class="btn btn-gold" onclick="exportReportPDF()">🖨 Print</button>
       <button class="btn btn-navy" onclick="saveJSON()">💾 Save Data (JSON)</button>
       <button class="btn btn-outline" style="color:var(--dark);border-color:var(--border);" onclick="closeReport()">✕ Close</button>
@@ -5192,22 +5192,41 @@ async function exportReportHTML(){
     if (d.textContent.includes('automatically pulled')) d.remove();
   });
   // Make all photo images clickable via lightbox in the exported HTML
-    // Convert any image URL (Supabase https:// or data:) to a base64 data URI
-  // so the exported HTML is fully self-contained — works offline and in email clients
+    // Fetch a photo URL and compress it to max 800px wide at 72% JPEG quality
+  // This keeps the exported HTML under ~5 MB even with 40 photos
   async function toDataURI(src) {
     if (!src) return '';
-    if (src.startsWith('data:')) return src;
     try {
-      const resp = await fetch(src);
-      const blob = await resp.blob();
-      return await new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result);
-        reader.onerror = rej;
-        reader.readAsDataURL(blob);
-      });
+      let imgEl;
+      if (src.startsWith('data:')) {
+        // Already base64 — load into an image element for resizing
+        imgEl = await new Promise((res, rej) => {
+          const i = new Image();
+          i.onload = () => res(i);
+          i.onerror = rej;
+          i.src = src;
+        });
+      } else {
+        const resp = await fetch(src);
+        const blob = await resp.blob();
+        const objUrl = URL.createObjectURL(blob);
+        imgEl = await new Promise((res, rej) => {
+          const i = new Image();
+          i.onload = () => { URL.revokeObjectURL(objUrl); res(i); };
+          i.onerror = rej;
+          i.src = objUrl;
+        });
+      }
+      // Resize to max 800px wide (keeps aspect ratio, reduces file size ~75%)
+      const MAX_W = 800;
+      let w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+      return canvas.toDataURL('image/jpeg', 0.72);
     } catch(e) {
-      console.warn('Could not embed photo as base64:', src, e);
+      console.warn('Could not compress photo:', src, e);
       return src;
     }
   }
@@ -5398,16 +5417,38 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;color:var(--
   const lbScript = '<scr' + 'ipt>' + lbLines.join('\n') + '<\/scr' + 'ipt>';
   const finalHtml = html.replace('<\/body>', lbScript + '<\/body>');
 
-  // Trigger download
-  const blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const safeWO = wo.replace(/[^a-zA-Z0-9\-_.]/g, '-');
-  a.download = 'TSI-' + safeWO + '-Overhaul-Report.html';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  // Save report HTML to Supabase DB and generate a shareable viewer link.
+  // The viewer page (report.html on GitHub Pages) fetches and renders the HTML by job ID.
+  if (exportBtn) { exportBtn.textContent = '☁️ Publishing...'; exportBtn.disabled = true; }
+  try {
+    const jobKey = CURRENT_JOB_ID || wo;
+    const saveRes = await fetch(SUPABASE_URL + '/rest/v1/overhaul_data', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify([{ job_id: jobKey, field_id: 'report_html', field_value: finalHtml }])
+    });
+    if (!saveRes.ok) throw new Error('Save failed: ' + await saveRes.text());
+    const viewerLink = 'https://ts-industries.github.io/TSI-Forms/report.html?job=' + encodeURIComponent(jobKey);
+    try { await navigator.clipboard.writeText(viewerLink); } catch(e) {}
+    alert('✅ Report published!\n\nShareable link (copied to clipboard):\n\n' + viewerLink + '\n\nPaste this link into your email.\nCustomers open it in any browser — no download required.');
+  } catch(err) {
+    console.error('Report publish failed:', err);
+    alert('Publish failed (' + err.message + ')\n\nFalling back to local download.');
+    const safeWO2 = (CURRENT_JOB_ID || wo).replace(/[^a-zA-Z0-9\-_.]/g, '-');
+    const fb = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
+    const fbUrl = URL.createObjectURL(fb);
+    const a = document.createElement('a');
+    a.href = fbUrl; a.download = 'TSI-' + safeWO2 + '-Overhaul-Report.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(fbUrl); a.remove(); }, 1000);
+  } finally {
+    if (exportBtn) { exportBtn.textContent = origBtnText; exportBtn.disabled = false; }
+  }
 }
 
 async function exportReportPDF(){
