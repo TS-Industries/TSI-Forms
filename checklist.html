@@ -5422,14 +5422,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;color:var(--
   if (exportBtn) { exportBtn.textContent = '☁️ Publishing...'; exportBtn.disabled = true; }
   try {
     const jobKey = CURRENT_JOB_ID || wo;
-    const saveRes = await fetch(SUPABASE_URL + '/rest/v1/overhaul_data', {
+    const saveRes = await fetch(WORKER_URL + '/api/job/' + encodeURIComponent(jobKey), {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify([{ job_id: jobKey, field_id: 'report_html', field_value: finalHtml }])
     });
     if (!saveRes.ok) throw new Error('Save failed: ' + await saveRes.text());
@@ -5666,7 +5661,7 @@ async function polishNotes(textareaId){
 // ══ PHOTO ATTACHMENT ══
 const photoStore = {};          // id -> array of public URLs
 const photoFieldsSeen = new Set();  // ids that have ever had photos this session (so deletions sync as empty)
-const BUCKET = 'overhaul-photos';
+const BUCKET = 'tsi-overhaul-photos'; // R2 bucket — managed by Worker
 const MAX_DIM = 1600;            // max px on longest side
 const JPEG_QUALITY = 0.85;
 
@@ -5691,26 +5686,19 @@ async function compressImage(file) {
   return await new Promise(res => canvas.toBlob(res, 'image/jpeg', JPEG_QUALITY));
 }
 
-// Upload a blob to Supabase Storage. Returns the public URL.
+// Upload a blob to Cloudflare R2 via Worker. Returns the public URL.
 async function uploadPhotoToStorage(jobId, fieldId, blob) {
-  const ext = 'jpg';
-  const ts = Date.now();
-  const rand = Math.random().toString(36).slice(2, 8);
-  const path = `${jobId}/${fieldId}/${ts}-${rand}.${ext}`;
-  const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': blob.type || 'image/jpeg',
-      'x-upsert': 'true'
-    },
-    body: blob
-  });
-  if (!res.ok) throw new Error('Upload failed: ' + res.status + ' ' + await res.text());
-  // Public URL (bucket must be public, or we use signed URLs — we'll use public for simplicity)
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(path)}`;
+  const res = await fetch(
+    WORKER_URL + '/api/photos/' + encodeURIComponent(jobId) + '/' + encodeURIComponent(fieldId),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': blob.type || 'image/jpeg' },
+      body: blob
+    }
+  );
+  if (!res.ok) throw new Error('Photo upload failed: ' + res.status + ' ' + await res.text());
+  const data = await res.json();
+  return data.url; // Worker returns { url, key }
 }
 
 async function handlePhotoUpload(id, input) {
@@ -5778,22 +5766,23 @@ async function deleteCurrentPhoto() {
   const url = photos[idx];
   if (!url) return;
 
-  // Parse the object path from the public URL so we can delete it from Storage
-  // Public URL format: {SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{path}
-  const marker = `/storage/v1/object/public/${BUCKET}/`;
-  const i = url.indexOf(marker);
-  if (i !== -1) {
-    const path = decodeURI(url.substring(i + marker.length));
-    try {
-      await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY
-        }
-      });
-    } catch(e) {
-      console.warn('Storage delete failed (continuing anyway):', e);
+  // Parse the object key from the Worker photo URL and delete via Worker
+  // URL format: {WORKER_URL}/photos/{jobId}/{fieldId}/{filename}
+  const photoBase = WORKER_URL + '/photos/';
+  if (url.startsWith(photoBase)) {
+    const objectKey = url.slice(photoBase.length); // jobId/fieldId/filename
+    const parts = objectKey.split('/');
+    if (parts.length >= 3) {
+      const [pJobId, pFieldId, ...rest] = parts;
+      const filename = rest.join('/');
+      try {
+        await fetch(
+          WORKER_URL + '/api/photos/' + encodeURIComponent(pJobId) + '/' + encodeURIComponent(pFieldId) + '/' + encodeURIComponent(filename),
+          { method: 'DELETE' }
+        );
+      } catch(e) {
+        console.warn('Photo delete failed (continuing anyway):', e);
+      }
     }
   }
 
@@ -6057,29 +6046,27 @@ function openLightbox_report(src){
 //  3. AUDIT HISTORY: every save snapshots into overhaul_data_history.
 //     Recoverable even if something slips past the other defenses.
 
-const HISTORY_TABLE = 'overhaul_data_history';
+const HISTORY_TABLE = 'overhaul_data_history'; // history is handled server-side
 const BLANK_OVERWRITE_REFUSE_COUNT = 5; // refuse save that blanks this many existing non-empty values
 
 // ── Supabase connection ──
-const SUPABASE_URL = 'https://skbdamrynkzxdfjhmawj.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrYmRhbXJ5bmt6eGRmamhtYXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODU5MjAsImV4cCI6MjA5MTk2MTkyMH0.JSIr-FKc-u3vqEhFdDNVt_9Y_tKiRCSAguDM7H0LSOQ';
-const TABLE = 'overhaul_data';
+// ── Cloudflare Worker backend (replaces Supabase) ──
+const WORKER_URL = 'https://tsi-overhaul-api.jason-184.workers.dev';
+const TABLE = 'overhaul_data'; // kept for compatibility — not used directly
 // CURRENT_JOB_ID declared at top of script
 
-// Wrapper for all Supabase REST calls — auth headers applied last so caller options
-// can't accidentally clobber them.
+// ── Cloudflare Worker fetch wrapper (replaces sbFetch) ──
+// Maintains the same call signature as the old sbFetch so no other code changes.
+// sbFetch is kept as a no-op stub — all API calls now go directly to WORKER_URL.
+// syncToCloud, loadJob, and photo functions all call fetch(WORKER_URL + ...) directly.
 async function sbFetch(path, options = {}) {
-  const { headers: callerHeaders = {}, ...rest } = options;
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    ...rest,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      ...callerHeaders
-    }
-  });
-  return res;
+  // History table calls — handled server-side by Worker
+  if (path.startsWith('overhaul_data_history')) {
+    return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
+  // Fallback (should not be reached in normal operation)
+  console.warn('[sbFetch] Unexpected call with path:', path);
+  return new Response(JSON.stringify({ error: 'unexpected sbFetch call' }), { status: 400 });
 }
 
 // ── Core state (declared at top of script) ──
@@ -6347,27 +6334,8 @@ function restoreState(state) {
 
 // ── WRITE TO HISTORY TABLE (best-effort, append-only) ──
 async function appendHistory(jobId, flat, source) {
-  try {
-    const rows = Object.entries(flat)
-      .filter(([,v]) => v !== undefined && v !== null)
-      .map(([field_id, field_value]) => ({
-        job_id: jobId,
-        field_id,
-        field_value: String(field_value),
-        source
-      }));
-    if (!rows.length) return;
-    // Batches of 200
-    for (let i = 0; i < rows.length; i += 200) {
-      const batch = rows.slice(i, i + 200);
-      await sbFetch(HISTORY_TABLE, {
-        method: 'POST',
-        body: JSON.stringify(batch)
-      });
-    }
-  } catch (e) {
-    console.warn('History append failed (non-fatal):', e);
-  }
+  // History is now appended server-side by the Cloudflare Worker during save.
+  // This function is kept as a no-op to avoid breaking callers.
 }
 
 // ── SAVE TO CLOUD ──
@@ -6406,7 +6374,8 @@ async function syncToCloud(jobId, state, opts = {}) {
     job_id: jobId,
     field_id,
     field_value: String(field_value || ''),
-    updated_at: now
+    updated_at: now,
+    source
   }));
 
   // Wrap upsert in try/catch and check res.ok on every batch.
@@ -6414,14 +6383,14 @@ async function syncToCloud(jobId, state, opts = {}) {
   try {
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const res = await sbFetch(TABLE + '?on_conflict=job_id,field_id', {
+      const res = await fetch(WORKER_URL + '/api/job/' + encodeURIComponent(jobId), {
         method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(batch)
       });
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
-        throw new Error('Supabase upsert failed (' + res.status + '): ' + errText.slice(0, 200));
+        throw new Error('Worker save failed (' + res.status + '): ' + errText.slice(0, 200));
       }
     }
     // Update snapshot with the merged values that were actually written
@@ -6518,10 +6487,9 @@ async function loadJob() {
     // FIX B: ORDER BY updated_at DESC so newest rows come first; raise limit to 10 000
     // to cover worst-case duplicate accumulation from missing UNIQUE constraint.
     // Then deduplicate client-side — first occurrence per field_id = most recent value.
-    const res = await sbFetch(
-      TABLE + '?job_id=eq.' + encodeURIComponent(jobId)
-            + '&order=updated_at.desc'
-            + '&limit=10000'
+    const res = await fetch(
+      WORKER_URL + '/api/job/' + encodeURIComponent(jobId),
+      { method: 'GET', headers: { 'Content-Type': 'application/json' } }
     );
     const rawRows = await res.json();
     // Deduplicate: keep only the first (= most-recent) occurrence of each field_id
@@ -7105,16 +7073,21 @@ async function deletePreOverhaulPhoto(gid, idx) {
   const photo = photos[idx];
   if (!photo) return;
   if (!confirm('Delete this photo? This cannot be undone.')) return;
-  const marker = `/storage/v1/object/public/${BUCKET}/`;
-  const i = photo.url.indexOf(marker);
-  if (i !== -1) {
-    const path = decodeURI(photo.url.substring(i + marker.length));
-    try {
-      await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
-        method: 'DELETE',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-      });
-    } catch(e) { console.warn('Storage delete failed (continuing anyway):', e); }
+  // Delete pre-overhaul photo from Cloudflare R2 via Worker
+  const photoBase2 = WORKER_URL + '/photos/';
+  if (photo.url && photo.url.startsWith(photoBase2)) {
+    const objectKey2 = photo.url.slice(photoBase2.length);
+    const parts2 = objectKey2.split('/');
+    if (parts2.length >= 3) {
+      const [pJobId2, pFieldId2, ...rest2] = parts2;
+      const filename2 = rest2.join('/');
+      try {
+        await fetch(
+          WORKER_URL + '/api/photos/' + encodeURIComponent(pJobId2) + '/' + encodeURIComponent(pFieldId2) + '/' + encodeURIComponent(filename2),
+          { method: 'DELETE' }
+        );
+      } catch(e) { console.warn('Photo delete failed (continuing anyway):', e); }
+    }
   }
   photos.splice(idx, 1);
   renderPreOverhaulThumbs(gid);
