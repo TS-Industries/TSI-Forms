@@ -270,6 +270,10 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 
 /* ── PARTS TRACKER ── */
 .parts-section{padding:1.25rem 1.5rem;}
+.parts-actions{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem;padding:.85rem 1rem;background:#F9FAFB;border:1px dashed var(--border);border-radius:6px;}
+.parts-actions-note{font-size:11px;color:var(--gray);line-height:1.5;max-width:60ch;}
+.parts-actions-note strong{color:var(--navy);}
+@media(max-width:640px){.parts-actions{flex-direction:column;align-items:stretch;}.parts-actions .btn{width:100%;}}
 .parts-table{width:100%;border-collapse:collapse;font-size:12px;}
 .parts-table th{background:var(--navy);color:white;padding:.5rem .75rem;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:left;}
 .parts-table td{padding:.4rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
@@ -2205,6 +2209,14 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
           </tr></thead>
           <tbody id="parts-tbody"></tbody>
         </table>
+
+        <div class="parts-actions">
+          <div class="parts-actions-note">
+            <strong>0-Hour Reorder Sheet</strong> — exports this parts list as a vendor-ready
+            spreadsheet you can email for a quote. Reuse it as the starting point for the next full overhaul.
+          </div>
+          <button class="btn btn-gold" onclick="exportPartsSheet()">&#128202; Export Parts Sheet (CSV)</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2931,6 +2943,88 @@ function delPartsRow(id){
   const r=document.getElementById('part-row-'+id);
   if(r) r.remove();
 }
+
+/* ── 0-HOUR REORDER SHEET EXPORT ───────────────────────────────────
+   Exports the parts list as a CSV the vendor can quote against, and
+   that becomes the starting template for the next 0-hour overhaul on
+   the same engine.
+
+   No pricing is stored or exported by TSI — the Unit Price / Ext Price
+   columns are left BLANK for the vendor to fill in with their quote.
+
+   CSV over XLSX deliberately: no library, works offline on a shop
+   tablet with no signal, opens directly in Excel and Sheets.
+   ────────────────────────────────────────────────────────────────── */
+function csvCell(v){
+  const s = (v == null ? '' : String(v));
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function exportPartsSheet(){
+  const parts = [];
+  // Walk actual rows in DOM order — robust to deleted rows and any row id.
+  document.querySelectorAll('#parts-tbody tr').forEach(row => {
+    const g = suffix => {
+      const el = row.querySelector('[id^="part-'+suffix+'-"]');
+      return el ? (el.value || '') : '';
+    };
+    const desc = g('desc'), num = g('num');
+    if(!desc && !num) return;                 // skip blank rows
+    parts.push({
+      desc, num,
+      qty:  g('qty'),
+      sup:  g('sup'),
+      cond: g('cond'),
+      note: g('note')
+    });
+  });
+
+  if(!parts.length){
+    alert('No parts entered yet.\n\nAdd parts to the Parts Used table first, then export.');
+    return;
+  }
+
+  const gv  = id => (document.getElementById(id) || {}).value || '';
+  const wo  = gv('job-id-input') || 'NO-WO';
+  const cust= gv('uf-customer');
+  const unit= gv('uf-unit') || gv('uf-serial');
+  const tech= gv('uf-tech');
+  const date= new Date().toISOString().slice(0,10);
+
+  const rows = [];
+  rows.push(['TRIPLE SPUR INDUSTRIES — PARTS REORDER SHEET']);
+  rows.push(['Cummins C8.3G — 0-Hour (Full) Overhaul']);
+  rows.push([]);
+  rows.push(['Work Order',    wo]);
+  rows.push(['Customer',      cust]);
+  rows.push(['Unit / Serial', unit]);
+  rows.push(['Technician',    tech]);
+  rows.push(['Exported',      date]);
+  rows.push([]);
+  rows.push(['VENDOR: please quote unit price, availability, and lead time in the columns provided.']);
+  rows.push([]);
+  rows.push(['#','Description','Part Number','Qty','Supplier','Condition','Notes',
+             'Unit Price (CAD)','Ext. Price (CAD)','Avail?','Lead Time']);
+  parts.forEach((p, i) => {
+    // Unit Price / Ext Price / Avail / Lead Time intentionally blank for the vendor.
+    rows.push([i+1, p.desc, p.num, p.qty, p.sup, p.cond, p.note, '', '', '', '']);
+  });
+  rows.push([]);
+  rows.push([`${parts.length} line items. Pricing to be completed by vendor.`]);
+
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TSI_Parts_Reorder_${wo}_${date}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
+  if(typeof setSyncStatus === 'function') setSyncStatus('Parts sheet exported');
+}
+
 
 // ══ PROGRESS TRACKING ══
 function updateProgress(){
