@@ -2826,8 +2826,22 @@ function validateMeas(id,min,max){
 function buildVIItems(containerId,prefix,items){
   const c=document.getElementById(containerId);
   if(!c) return;
+
+  // GUARD — do not double-build.
+  // These containers are ALREADY populated with their rows in the static HTML.
+  // Without this check, DOMContentLoaded appends a second identical copy of
+  // every row, producing DUPLICATE ELEMENT IDs. getElementById() then only
+  // ever returns the FIRST match, so tapping a bottom (duplicate) button
+  // silently toggles the TOP row's button instead — the bottom rows never
+  // highlight, and they wipe the selections above them.
+  //
+  // Skip any row that already exists. Sections whose rows are present in the
+  // HTML are left alone; a section that is genuinely empty still gets built,
+  // so this stays safe if the static markup is ever removed.
   items.forEach((label,i)=>{
     const id=`${prefix}-${i}`;
+    if(document.getElementById('vi-row-'+id)) return;   // already in the DOM — skip
+
     const div=document.createElement('div');
     div.className='vi-item';
     div.id='vi-row-'+id;
@@ -4503,6 +4517,71 @@ function flattenState(state) {
   return flat;
 }
 // ── RESTORE STATE ──
+/* ── CLEAR SAVED DATA ──────────────────────────────────────────────
+   Wires up the "Clear Saved Data" button, which previously called an
+   undefined function and silently did nothing — a tech could hit it
+   between jobs, see no error, assume the form was cleared, and start
+   the next WO on top of the previous job's data.
+
+   Deliberately SURGICAL. Does NOT use localStorage.clear(), which
+   would also wipe:
+     - tsi_ak                    → the Anthropic API key (breaks AI Polish)
+     - tsi_mobile_tip_dismissed  → the Add-to-Home-Screen banner returns
+
+   Reuses restoreState({}) rather than writing a second clearing routine.
+   An empty object passes the `if (!state) return` guard, so the existing
+   proven clear path runs with nothing to repopulate. One reset path, not two.
+   ────────────────────────────────────────────────────────────────── */
+function clearSavedData(){
+  const jobId = (typeof CURRENT_JOB_ID !== 'undefined' && CURRENT_JOB_ID)
+    ? CURRENT_JOB_ID
+    : (document.getElementById('job-id-input') || {}).value || '';
+
+  const label = jobId ? `Work Order ${jobId}` : 'this checklist';
+  const ok = window.confirm(
+    `Clear all saved data for ${label}?\n\n` +
+    `This wipes the local backup and resets every field, checkbox, ` +
+    `PASS/FAIL selection, photo, and note on this form.\n\n` +
+    `This cannot be undone.`
+  );
+  if(!ok) return;
+
+  try{
+    // Remove ONLY the backups for THIS job — leave other WOs' backups intact.
+    // Check every source the WO# could come from: the in-memory job id, the
+    // input field, and the last-job pointer. If CURRENT_JOB_ID was never set
+    // (e.g. tech typed a WO# but the job never loaded), the backup would
+    // otherwise be orphaned in storage and silently reload later.
+    const candidates = new Set();
+    if(jobId) candidates.add(jobId);
+    const lastId = localStorage.getItem('tsi_last_job_id');
+    if(lastId) candidates.add(lastId);
+
+    candidates.forEach(id => localStorage.removeItem('tsi_local_backup_' + id));
+
+    // Forget the prefilled WO#, or the form reloads straight back into it.
+    localStorage.removeItem('tsi_last_job_id');
+  }catch(e){
+    console.warn('clearSavedData: localStorage unavailable', e);
+  }
+
+  // Reset in-memory job state so the next save doesn't re-attach to the old WO.
+  if(typeof CURRENT_JOB_ID !== 'undefined')       CURRENT_JOB_ID = null;
+  if(typeof _lastServerSnapshot !== 'undefined')  _lastServerSnapshot = null;
+
+  // Reuse the existing clear path. restoreState({}) wipes every field,
+  // measurement, VI selection, photo, note, and bolt checkbox — then its
+  // finally-block calls updateProgress() and re-enables saves on its own.
+  if(typeof restoreState === 'function') restoreState({});
+  if(typeof restoreLbState === 'function') restoreLbState({});
+
+  const woField = document.getElementById('job-id-input');
+  if(woField) woField.value = '';
+
+  if(typeof dismissRestore === 'function') dismissRestore();
+  if(typeof setSyncStatus === 'function') setSyncStatus('Cleared');
+}
+
 function restoreState(state) {
   if (!state) return;
   _savesSuspended = true;
