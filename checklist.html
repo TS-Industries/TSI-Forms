@@ -217,10 +217,36 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 .vi-item-label{font-size:12px;font-weight:500;flex:1;}
 .vi-btns{display:flex;align-items:center;gap:.375rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
 .vi-btn{padding:4px 12px;border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.5px;cursor:pointer;border:1.5px solid transparent;transition:all .12s;}
-.vi-btn-pass{border-color:#D1FAE5;color:var(--pass);background:transparent;}
-.vi-btn-pass:hover,.vi-btn-pass.selected-pass{background:var(--pass-bg);border-color:var(--pass);}
-.vi-btn-fail{border-color:#FEE2E2;color:var(--fail);background:transparent;}
-.vi-btn-fail:hover,.vi-btn-fail.selected-fail{background:var(--fail-bg);border-color:var(--fail);}
+/* --- Unselected (resting) --- */
+.vi-btn-pass{border-color:#A7D8C0;color:var(--pass);background:transparent;}
+.vi-btn-fail{border-color:#EFB4B4;color:var(--fail);background:transparent;}
+/* --- Hover: subtle tint only. Must NOT resemble selected. --- */
+.vi-btn-pass:hover:not(.selected-pass){background:var(--pass-bg);}
+.vi-btn-fail:hover:not(.selected-fail){background:var(--fail-bg);}
+/* --- SELECTED: solid fill, white text, checkmark. Unmistakable. --- */
+.vi-btn-pass.selected-pass{
+  background:var(--pass);
+  border-color:var(--pass);
+  color:#fff;
+  box-shadow:0 0 0 2px rgba(6,95,70,.25);
+  transform:scale(1.04);
+}
+.vi-btn-fail.selected-fail{
+  background:var(--fail);
+  border-color:var(--fail);
+  color:#fff;
+  box-shadow:0 0 0 2px rgba(153,27,27,.25);
+  transform:scale(1.04);
+}
+.vi-btn.selected-pass::before,
+.vi-btn.selected-fail::before{content:'\2713\00a0';font-weight:900;}
+/* --- Dim the button that was NOT chosen, so the row reads at a glance --- */
+.vi-btns.has-selection .vi-btn:not(.selected-pass):not(.selected-fail){opacity:.4;}
+/* --- Row-level cue: colored left edge on the whole inspection item --- */
+.vi-item.vi-passed{border-left:4px solid var(--pass);background:rgba(209,250,229,.28);}
+.vi-item.vi-failed{border-left:4px solid var(--fail);background:rgba(254,226,226,.35);}
+/* --- Keyboard focus (accessibility / gloved stylus users) --- */
+.vi-btn:focus-visible{outline:3px solid #1E3A5F;outline-offset:2px;}
 
 /* ── BOLT GRID ── */
 
@@ -2821,11 +2847,38 @@ function setVI(id,result){
   const pb=document.getElementById('pass-'+id);
   const fb=document.getElementById('fail-'+id);
   if(!pb||!fb) return;
+
+  // Toggle-off: tapping the already-selected button clears the choice.
+  // Prevents a mis-tap being locked in with no way to undo it.
+  const alreadyPass = pb.classList.contains('selected-pass');
+  const alreadyFail = fb.classList.contains('selected-fail');
+  if((result==='pass' && alreadyPass) || (result==='fail' && alreadyFail)) result=null;
+
   pb.classList.toggle('selected-pass',result==='pass');
-  pb.classList.toggle('selected-fail',false);
   fb.classList.toggle('selected-fail',result==='fail');
-  fb.classList.toggle('selected-pass',false);
+  pb.classList.remove('selected-fail');
+  fb.classList.remove('selected-pass');
+
+  pb.setAttribute('aria-pressed', result==='pass' ? 'true' : 'false');
+  fb.setAttribute('aria-pressed', result==='fail' ? 'true' : 'false');
+
+  applyVIRowCue(id,result);
   updateProgress();
+}
+
+// Paints the row-level cues (dimmed sibling + colored left edge).
+// Split out so session-restore can reuse it — see restore patch below.
+function applyVIRowCue(id,result){
+  const pb=document.getElementById('pass-'+id);
+  const fb=document.getElementById('fail-'+id);
+  if(!pb||!fb) return;
+  const group = pb.parentElement;                       // .vi-btns
+  const row   = document.getElementById('vi-row-'+id);  // .vi-item
+  if(group) group.classList.toggle('has-selection', result==='pass'||result==='fail');
+  if(row){
+    row.classList.toggle('vi-passed', result==='pass');
+    row.classList.toggle('vi-failed', result==='fail');
+  }
 }
 
 
@@ -4498,16 +4551,22 @@ function restoreState(state) {
     // Without this, switching to an empty job leaves the previous job's
     // selected-pass / selected-fail classes on the buttons, causing a
     // phantom pass/fail count on what should be a 0-check blank form.
-    document.querySelectorAll('.vi-btn-pass').forEach(b => b.classList.remove('selected-pass'));
-    document.querySelectorAll('.vi-btn-fail').forEach(b => b.classList.remove('selected-fail'));
+    document.querySelectorAll('.vi-btn-pass').forEach(b => { b.classList.remove('selected-pass'); b.setAttribute('aria-pressed','false'); });
+    document.querySelectorAll('.vi-btn-fail').forEach(b => { b.classList.remove('selected-fail'); b.setAttribute('aria-pressed','false'); });
+    // Also clear the row-level cues, or a blank job inherits the last job's colored edges.
+    document.querySelectorAll('.vi-btns').forEach(g => g.classList.remove('has-selection'));
+    document.querySelectorAll('.vi-item').forEach(r => r.classList.remove('vi-passed','vi-failed'));
 
-    Object.entries(state.vi || {}).forEach(([id, result]) => {
+    Object.entries(state.vi || {}).forEach(([id, rawResult]) => {
+      // Normalize: legacy saves may hold 'PASS' / 'Pass' / true. Compare lowercase.
+      const result = String(rawResult).toLowerCase();
       const pb = document.getElementById('pass-'+id);
       const fb = document.getElementById('fail-'+id);
       if (pb) pb.classList.remove('selected-pass');
       if (fb) fb.classList.remove('selected-fail');
-      if (result === 'pass' && pb) pb.classList.add('selected-pass');
-      if (result === 'fail' && fb) fb.classList.add('selected-fail');
+      if (result === 'pass' && pb) { pb.classList.add('selected-pass'); pb.setAttribute('aria-pressed','true'); }
+      if (result === 'fail' && fb) { fb.classList.add('selected-fail'); fb.setAttribute('aria-pressed','true'); }
+      applyVIRowCue(id, (result === 'pass' || result === 'fail') ? result : null);
     });
 
     Object.entries(state.bolts || {}).forEach(([pos,v]) => {
