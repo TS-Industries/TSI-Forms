@@ -2313,6 +2313,23 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
 </div>
 
 <script>
+/* ── AI POLISH MODEL ───────────────────────────────────────────────
+   Anthropic retires old model IDs (~6 months' notice); a retired ID
+   returns HTTP 404. Rather than a single hardcoded model that breaks
+   silently, this is a PRIORITY LIST: the first one is tried first, and
+   if it 404s (retired) the code automatically falls through to the
+   next. The form keeps working, and a banner warns you to refresh the
+   list. Keep the newest/preferred model at the TOP.
+
+   Update from: platform.claude.com/docs/en/about-claude/models/overview
+   History: claude-sonnet-4-20250514 retired 2026-06-15. */
+const AI_MODELS = [
+  'claude-sonnet-4-6',      // preferred — current stable Sonnet
+  'claude-sonnet-4-5',      // fallback 1
+  'claude-haiku-4-5'        // fallback 2 — cheapest, always keep one live model here
+];
+const AI_MODEL = AI_MODELS[0];   // back-compat for any other reference
+
 // ── Core state variables — declared first so DOMContentLoaded reset works ──
 let CURRENT_JOB_ID = null;
 let _lastServerSnapshot = null;
@@ -4029,36 +4046,57 @@ async function polishNotes(textareaId){
 
   if(btn){btn.disabled=true;btn.innerHTML='ΓÅ│ Polishing...';}
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing professional field service notes for a customer report on a Cummins C8.3G engine overhaul. Rewrite the following rough technician notes into clear, professional, third-person technical language suitable for a customer report. Keep all technical facts exactly as stated. Be concise. Do not add information that is not in the notes. Return only the rewritten text with no preamble.\n\nRough notes: ${raw}`}]
-      })
-    });
-    if(resp.status===401){
+    const body = {
+      max_tokens:1000,
+      messages:[{role:'user',content:`You are an experienced diesel and natural gas engine overhaul technician writing professional field service notes for a customer report on a Cummins C8.3G engine overhaul. Rewrite the following rough technician notes into clear, professional, third-person technical language suitable for a customer report. Keep all technical facts exactly as stated. Be concise. Do not add information that is not in the notes. Return only the rewritten text with no preamble.\\n\\nRough notes: ${raw}`}]
+    };
+
+    // Try each model in priority order. A 404 means that model was
+    // RETIRED - fall through to the next. Any other error stops the loop
+    // and is reported normally.
+    let resp=null, usedModel=null, retiredCount=0;
+    for(const model of AI_MODELS){
+      resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':apiKey,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({model, ...body})
+      });
+      if(resp.status===404){ retiredCount++; continue; }
+      usedModel=model;
+      break;
+    }
+
+    if(resp && resp.status===401){
       localStorage.removeItem('tsi_ak');
-      alert('Invalid API key ΓÇö key has been cleared. Please click Set Key and re-enter.');
-      if(btn){btn.disabled=false;btn.innerHTML='Γ£¿ Polish with AI';}
+      alert('Invalid API key - key has been cleared. Please click Set Key and re-enter.');
+      if(btn){btn.disabled=false;btn.innerHTML='Polish with AI';}
+      return;
+    }
+    if(!resp || (resp.status===404 && !usedModel)){
+      alert('AI Polish is temporarily unavailable - all configured models have been retired.\n\nThe app needs an update to the current Anthropic model list. Your notes are unchanged and saved.');
+      if(typeof setSyncStatus==='function') setSyncStatus('AI models need updating');
+      if(btn){btn.disabled=false;btn.innerHTML='Polish with AI';}
       return;
     }
     if(!resp.ok){
       const errData=await resp.json().catch(()=>({}));
       console.error('Anthropic HTTP '+resp.status, errData);
       alert('API error '+resp.status+': '+(errData.error?.message||'Unknown error'));
-      if(btn){btn.disabled=false;btn.innerHTML='Γ£¿ Polish with AI';}
+      if(btn){btn.disabled=false;btn.innerHTML='Polish with AI';}
       return;
     }
     const data=await resp.json();
     if(data.content&&data.content[0]&&data.content[0].text){
       ta.value=data.content[0].text;
+      if(retiredCount>0 && typeof setSyncStatus==='function'){
+        setSyncStatus('Polished (backup model '+usedModel+' - app needs model update)');
+        console.warn('AI Polish: '+retiredCount+' preferred model(s) retired; used fallback '+usedModel);
+      }
     } else {
       console.error('Anthropic response:', JSON.stringify(data));
       alert('AI polish failed ΓÇö Error: '+(data.error?.message||data.type||JSON.stringify(data)));
