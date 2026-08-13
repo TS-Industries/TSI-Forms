@@ -3820,14 +3820,26 @@ async function exportReportHTML(){
     '.rpt-photo-item img, .po-photo-item img, .rpt-lb-photo img, [onclick*="openLightbox_report"]'
   ));
 
-  // Show progress indicator while photos are being embedded
+  // ── PHOTO HANDLING — reference by URL, do NOT embed base64 ──
+  // Photos already live at Worker URLs (…/photos/WO-…/field/….jpg). Embedding them
+  // as base64 bloated the published HTML to ~14 MB and caused 'Publish failed'.
+  // Keeping the original Worker URL makes the published report a few hundred KB and
+  // loads full-resolution photos from storage when the customer opens it.
+  // Only genuine inline data: URIs (rare) get compressed; http(s) URLs pass through.
   const exportBtn = document.querySelector('[onclick="exportReportHTML()"]');
   const origBtnText = exportBtn ? exportBtn.textContent : '';
-  if (exportBtn) { exportBtn.textContent = '\u23f3 Embedding photos (' + allPhotoImgs.length + ')...'; exportBtn.disabled = true; }
+  if (exportBtn) { exportBtn.textContent = '\u23f3 Preparing report...'; exportBtn.disabled = true; }
 
-  // Fetch and convert all photos to base64 in parallel
   const b64Results = await Promise.all(
-    allPhotoImgs.map(img => toDataURI(img.src || img.getAttribute('src') || ''))
+    allPhotoImgs.map(async img => {
+      const src = img.src || img.getAttribute('src') || '';
+      if (!src) return '';
+      // Worker/URL-hosted photo → keep the URL (no embedding).
+      if (/^https?:\/\//i.test(src)) return src;
+      // Only a real inline data: URI gets compressed (legacy safety).
+      if (src.startsWith('data:')) return await toDataURI(src);
+      return src;
+    })
   );
 
   if (exportBtn) { exportBtn.textContent = origBtnText; exportBtn.disabled = false; }
@@ -4098,7 +4110,7 @@ async function exportReportPDF(){
       const pc = document.createElement('canvas');
       pc.width = canvas.width; pc.height = sliceH;
       pc.getContext('2d').drawImage(canvas, 0, yPos, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-      pdf.addImage(pc.toDataURL('image/jpeg', 0.98), 'JPEG', margins, margins, pageW, sliceH / ratio);
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.80), 'JPEG', margins, margins, pageW, sliceH / ratio);
       yPos += sliceH; pageNum++;
     }
     const totalPages = pageNum;
@@ -4131,12 +4143,12 @@ async function exportReportPDF(){
       if (srcAR > targetAR) { sw = img.naturalHeight * targetAR; sx = (img.naturalWidth - sw) / 2; }
       else if (srcAR < targetAR) { sh = img.naturalWidth / targetAR; sy = (img.naturalHeight - sh) / 2; }
 
-      const outW = Math.min(sw, 1200), outH = outW / targetAR; // cap output size while keeping embedded photos sharp
+      const outW = Math.min(sw, 900), outH = outW / targetAR; // cap output size while keeping embedded photos sharp
       try {
         const oc = document.createElement('canvas');
         oc.width = outW; oc.height = outH;
         oc.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
-        const dataUrl = oc.toDataURL('image/jpeg', 0.96);
+        const dataUrl = oc.toDataURL('image/jpeg', 0.75);
         pdf.setPage(pIdx + 1);
         const xMm = margins + canvasX / ratio, yMm = margins + yOnPage / ratio;
         const wMm = canvasW / ratio, hMm = canvasH / ratio;
