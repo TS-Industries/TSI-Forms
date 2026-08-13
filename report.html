@@ -124,24 +124,29 @@ async function loadReport() {
   document.title = 'TSI Report — ' + jobId;
 
   try {
+    // Fetch the published report from the Cloudflare Worker (same backend as the
+    // checklist). The Worker returns an array of { field_id, field_value } rows;
+    // we want the row whose field_id is 'report_html'.
     const res = await fetch(
-      SUPABASE_URL + '/rest/v1/overhaul_data?job_id=eq.' + encodeURIComponent(jobId) +
-      '&field_id=eq.report_html&select=field_value',
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      WORKER_URL + '/api/job/' + encodeURIComponent(jobId),
+      { method: 'GET', headers: { 'Content-Type': 'application/json' } }
     );
 
     if (!res.ok) throw new Error('Server error ' + res.status);
 
-    const data = await res.json();
+    const rows = await res.json();
+    const reportRow = Array.isArray(rows)
+      ? rows.find(r => r.field_id === 'report_html')
+      : null;
 
-    if (!data || !data.length || !data[0].field_value) {
+    if (!reportRow || !reportRow.field_value) {
       showError('Report Not Published Yet',
         'No report has been published for job <strong>' + jobId + '</strong>.<br><br>' +
         'Please contact TSI Industries to request the report link.');
       return;
     }
 
-    _reportHtml = data[0].field_value;
+    _reportHtml = reportRow.field_value;
 
     // Render the report in the iframe using a blob URL
     const blob = new Blob([_reportHtml], { type: 'text/html;charset=utf-8' });
