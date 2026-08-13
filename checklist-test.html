@@ -9,106 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>Cummins C8.3G — Complete Engine Overhaul Checklist</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-// ── VOICE DICTATION (Web Speech API, ported from IronTrack VoiceTextarea) ──
-// Behavior mirrors IronTrack: APPENDS to existing text (never overwrites), streams
-// interim results live, stops if the tech starts typing, and the mic button is
-// HIDDEN entirely on browsers without SpeechRecognition (no broken control, no alert).
-// No external API. Works wherever the browser's speech engine works (incl. iOS Safari
-// where supported).
-const _SR = (typeof window!=='undefined') ? (window.SpeechRecognition || window.webkitSpeechRecognition) : undefined;
-let _rec=null, _recTarget=null, _recBase='', _stoppedForTyping=false;
 
-function _micStop(){
-  try{ _rec && _rec.stop(); }catch(e){}
-}
-function toggleDictation(targetId){
-  const ta = document.getElementById(targetId);
-  const btn = document.getElementById('mic-btn-'+targetId);
-  if(!ta || !_SR) return;                       // unsupported → button is hidden anyway
-  // Already listening on THIS field → stop.
-  if(_rec && _recTarget===targetId){ _micStop(); return; }
-  // Listening elsewhere → stop that session first.
-  if(_rec){ _micStop(); }
-
-  const rec = new _SR();
-  rec.lang = 'en-CA';
-  rec.interimResults = true;
-  rec.continuous = true;
-  _recTarget = targetId;
-  _stoppedForTyping = false;
-
-  // Start from current value + separator so speech appends, never overwrites.
-  const cur = ta.value || '';
-  _recBase = (cur && !/\s$/.test(cur)) ? cur + ' ' : cur;
-
-  rec.onstart = ()=>{ if(btn){ btn.classList.add('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display=''; };
-
-  rec.onresult = (ev)=>{
-    let finalText='', interim='';
-    for(let k=0;k<ev.results.length;k++){
-      const r=ev.results[k];
-      if(r.isFinal) finalText += r[0].transcript;
-      else interim += r[0].transcript;
-    }
-    ta.value = _recBase + finalText + interim;
-  };
-
-  rec.onend = ()=>{
-    if(btn){ btn.classList.remove('listening'); } { const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; }
-    // If we stopped because the tech typed, leave their keystroke alone; else trim trailing space.
-    if(!_stoppedForTyping){ ta.value = (ta.value||'').replace(/\s+$/,''); }
-    _rec=null; _recTarget=null;
-    if(typeof autoSave==='function') autoSave();
-  };
-
-  // no-speech / audio-capture / not-allowed → go quiet and reset (NO alert popups).
-  rec.onerror = ()=>{ if(btn){ btn.classList.remove('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; };
-
-  // If the tech starts typing in this field, stop dictation so it doesn't fight the keyboard.
-  const onType = ()=>{ if(_rec && _recTarget===targetId){ _stoppedForTyping=true; _micStop(); } ta.removeEventListener('keydown', onType); };
-  ta.addEventListener('keydown', onType);
-
-  _rec = rec;
-  try{ rec.start(); }catch(e){ if(btn){ btn.classList.remove('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; _rec=null; _recTarget=null; }
-}
-
-// Hide every mic button if the browser can't do speech recognition (feature-detect on load).
-document.addEventListener('DOMContentLoaded', ()=>{
-  if(!_SR){
-    document.querySelectorAll('.mic-icon-btn').forEach(b=>{ b.style.display='none'; });
-  }
-});
-
-// ── PULL-ON-FOCUS: refresh current job from server when returning to the app ──
-// Reuses loadJob() (the tested fetch+merge path). Throttled so quick tab flips
-// don't spam the Worker. Skips while actively dictating or if a load is in flight.
-let _lastPull=0;
-async function pullOnFocusRefresh(){
-  try{
-    if(!CURRENT_JOB_ID) return;
-    if(typeof _loadInFlight!=='undefined' && _loadInFlight) return;
-    if(_recog) return; // don't yank text out from under an active dictation
-    const now=Date.now();
-    if(now-_lastPull < 8000) return; // at most once per 8s
-    _lastPull=now;
-    const inp=document.getElementById('job-id-input');
-    if(inp && inp.value.trim()!==CURRENT_JOB_ID){ inp.value=CURRENT_JOB_ID; }
-    // FLUSH FIRST: push whatever is on THIS screen up to the server before pulling,
-    // so a note you typed in the last 3s can't be reverted by the incoming copy.
-    // syncToCloud merges (blank DOM never overwrites server), so this is safe.
-    try{
-      if(typeof syncToCloud==='function' && typeof collectState==='function'
-         && !_savesSuspended && _lastServerSnapshot!==null){
-        if(typeof setSyncStatus==='function') setSyncStatus('Saving your edits...');
-        await syncToCloud(CURRENT_JOB_ID, collectState(), { force:true, source:'pull-flush' });
-      }
-    }catch(e){ console.warn('pre-pull flush failed (continuing):', e); }
-    if(typeof setSyncStatus==='function') setSyncStatus('Refreshing from server...');
-    if(typeof loadJob==='function') loadJob();
-  }catch(e){ console.warn('pull-on-focus skipped:', e); }
-}
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pullOnFocusRefresh(); });
-window.addEventListener('focus', pullOnFocusRefresh);
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2433,6 +2334,107 @@ body{font-family:Arial, sans-serif;background:#F5F7FA;color:var(--dark);min-heig
 </div>
 
 <script>
+// ── VOICE DICTATION (Web Speech API, ported from IronTrack VoiceTextarea) ──
+// Behavior mirrors IronTrack: APPENDS to existing text (never overwrites), streams
+// interim results live, stops if the tech starts typing, and the mic button is
+// HIDDEN entirely on browsers without SpeechRecognition (no broken control, no alert).
+// No external API. Works wherever the browser's speech engine works (incl. iOS Safari
+// where supported).
+const _SR = (typeof window!=='undefined') ? (window.SpeechRecognition || window.webkitSpeechRecognition) : undefined;
+let _rec=null, _recTarget=null, _recBase='', _stoppedForTyping=false;
+
+function _micStop(){
+  try{ _rec && _rec.stop(); }catch(e){}
+}
+function toggleDictation(targetId){
+  const ta = document.getElementById(targetId);
+  const btn = document.getElementById('mic-btn-'+targetId);
+  if(!ta || !_SR) return;                       // unsupported → button is hidden anyway
+  // Already listening on THIS field → stop.
+  if(_rec && _recTarget===targetId){ _micStop(); return; }
+  // Listening elsewhere → stop that session first.
+  if(_rec){ _micStop(); }
+
+  const rec = new _SR();
+  rec.lang = 'en-CA';
+  rec.interimResults = true;
+  rec.continuous = true;
+  _recTarget = targetId;
+  _stoppedForTyping = false;
+
+  // Start from current value + separator so speech appends, never overwrites.
+  const cur = ta.value || '';
+  _recBase = (cur && !/\s$/.test(cur)) ? cur + ' ' : cur;
+
+  rec.onstart = ()=>{ if(btn){ btn.classList.add('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display=''; };
+
+  rec.onresult = (ev)=>{
+    let finalText='', interim='';
+    for(let k=0;k<ev.results.length;k++){
+      const r=ev.results[k];
+      if(r.isFinal) finalText += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    ta.value = _recBase + finalText + interim;
+  };
+
+  rec.onend = ()=>{
+    if(btn){ btn.classList.remove('listening'); } { const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; }
+    // If we stopped because the tech typed, leave their keystroke alone; else trim trailing space.
+    if(!_stoppedForTyping){ ta.value = (ta.value||'').replace(/\s+$/,''); }
+    _rec=null; _recTarget=null;
+    if(typeof autoSave==='function') autoSave();
+  };
+
+  // no-speech / audio-capture / not-allowed → go quiet and reset (NO alert popups).
+  rec.onerror = ()=>{ if(btn){ btn.classList.remove('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; };
+
+  // If the tech starts typing in this field, stop dictation so it doesn't fight the keyboard.
+  const onType = ()=>{ if(_rec && _recTarget===targetId){ _stoppedForTyping=true; _micStop(); } ta.removeEventListener('keydown', onType); };
+  ta.addEventListener('keydown', onType);
+
+  _rec = rec;
+  try{ rec.start(); }catch(e){ if(btn){ btn.classList.remove('listening'); } const tag=document.getElementById('listening-'+targetId); if(tag) tag.style.display='none'; _rec=null; _recTarget=null; }
+}
+
+// Hide every mic button if the browser can't do speech recognition (feature-detect on load).
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(!_SR){
+    document.querySelectorAll('.mic-icon-btn').forEach(b=>{ b.style.display='none'; });
+  }
+});
+
+// ── PULL-ON-FOCUS: refresh current job from server when returning to the app ──
+// Reuses loadJob() (the tested fetch+merge path). Throttled so quick tab flips
+// don't spam the Worker. Skips while actively dictating or if a load is in flight.
+let _lastPull=0;
+async function pullOnFocusRefresh(){
+  try{
+    if(!CURRENT_JOB_ID) return;
+    if(typeof _loadInFlight!=='undefined' && _loadInFlight) return;
+    if(_recog) return; // don't yank text out from under an active dictation
+    const now=Date.now();
+    if(now-_lastPull < 8000) return; // at most once per 8s
+    _lastPull=now;
+    const inp=document.getElementById('job-id-input');
+    if(inp && inp.value.trim()!==CURRENT_JOB_ID){ inp.value=CURRENT_JOB_ID; }
+    // FLUSH FIRST: push whatever is on THIS screen up to the server before pulling,
+    // so a note you typed in the last 3s can't be reverted by the incoming copy.
+    // syncToCloud merges (blank DOM never overwrites server), so this is safe.
+    try{
+      if(typeof syncToCloud==='function' && typeof collectState==='function'
+         && !_savesSuspended && _lastServerSnapshot!==null){
+        if(typeof setSyncStatus==='function') setSyncStatus('Saving your edits...');
+        await syncToCloud(CURRENT_JOB_ID, collectState(), { force:true, source:'pull-flush' });
+      }
+    }catch(e){ console.warn('pre-pull flush failed (continuing):', e); }
+    if(typeof setSyncStatus==='function') setSyncStatus('Refreshing from server...');
+    if(typeof loadJob==='function') loadJob();
+  }catch(e){ console.warn('pull-on-focus skipped:', e); }
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pullOnFocusRefresh(); });
+window.addEventListener('focus', pullOnFocusRefresh);
+
 /* ── AI POLISH MODEL ───────────────────────────────────────────────
    Anthropic retires old model IDs (~6 months' notice); a retired ID
    returns HTTP 404. Rather than a single hardcoded model that breaks
@@ -3220,8 +3222,15 @@ function updateProgress(){
       else if(fb&&fb.classList.contains('selected-fail')) fail++;
     }
   });
+  // Head-bolt caps are OPTIONAL for overall completion — they only apply on a
+  // head R&R job. Count them in Section 6's own badge, NOT the global percentage,
+  // so skipping caps doesn't strand the form in the high-80s.
   const torqued=document.querySelectorAll('.cap-circle.torqued').length;
-  total+=26; pass+=torqued;
+  const capBadge=document.getElementById('badge-sec-6-bolts');
+  if(capBadge){
+    if(torqued===26){capBadge.className='badge badge-pass';capBadge.textContent='COMPLETE';}
+    else{capBadge.className='badge badge-gold';capBadge.textContent=torqued+'/26';}
+  }
   const entered=pass+fail;
   const pct=total>0?Math.round((entered/total)*100):0;
   document.getElementById('prog-total').textContent=total;
@@ -5458,14 +5467,24 @@ function lbRemoveRow(n) {
 }
 
 function lbUpdateCount() {
-  const n = document.getElementById('lb-tbody')?.rows.length || 0;
+  const tbody = document.getElementById('lb-tbody');
+  const totalRows = tbody?.rows.length || 0;
+  // Count only rows that actually have data entered — a pre-rendered empty row
+  // is NOT a completed reading (prevents Section 9 showing COMPLETE on a blank form).
+  let filled = 0;
+  if (tbody) {
+    for (const row of tbody.rows) {
+      const hasData = [...row.querySelectorAll('input')].some(inp => inp.value.trim() !== '');
+      if (hasData) filled++;
+    }
+  }
   const el = document.getElementById('lb-reading-count');
-  if (el) el.textContent = `${n} / 8 readings`;
-  // Update section badge
+  if (el) el.textContent = `${filled} / 8 readings`;
   const badge = document.getElementById('badge-sec-9');
   if (badge) {
-    badge.textContent = n === 8 ? 'COMPLETE' : `${n} / 8 readings`;
-    badge.className = n === 8 ? 'badge badge-pass' : 'badge badge-gray';
+    if (filled === 0) { badge.textContent = '0 / 8 readings'; badge.className = 'badge badge-gray'; }
+    else if (filled >= 8) { badge.textContent = 'COMPLETE'; badge.className = 'badge badge-pass'; }
+    else { badge.textContent = `${filled} / 8 readings`; badge.className = 'badge badge-gray'; }
   }
 }
 
