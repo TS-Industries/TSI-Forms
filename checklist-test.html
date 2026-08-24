@@ -4103,15 +4103,54 @@ async function exportReportPDF(){
     const pageH = pdf.internal.pageSize.getHeight() - margins * 2;
     const ratio = canvas.width / pageW;   // canvas px per mm
     const pageHeightPx = pageH * ratio;
+
+    // ── KEEP-TOGETHER BLOCKS ──
+    // Collect the on-canvas vertical span of every element that must not be
+    // split across a page break (photos, table rows, section headers). The
+    // pagination loop below pulls a page break UP above any block it would
+    // otherwise slice through, so photos never get cut in half.
+    const modalTop = modal.getBoundingClientRect().top;
+    const keepSel = '.rpt-photo-item, .rpt-section-row, .report-section-title, ' +
+                    '.rpt-photo-section-title, tr';
+    const keepBlocks = [...modal.querySelectorAll(keepSel)].map(el => {
+      const r = el.getBoundingClientRect();
+      return { top: (r.top - modalTop) * scale, bottom: (r.bottom - modalTop) * scale };
+    }).filter(b => b.bottom > b.top && (b.bottom - b.top) < pageHeightPx)
+      .sort((a, b) => a.top - b.top);
+
+    // Given a proposed cut line (canvas px), if it lands inside a keep-together
+    // block, move the cut up to that block's top. Never returns a cut at/below
+    // pageStart (that would make a zero/negative page); callers guard for that.
+    function safeCut(pageStart, proposedCut) {
+      let cut = proposedCut;
+      for (const b of keepBlocks) {
+        if (b.top < cut && b.bottom > cut && b.top > pageStart) {
+          cut = b.top;
+        }
+      }
+      return cut;
+    }
+
+    // pageBounds[i] = { start, end } canvas-px span of PDF page i (0-based).
+    // Used by the high-res photo overlay so it targets the correct variable-height page.
+    const pageBounds = [];
     let yPos = 0, pageNum = 0;
     while (yPos < canvas.height) {
       if (pageNum > 0) pdf.addPage();
-      const sliceH = Math.min(pageHeightPx, canvas.height - yPos);
+      let cut = Math.min(yPos + pageHeightPx, canvas.height);
+      if (cut < canvas.height) {
+        const adjusted = safeCut(yPos, cut);
+        // Only honour the adjustment if it still leaves a usable slice; a block
+        // taller than usable space (already filtered) can't force a null page.
+        if (adjusted > yPos) cut = adjusted;
+      }
+      const sliceH = cut - yPos;
+      pageBounds.push({ start: yPos, end: cut });
       const pc = document.createElement('canvas');
       pc.width = canvas.width; pc.height = sliceH;
       pc.getContext('2d').drawImage(canvas, 0, yPos, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
       pdf.addImage(pc.toDataURL('image/jpeg', 0.80), 'JPEG', margins, margins, pageW, sliceH / ratio);
-      yPos += sliceH; pageNum++;
+      yPos = cut; pageNum++;
     }
     const totalPages = pageNum;
 
@@ -4131,10 +4170,14 @@ async function exportReportPDF(){
       const { top, left } = offsetRel(img, modal);
       const dispW = img.offsetWidth, dispH = img.offsetHeight;
       const canvasX = left * scale, canvasY = top * scale, canvasW = dispW * scale, canvasH = dispH * scale;
-      const pIdx = Math.floor(canvasY / pageHeightPx);
-      const yOnPage = canvasY - pIdx * pageHeightPx;
+      // Find which PDF page this photo's TOP sits on, using the real
+      // (variable-height) page boundaries computed during pagination.
+      const pIdx = pageBounds.findIndex(pb => canvasY >= pb.start && canvasY < pb.end);
       if (pIdx < 0 || pIdx >= totalPages) continue;
-      if (yOnPage + canvasH > pageHeightPx) continue; // photo straddles a page break — keep base render as fallback
+      const yOnPage = canvasY - pageBounds[pIdx].start;
+      // With break-aware pagination a photo should never straddle a break now,
+      // but keep the guard: if it somehow does, leave the base render.
+      if (canvasY + canvasH > pageBounds[pIdx].end) continue;
 
       // Crop the natural image to match the displayed aspect ratio (object-fit: cover)
       const targetAR = dispW / dispH;
