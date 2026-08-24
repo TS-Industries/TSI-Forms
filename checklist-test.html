@@ -3759,16 +3759,30 @@ async function exportReportHTML(){
   const reportBody = document.getElementById('report-body');
   if (!reportBody) { alert('Report body not found.'); return; }
 
-  // Convert all textareas to their current values (so summary text is visible)
-  let bodyHTML = reportBody.innerHTML;
-  // Replace textarea elements with their value as plain text in a div
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = bodyHTML;
-  tempDiv.querySelectorAll('textarea').forEach(ta => {
+  // Convert all textareas to their current values (so summary text is visible).
+  // IMPORTANT: clone the LIVE DOM node — reading reportBody.innerHTML into a string
+  // and re-parsing it loses every textarea's typed value (a textarea's current
+  // value is not serialized into innerHTML), which blanked the summary on export.
+  // Walking the live and cloned textareas in parallel lets us copy the real
+  // typed values across before serializing.
+  const liveTextareas = [...reportBody.querySelectorAll('textarea')];
+  const tempDiv = reportBody.cloneNode(true);
+  const clonedTextareas = [...tempDiv.querySelectorAll('textarea')];
+  clonedTextareas.forEach((ta, i) => {
     const div = document.createElement('div');
     div.style.cssText = 'font-size:13px;line-height:1.7;color:#1E2A3A;white-space:pre-wrap;padding:0.5rem 0;';
-    div.textContent = ta.value;
+    // Pull the value from the matching LIVE textarea, not the (blank) clone
+    div.textContent = liveTextareas[i] ? liveTextareas[i].value : '';
     ta.parentNode.replaceChild(div, ta);
+  });
+  // Same value-loss problem applies to <input> fields (signature, date completed):
+  // a cloned input does not carry the user's typed value. Copy live values across,
+  // and bake them into the value ATTRIBUTE so they survive serialization.
+  const liveInputs = [...reportBody.querySelectorAll('input')];
+  const clonedInputs = [...tempDiv.querySelectorAll('input')];
+  clonedInputs.forEach((inp, i) => {
+    const val = liveInputs[i] ? liveInputs[i].value : '';
+    if (val) inp.setAttribute('value', val);
   });
   // Remove the Refresh Notes / Clear Summary buttons from the export
   tempDiv.querySelectorAll('.polish-btn').forEach(btn => btn.remove());
