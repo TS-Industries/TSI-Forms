@@ -4770,7 +4770,8 @@ function isEffectiveDowngrade(oldVal, newVal) {
 function isCriticalField(fid) {
   return fid.startsWith('meas_val_') || fid.startsWith('meas_note_') ||
          fid.startsWith('notes_')    || fid.startsWith('meta_')      ||
-         fid.startsWith('vi_')       || fid === 'lb_data';
+         fid.startsWith('vi_')       || fid === 'lb_data'            ||
+         fid === 'summary';
 }
 
 // ── COLLECT STATE ──
@@ -4813,6 +4814,12 @@ function collectState() {
   document.querySelectorAll('[id^="notes-"]').forEach(el => {
     state.notes[el.id.replace('notes-','')] = el.value || '';
   });
+
+  // Save the report summary too. Its id is 'rpt-summary-input' (does NOT start
+  // with 'notes-'), so the loop above misses it — without this, a hand-edited
+  // summary is never persisted and gets regenerated from section notes on reopen.
+  const summaryField = document.getElementById('rpt-summary-input');
+  state.summary = summaryField ? (summaryField.value || '') : '';
 
   state.photos = {};
   const allIds = new Set([...Object.keys(photoStore), ...photoFieldsSeen]);
@@ -4866,6 +4873,7 @@ function flattenState(state) {
   });
   Object.entries(state.bolts||{}).forEach(([p,v])  => flat['bolt_'+p]    = v ? '1' : '0');
   Object.entries(state.notes||{}).forEach(([s,v])  => flat['notes_'+s]   = v);
+  flat['summary'] = state.summary || '';
   Object.entries(state.photos||{}).forEach(([id,u])=> flat['photos_'+id] = JSON.stringify(u || []));
   // Parts list serialized as a single JSON string
   flat['parts_list'] = JSON.stringify(state.parts || []);
@@ -5015,6 +5023,14 @@ function restoreState(state) {
       const el = document.getElementById('notes-'+s);
       if (el) el.value = v || '';
     });
+
+    // Restore the hand-edited report summary. The box was cleared above; put the
+    // saved text back so openReport()'s auto-populate (which only fills when the
+    // box is empty) won't overwrite the technician's reworded version.
+    if (typeof state.summary === 'string') {
+      const summaryEl = document.getElementById('rpt-summary-input');
+      if (summaryEl) summaryEl.value = state.summary;
+    }
 
     Object.keys(photoStore).forEach(k => delete photoStore[k]);
     photoFieldsSeen.clear();
@@ -5274,6 +5290,8 @@ async function loadJob() {
         state.bolts[field_id.replace('bolt_','')] = field_value === '1';
       } else if (field_id.startsWith('notes_')) {
         state.notes[field_id.replace('notes_','')] = field_value;
+      } else if (field_id === 'summary') {
+        state.summary = field_value;
       } else if (field_id.startsWith('photos_')) {
         const id = field_id.replace('photos_','');
         try {
