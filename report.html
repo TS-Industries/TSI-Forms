@@ -148,12 +148,25 @@ async function loadReport() {
 
     _reportHtml = reportRow.field_value;
 
+    // The typed summary is stored as its own 'summary' row on the job, in the SAME response
+    // we just fetched — it was never lost, only omitted from older published blobs.
+    // See patchSummaryBox() for why we need it here.
+    const summaryRow = Array.isArray(rows)
+      ? rows.find(r => r.field_id === 'summary')
+      : null;
+    const summaryText = summaryRow && typeof summaryRow.field_value === 'string'
+      ? summaryRow.field_value
+      : '';
+
     // Render the report in the iframe using a blob URL
     const blob = new Blob([_reportHtml], { type: 'text/html;charset=utf-8' });
     const blobUrl = URL.createObjectURL(blob);
     const frame = document.getElementById('report-frame');
     frame.src = blobUrl;
-    frame.onload = function() { URL.revokeObjectURL(blobUrl); };
+    frame.onload = function() {
+      URL.revokeObjectURL(blobUrl);
+      patchSummaryBox(frame, summaryText);
+    };
 
     // Show the top bar and iframe, hide loader
     document.getElementById('bar-job-id').textContent = jobId;
@@ -168,6 +181,51 @@ async function loadReport() {
   }
 }
 
+/**
+ * Viewer-side safety net for reports published before the publisher bug was fixed.
+ *
+ * Those blobs baked the summary box with an EMPTY text div, plus two editor-only leftovers:
+ * the "…automatically pulled in below. Click Refresh Notes…" instruction line, and the
+ * now-empty Refresh/Clear button wrapper. The typed summary itself was never lost — it is
+ * saved as its own 'summary' row on the job — so the rendered report can be repaired
+ * without republishing it.
+ *
+ * Safe on correctly-published reports: the text div is filled ONLY when it is empty, so a
+ * baked-in summary is never overwritten or duplicated.
+ *
+ * The iframe holds a blob: URL created by this page, so it is same-origin and
+ * contentDocument is readable. Revoking that URL does not affect the already-parsed
+ * document, which is why this reads the DOM instead of re-fetching the blob.
+ *
+ * Fails silently by design: a report that renders without its summary still beats a report
+ * that does not render at all.
+ */
+function patchSummaryBox(frame, summaryText) {
+  try {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+    const box = doc.querySelector('.ai-summary-box');
+    if (!box) return;
+
+    let target = null;
+    Array.prototype.slice.call(box.children).forEach(function (d) {
+      if (d.tagName !== 'DIV') return;
+      if (d.classList.contains('ai-badge')) return;                  // keep: the heading
+      const style = d.getAttribute('style') || '';
+      if (/white-space\s*:\s*pre-wrap/i.test(style)) { target = d; return; }  // the summary
+      if (d.textContent.indexOf('automatically pulled') !== -1) { d.remove(); return; }
+      if (/display\s*:\s*flex/i.test(style) && !d.textContent.trim()) d.remove();
+    });
+
+    // Fill only if empty — never clobber a correctly-baked summary.
+    if (target && !target.textContent.trim() && summaryText.trim()) {
+      target.textContent = summaryText;
+    }
+  } catch (e) {
+    console.warn('Summary repair skipped:', e);
+  }
+}
+
 function showError(title, msg) {
   document.getElementById('loader').style.display = 'none';
   document.getElementById('err-title').textContent = title;
@@ -177,7 +235,15 @@ function showError(title, msg) {
 
 function downloadReport() {
   if (!_reportHtml) return;
-  const blob = new Blob([_reportHtml], { type: 'text/html;charset=utf-8' });
+  // Serialize the PATCHED document when it is available, so a downloaded copy carries the
+  // repaired summary rather than the original empty box. Photos are already data: URIs, so
+  // they survive serialization. Falls back to the raw blob if the frame can't be read.
+  let html = _reportHtml;
+  try {
+    const doc = document.getElementById('report-frame').contentDocument;
+    if (doc && doc.documentElement) html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  } catch (e) { /* fall back to the raw published blob */ }
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

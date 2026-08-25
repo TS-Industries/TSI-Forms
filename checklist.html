@@ -2295,8 +2295,12 @@ body{font-family:'Barlow',sans-serif;background:#0F1A24;color:var(--dark);min-he
       <div class="signoff-block">
         <div style="font-family:&#39;Barlow Condensed&#39;,sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;color:var(--navy);">SIGN-OFF &amp; CERTIFICATION</div>
         <div class="signoff-grid">
-          <div class="signoff-field"><label>Technician Signature</label><input class="signoff-line" type="text" placeholder="Sign here"></div>
-          <div class="signoff-field"><label>Date Completed</label><input class="signoff-line" type="date"></div>
+          <!-- These ids are load-bearing: exportReportHTML() pairs each live field to its
+               clone BY ID when baking values into the published report. Without them the
+               pairing falls back to list position, which can bake the signature into the
+               date field. Do not remove or rename. -->
+          <div class="signoff-field"><label>Technician Signature</label><input id="rpt-signoff-signature" class="signoff-line" type="text" placeholder="Sign here"></div>
+          <div class="signoff-field"><label>Date Completed</label><input id="rpt-signoff-date" class="signoff-line" type="date"></div>
 
         </div>
         <div class="signoff-cert">I hereby certify that this engine overhaul was performed in accordance with Cummins Manual 3666206. All measurements recorded are accurate and were obtained using calibrated instruments. All torque values were applied using a calibrated torque wrench. This engine meets or exceeds factory specifications for continued natural gas service.</div>
@@ -3606,28 +3610,54 @@ async function exportReportHTML(){
   // IMPORTANT: clone the LIVE DOM node — reading reportBody.innerHTML into a string
   // and re-parsing it loses every textarea's typed value (a textarea's current
   // value is not serialized into innerHTML), which blanked the summary on publish.
-  const liveTextareas = [...reportBody.querySelectorAll('textarea')];
   const tempDiv = reportBody.cloneNode(true);
-  const clonedTextareas = [...tempDiv.querySelectorAll('textarea')];
-  clonedTextareas.forEach((ta, i) => {
+
+  // Pair each cloned field back to its live counterpart BY ID, never by list position.
+  // Index pairing happens to line up today, but identity-by-position is the same bug class
+  // as the ':first-child' strip below: it silently pairs the WRONG two nodes as soon as the
+  // tree changes, and on the sign-off row that means baking the signature into the date
+  // field — permanently, in the customer's published report. An id match either finds the
+  // right node or finds nothing; it can never find the wrong one. Nodes with no id fall back
+  // to position, which is exactly the previous behaviour, so nothing regresses.
+  // tempDiv is detached, so getElementById can only ever return the LIVE node.
+  const pairLive = (cloned, liveList, i) => {
+    if (!cloned.id) return liveList[i] || null;
+    const live = document.getElementById(cloned.id);
+    return (live && reportBody.contains(live)) ? live : (liveList[i] || null);
+  };
+
+  const liveTextareas = [...reportBody.querySelectorAll('textarea')];
+  tempDiv.querySelectorAll('textarea').forEach((ta, i) => {
+    const live = pairLive(ta, liveTextareas, i);
     const div = document.createElement('div');
     div.style.cssText = 'font-size:13px;line-height:1.7;color:#1E2A3A;white-space:pre-wrap;padding:0.5rem 0;';
-    div.textContent = liveTextareas[i] ? liveTextareas[i].value : '';
+    div.textContent = live ? live.value : '';
     ta.parentNode.replaceChild(div, ta);
   });
   // Same value-loss applies to <input> fields (signature, date completed):
   // bake live values into the value attribute so they survive serialization.
   const liveInputs = [...reportBody.querySelectorAll('input')];
-  const clonedInputs = [...tempDiv.querySelectorAll('input')];
-  clonedInputs.forEach((inp, i) => {
-    const val = liveInputs[i] ? liveInputs[i].value : '';
+  tempDiv.querySelectorAll('input').forEach((inp, i) => {
+    const live = pairLive(inp, liveInputs, i);
+    const val = live ? live.value : '';
     if (val) inp.setAttribute('value', val);
   });
   // Remove the Refresh Notes / Clear Summary buttons from the export
   tempDiv.querySelectorAll('.polish-btn').forEach(btn => btn.remove());
-  // Remove the ai-summary-box instruction text div (first child of ai-summary-box)
-  tempDiv.querySelectorAll('.ai-summary-box > div:first-child').forEach(d => {
-    if (d.textContent.includes('automatically pulled')) d.remove();
+  // Strip the two editor-only rows from the summary box. Match by CONTENT/SHAPE, never by
+  // position: the old ':first-child' selector always landed on .ai-badge ("OVERALL SUMMARY"),
+  // so the instruction div was never removed and recipients were told to "Click Refresh Notes"
+  // for a button that isn't in the export. The badge and the summary text div are both
+  // protected explicitly — checked BEFORE the content match, so a summary that happened to
+  // quote the instruction wording can never delete itself.
+  tempDiv.querySelectorAll('.ai-summary-box > div').forEach(d => {
+    if (d.classList.contains('ai-badge')) return;                    // keep: the heading
+    const style = d.getAttribute('style') || '';
+    if (/white-space\s*:\s*pre-wrap/i.test(style)) return;           // keep: the summary text
+    if (d.textContent.includes('automatically pulled')) { d.remove(); return; }
+    // The Refresh/Clear row: its .polish-btn children are already gone by this point,
+    // leaving an empty flex wrapper that would otherwise ship as dead markup.
+    if (/display\s*:\s*flex/i.test(style) && !d.textContent.trim()) d.remove();
   });
   // Make all photo images clickable via lightbox in the exported HTML
     // Fetch a photo URL and compress it to max 800px wide at 72% JPEG quality
