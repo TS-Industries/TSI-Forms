@@ -2408,6 +2408,7 @@ function injectJobUI() {
 function attachAutoSaveListeners() {
   const handler = () => { if (typeof autoSave === 'function') autoSave(); };
   document.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.id === 'job-id-input') return; // the WO# box isn't part of the sheet
     el.addEventListener('input', handler);
     el.addEventListener('change', handler);
   });
@@ -4581,6 +4582,8 @@ function tripNetGuard() {
   if (_net.paused) return;
   _net.paused = true;
   clearTimeout(_retryTimer); _retryTimer = null;
+  if (_changeWaiting && !_savesSuspended && !jobIdTypedAway()) keepOnDevice(CURRENT_JOB_ID);
+  _changeWaiting = false;
   clearTimeout(_syncTimer); _syncTimer = null;
   console.error('[save] runaway guard tripped: more than ' + NET_GUARD_MAX_PER_MIN + ' requests in a minute');
   let b = document.getElementById('net-guard-banner');
@@ -5056,7 +5059,7 @@ async function syncToCloud(jobId, state, opts = {}) {
   }
   if (_lastServerSnapshot === null) return; // never save a job that hasn't loaded
   if (_net.paused) { keepOnDevice(jobId, state); setSyncStatus('⚠ ' + NET_PAUSED_MSG); return; }
-  if (_saveInFlight) { _saveAgain = true; return; } // one save at a time; the next picks up the rest
+  if (_saveInFlight) { keepOnDevice(jobId, state); _saveAgain = true; return; } // one save at a time; the next picks up the rest
 
   const source = opts.source || 'autosave';
   // ONLY the fields that changed (the server-wins merge is inside changedFields:
@@ -5113,7 +5116,7 @@ async function syncToCloud(jobId, state, opts = {}) {
     scheduleRetry();
   } finally {
     _saveInFlight = false;
-    if (_saveAgain) { _saveAgain = false; if (!_net.paused) autoSave(); }
+    if (_saveAgain) { _saveAgain = false; if (!_net.paused && CURRENT_JOB_ID === jobId && _lastServerSnapshot !== null) autoSave(); }
   }
 }
 // ── DATA GUARD WARNING BANNER ───
