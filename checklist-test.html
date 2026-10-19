@@ -2481,6 +2481,7 @@ function injectJobUI() {
         if (typeof checkRestore === 'function') checkRestore();
         const typed = jobInput.value.trim();
         if (typed !== CURRENT_JOB_ID) {
+          flushBeforeJobChange();
           _lastServerSnapshot = null;
           clearTimeout(_syncTimer);
           _syncTimer = null;
@@ -2518,6 +2519,7 @@ function injectJobUI() {
       // previous job being written to the new job # before LOAD is clicked.
       const typed = jobInput.value.trim();
       if (typed !== CURRENT_JOB_ID) {
+        flushBeforeJobChange();
         _lastServerSnapshot = null;
         clearTimeout(_syncTimer);
         _syncTimer = null;
@@ -4749,12 +4751,13 @@ const NET_GUARD_MAX_PER_MIN = 60;
 const NET_PAUSED_MSG = 'Saving paused — too many requests. Your entries are kept. Reload to resume.';
 const _net = { times: [], paused: false, rawFetch: window.fetch.bind(window) };
 let _saveInFlight = false;
+let _changeWaiting = false; // a user change is waiting for its debounced save
 let _saveAgain = false;
 let _retryTimer = null;
 let _retryDelay = 0;
 window.fetch = function(input, init) {
   const url = String((input && input.url) || input || '');
-  if (url.startsWith(WORKER_URL)) {
+  if (url.startsWith(WORKER_URL + '/api/')) { // API calls only: photo downloads (report export) aren't counted
     if (_net.paused) return Promise.reject(new Error(NET_PAUSED_MSG));
     const now = Date.now();
     _net.times = _net.times.filter(t => now - t < 60000);
@@ -4794,6 +4797,21 @@ function writePending(jobId, map) {
   } catch(e) { /* storage full or blocked — the on-screen values are still there */ }
 }
 function hasPending(jobId) { return !!jobId && Object.keys(readPending(jobId)).length > 0; }
+// The WO# box no longer matches the loaded job (a switch is being typed).
+function jobIdTypedAway() {
+  const typed = ((document.getElementById('job-id-input') || {}).value || '').trim();
+  return !!typed && typed !== CURRENT_JOB_ID;
+}
+// A change typed just before the WO# box was edited still goes to the job it was typed on.
+function flushBeforeJobChange() {
+  const waiting = _changeWaiting;
+  _changeWaiting = false;
+  if (!waiting || !CURRENT_JOB_ID || _lastServerSnapshot === null || _savesSuspended) return;
+  clearTimeout(_syncTimer); _syncTimer = null;
+  const state = collectState();
+  keepOnDevice(CURRENT_JOB_ID, state); // kept even if the save below can't run now
+  syncToCloud(CURRENT_JOB_ID, state, { source: 'before-job-change' });
+}
 // While saving is paused, a change is still kept on this device (sent after a reload).
 function keepOnDevice(jobId, state) {
   try {
@@ -4838,8 +4856,9 @@ function scheduleRetry() {
   _retryTimer = setTimeout(() => { _retryTimer = null; retryPendingNow(); }, _retryDelay);
 }
 function retryPendingNow() {
-  if (_net.paused || !CURRENT_JOB_ID || document.hidden || _savesSuspended || _lastServerSnapshot === null) return;
+  if (_net.paused || !CURRENT_JOB_ID || document.hidden || _lastServerSnapshot === null || jobIdTypedAway()) return;
   if (!hasPending(CURRENT_JOB_ID)) return;
+  if (_savesSuspended || _saveInFlight) { scheduleRetry(); return; } // try again later, don't stall
   syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'retry' });
 }
 const TABLE = 'overhaul_data'; // kept for compatibility — not used directly
@@ -5264,14 +5283,14 @@ async function syncToCloud(jobId, state, opts = {}) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
-        keepalive: !!opts.keepalive && body.length < 60000 // lets a save on tab close finish
+        keepalive: !!opts.keepalive && rows.length <= 100 && new Blob([body]).size < 60000 // lets a save on tab close finish
       });
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
         throw new Error('Worker save failed (' + res.status + '): ' + errText.slice(0, 200));
       }
     }
-    if (CURRENT_JOB_ID === jobId) _lastServerSnapshot = { ...(_lastServerSnapshot || {}), ...changed };
+    if (CURRENT_JOB_ID === jobId && _lastServerSnapshot !== null) _lastServerSnapshot = { ..._lastServerSnapshot, ...changed };
     const left = readPending(jobId);
     for (const fid of ids) if (left[fid] === changed[fid]) delete left[fid];
     writePending(jobId, left);
@@ -5360,6 +5379,7 @@ async function loadJob() {
     }
 
     _savesSuspended = true;
+    _changeWaiting = false;
     CURRENT_JOB_ID = jobId;
     _lastServerSnapshot = null; // clear immediately — must not carry stale WO data into the new job
     localStorage.setItem('tsi_last_job_id', jobId);
@@ -5490,9 +5510,11 @@ function autoSave() {
   }
   if (_net.paused) { if (!_savesSuspended) keepOnDevice(CURRENT_JOB_ID); return; }
   clearTimeout(_syncTimer);
+  _changeWaiting = true;
   setSyncStatus('Saving…');
   _syncTimer = setTimeout(async () => {
     _syncTimer = null;
+    _changeWaiting = false;
     if (_savesSuspended) return;
     if (!CURRENT_JOB_ID) {
       // No active job loaded yet. If a Job # has been typed, save a local
@@ -5799,9 +5821,7 @@ function restoreLbState(lb) {
 // 1. BEFOREUNLOAD WARNING — warn if anything on screen isn't confirmed by the server.
 function hasUnsavedChanges() {
   if (!CURRENT_JOB_ID) return false;
-  if (_saveInFlight || hasPending(CURRENT_JOB_ID)) return true;
-  if (_savesSuspended || _lastServerSnapshot === null) return false;
-  try { return Object.keys(changedFields(CURRENT_JOB_ID, collectState())).length > 0; } catch(e) { return false; }
+  return _changeWaiting || _saveInFlight || hasPending(CURRENT_JOB_ID);
 }
 window.addEventListener('beforeunload', (e) => {
   if (!hasUnsavedChanges()) return;
@@ -5814,11 +5834,14 @@ window.addEventListener('beforeunload', (e) => {
 //    lock), send a change that is still waiting ONCE, then nothing while hidden.
 //    Back on screen: retry anything kept on this device.
 function flushOnHide(source) {
-  if (!CURRENT_JOB_ID || _savesSuspended || _lastServerSnapshot === null || _net.paused) return;
+  if (!_changeWaiting) return; // only a real change that is still waiting
+  if (!CURRENT_JOB_ID || _savesSuspended || _lastServerSnapshot === null || jobIdTypedAway()) return;
+  if (_net.paused) { keepOnDevice(CURRENT_JOB_ID); return; }
   clearTimeout(_syncTimer); _syncTimer = null;
-  if (Object.keys(changedFields(CURRENT_JOB_ID, collectState())).length) {
-    syncToCloud(CURRENT_JOB_ID, collectState(), { source, keepalive: true });
-  }
+  _changeWaiting = false;
+  const state = collectState();
+  keepOnDevice(CURRENT_JOB_ID, state); // the page may be killed before the reply
+  syncToCloud(CURRENT_JOB_ID, state, { source, keepalive: true });
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushOnHide('visibility-hide');
