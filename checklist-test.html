@@ -2414,20 +2414,26 @@ async function pullOnFocusRefresh(){
     if(typeof _loadInFlight!=='undefined' && _loadInFlight) return;
     if(_recog) return; // don't yank text out from under an active dictation
     const now=Date.now();
-    if(now-_lastPull < 8000) return; // at most once per 8s
+    if(document.hidden) return; // never while hidden
+    if(_net.paused || _saveInFlight) return;
+    if(now-_lastPull < 60000) return; // at most once a minute (Oct 19 usage fix; was 8s)
     _lastPull=now;
     const inp=document.getElementById('job-id-input');
     if(inp && inp.value.trim()!==CURRENT_JOB_ID){ inp.value=CURRENT_JOB_ID; }
     // FLUSH FIRST: push whatever is on THIS screen up to the server before pulling,
     // so a note you typed in the last 3s can't be reverted by the incoming copy.
     // syncToCloud merges (blank DOM never overwrites server), so this is safe.
+    // Only the changed fields, with the server-wins merge (no force: a blank on
+    // screen must never wipe a saved value). If anything is still unsaved,
+    // don't pull — the pull would put the server's older copy on screen.
     try{
       if(typeof syncToCloud==='function' && typeof collectState==='function'
          && !_savesSuspended && _lastServerSnapshot!==null){
-        if(typeof setSyncStatus==='function') setSyncStatus('Saving your edits...');
-        await syncToCloud(CURRENT_JOB_ID, collectState(), { force:true, source:'pull-flush' });
+        clearTimeout(_syncTimer); _syncTimer = null;
+        await syncToCloud(CURRENT_JOB_ID, collectState(), { source:'pull-flush' });
       }
     }catch(e){ console.warn('pre-pull flush failed (continuing):', e); }
+    if(hasPending(CURRENT_JOB_ID)) return;
     if(typeof setSyncStatus==='function') setSyncStatus('Refreshing from server...');
     if(typeof loadJob==='function') loadJob();
   }catch(e){ console.warn('pull-on-focus skipped:', e); }
@@ -4727,6 +4733,115 @@ const BLANK_OVERWRITE_REFUSE_COUNT = 5; // refuse save that blanks this many exi
 // ── Supabase connection ──
 // ── Cloudflare Worker backend (replaces Supabase) ──
 const WORKER_URL = 'https://tsi-overhaul-api.jason-184.workers.dev';
+
+// ── SAVE ENGINE (Jason, Oct 19 usage fix) ─────────────────────────────────────
+// An open sheet used to re-send EVERY field every 30 seconds (and every change
+// re-sent the whole sheet), which burned Cloudflare's free daily allowance in a
+// few hours. Now:
+//   • a save goes out ~2 s after the last change, with ONLY the changed fields;
+//   • no timer saves: an idle sheet sends nothing; a hidden tab sends nothing;
+//   • a failed save is kept on this device (tsi_pending_<job>) and retried with
+//     back-off (5 s, 10 s, 20 s … 5 min), only while the tab is visible;
+//   • RUNAWAY GUARD: more than 60 Worker requests in a minute stops all sending.
+// The server-wins merge (a blank on screen never wipes a saved value) is unchanged.
+const SAVE_DEBOUNCE_MS = 2000;
+const NET_GUARD_MAX_PER_MIN = 60;
+const NET_PAUSED_MSG = 'Saving paused — too many requests. Your entries are kept. Reload to resume.';
+const _net = { times: [], paused: false, rawFetch: window.fetch.bind(window) };
+let _saveInFlight = false;
+let _saveAgain = false;
+let _retryTimer = null;
+let _retryDelay = 0;
+window.fetch = function(input, init) {
+  const url = String((input && input.url) || input || '');
+  if (url.startsWith(WORKER_URL)) {
+    if (_net.paused) return Promise.reject(new Error(NET_PAUSED_MSG));
+    const now = Date.now();
+    _net.times = _net.times.filter(t => now - t < 60000);
+    if (_net.times.length >= NET_GUARD_MAX_PER_MIN) {
+      tripNetGuard();
+      return Promise.reject(new Error(NET_PAUSED_MSG));
+    }
+    _net.times.push(now);
+  }
+  return _net.rawFetch(input, init);
+};
+function tripNetGuard() {
+  if (_net.paused) return;
+  _net.paused = true;
+  clearTimeout(_retryTimer); _retryTimer = null;
+  clearTimeout(_syncTimer); _syncTimer = null;
+  console.error('[save] runaway guard tripped: more than ' + NET_GUARD_MAX_PER_MIN + ' requests in a minute');
+  let b = document.getElementById('net-guard-banner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'net-guard-banner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;background:#DC2626;color:white;padding:12px 20px;font-family:Arial,sans-serif;font-weight:700;font-size:14px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+    document.body.appendChild(b);
+  }
+  b.textContent = '⚠ ' + NET_PAUSED_MSG;
+  setSyncStatus('⚠ ' + NET_PAUSED_MSG);
+}
+// Entries not yet confirmed by the Worker, kept on this device per job.
+function pendingKey(jobId) { return 'tsi_pending_' + jobId; }
+function readPending(jobId) {
+  try { return JSON.parse(localStorage.getItem(pendingKey(jobId)) || '{}') || {}; } catch(e) { return {}; }
+}
+function writePending(jobId, map) {
+  try {
+    if (Object.keys(map).length) localStorage.setItem(pendingKey(jobId), JSON.stringify(map));
+    else localStorage.removeItem(pendingKey(jobId));
+  } catch(e) { /* storage full or blocked — the on-screen values are still there */ }
+}
+function hasPending(jobId) { return !!jobId && Object.keys(readPending(jobId)).length > 0; }
+// While saving is paused, a change is still kept on this device (sent after a reload).
+function keepOnDevice(jobId, state) {
+  try {
+    if (!jobId || _lastServerSnapshot === null) return;
+    const changed = changedFields(jobId, state || collectState());
+    if (Object.keys(changed).length) writePending(jobId, { ...readPending(jobId), ...changed });
+  } catch(e) { /* the on-screen values are still there */ }
+}
+// The fields that differ from what the server holds (server-wins merge applied).
+function changedFields(jobId, state, opts = {}) {
+  if (!jobId || _lastServerSnapshot === null) return {};
+  const flat = { ...flattenState(state) };
+  if (!opts.force) {
+    for (const [fid, serverVal] of Object.entries(_lastServerSnapshot)) {
+      if (isPresent(serverVal) && isBlank(flat[fid])) flat[fid] = serverVal; // blank on screen never wipes
+    }
+  }
+  for (const [fid, v] of Object.entries(readPending(jobId))) {
+    if (isBlank(flat[fid]) && isPresent(v)) flat[fid] = v; // an unsent entry kept on this device
+  }
+  const changed = {};
+  for (const [fid, v] of Object.entries(flat)) {
+    const val = String(v ?? '');
+    if (!sameFieldValue(fid, val, String(_lastServerSnapshot[fid] ?? ''))) changed[fid] = val;
+  }
+  return changed;
+}
+// Load bank rows get new internal ids each time the sheet loads; the ids alone
+// are not a change (otherwise just opening a job would look like an edit).
+function sameFieldValue(fid, a, b) {
+  if (a === b) return true;
+  if (fid !== 'lb_data') return false;
+  try {
+    const strip = s => { const o = JSON.parse(s || '{}'); if (o && Array.isArray(o.rows)) o.rows = o.rows.map(({ id, ...r }) => r); return JSON.stringify(o); };
+    return strip(a) === strip(b);
+  } catch(e) { return false; }
+}
+function scheduleRetry() {
+  if (_net.paused || !CURRENT_JOB_ID) return;
+  clearTimeout(_retryTimer);
+  _retryDelay = Math.min(_retryDelay ? _retryDelay * 2 : 5000, 300000);
+  _retryTimer = setTimeout(() => { _retryTimer = null; retryPendingNow(); }, _retryDelay);
+}
+function retryPendingNow() {
+  if (_net.paused || !CURRENT_JOB_ID || document.hidden || _savesSuspended || _lastServerSnapshot === null) return;
+  if (!hasPending(CURRENT_JOB_ID)) return;
+  syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'retry' });
+}
 const TABLE = 'overhaul_data'; // kept for compatibility — not used directly
 // CURRENT_JOB_ID declared at top of script
 
@@ -4923,7 +5038,7 @@ function clearSavedData(){
     const lastId = localStorage.getItem('tsi_last_job_id');
     if(lastId) candidates.add(lastId);
 
-    candidates.forEach(id => localStorage.removeItem('tsi_local_backup_' + id));
+    candidates.forEach(id => { localStorage.removeItem('tsi_local_backup_' + id); localStorage.removeItem('tsi_pending_' + id); });
 
     // Forget the prefilled WO#, or the form reloads straight back into it.
     localStorage.removeItem('tsi_last_job_id');
@@ -5112,58 +5227,66 @@ async function syncToCloud(jobId, state, opts = {}) {
     console.log('[save] suspended, skipping');
     return;
   }
+  if (_lastServerSnapshot === null) return; // never save a job that hasn't loaded
+  if (_net.paused) { keepOnDevice(jobId, state); setSyncStatus('⚠ ' + NET_PAUSED_MSG); return; }
+  if (_saveInFlight) { _saveAgain = true; return; } // one save at a time; the next picks up the rest
 
-  const domFlat = flattenState(state);
   const source = opts.source || 'autosave';
-
-  // MERGE: build the final flat object by taking the DOM value when present,
-  // or the last known server value when the DOM is blank.
-  // This is the core fix — blank DOM fields never overwrite real server data.
-  const flat = { ...domFlat };
-  if (_lastServerSnapshot && !opts.force) {
-    for (const [fid, serverVal] of Object.entries(_lastServerSnapshot)) {
-      if (isPresent(serverVal) && isBlank(flat[fid])) {
-        flat[fid] = serverVal; // keep server value — DOM is blank (collapsed section)
-      }
-    }
+  // ONLY the fields that changed (the server-wins merge is inside changedFields:
+  // a field blank on screen keeps its server value, so collapsed sections never
+  // blank real data; only opts.force can blank a field).
+  const changed = changedFields(jobId, state, opts);
+  const ids = Object.keys(changed);
+  if (!ids.length) {
+    writePending(jobId, {});
+    setSyncStatus('✓ Saved');
+    return;
   }
 
-  setSyncStatus('Saving...');
+  // Kept on this device until the Worker confirms it.
+  writePending(jobId, { ...readPending(jobId), ...changed });
+  _saveInFlight = true;
+  setSyncStatus('Saving…');
 
-  // Build rows for overhaul_data
   const now = new Date().toISOString();
-  const rows = Object.entries(flat).map(([field_id, field_value]) => ({
+  const rows = ids.map(field_id => ({
     job_id: jobId,
     field_id,
-    field_value: String(field_value || ''),
+    field_value: changed[field_id],
     updated_at: now,
     source
   }));
 
-  // Wrap upsert in try/catch and check res.ok on every batch.
-  // Only update _lastServerSnapshot if ALL batches succeed.
   try {
     for (let i = 0; i < rows.length; i += 100) {
-      const batch = rows.slice(i, i + 100);
+      const body = JSON.stringify(rows.slice(i, i + 100));
       const res = await fetch(WORKER_URL + '/api/job/' + encodeURIComponent(jobId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(batch)
+        body,
+        keepalive: !!opts.keepalive && body.length < 60000 // lets a save on tab close finish
       });
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
         throw new Error('Worker save failed (' + res.status + '): ' + errText.slice(0, 200));
       }
     }
-    // Update snapshot with the merged values that were actually written
-    _lastServerSnapshot = { ...flat };
-    // Write to history (fire-and-forget)
-    appendHistory(jobId, flat, source);
+    if (CURRENT_JOB_ID === jobId) _lastServerSnapshot = { ...(_lastServerSnapshot || {}), ...changed };
+    const left = readPending(jobId);
+    for (const fid of ids) if (left[fid] === changed[fid]) delete left[fid];
+    writePending(jobId, left);
+    _retryDelay = 0;
+    clearTimeout(_retryTimer); _retryTimer = null;
+    appendHistory(jobId, changed, source);
     setSyncStatus('✓ Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
   } catch (saveErr) {
     console.error('[save] Cloud save failed:', saveErr);
-    setSyncStatus('⚠ Save failed — check connection');
-    // Do NOT update _lastServerSnapshot on failure
+    // Do NOT update _lastServerSnapshot on failure; the entries stay on this device.
+    setSyncStatus(_net.paused ? '⚠ ' + NET_PAUSED_MSG : '⚠ Not saved yet — will retry');
+    scheduleRetry();
+  } finally {
+    _saveInFlight = false;
+    if (_saveAgain) { _saveAgain = false; if (!_net.paused) autoSave(); }
   }
 }
 // ── DATA GUARD WARNING BANNER ───
@@ -5268,12 +5391,19 @@ async function loadJob() {
       throw new Error('Load response not an array');
     }
 
-    // Build snapshot + state
+    // Build snapshot + state. The snapshot is the SERVER's values; entries kept on
+    // this device from a save that never got through go on screen on top of
+    // them, and are sent again once the load settles.
     const snapshot = {};
+    rows.forEach(r => { snapshot[r.field_id] = r.field_value; });
+    const _pend = readPending(jobId);
+    const _pendIds = Object.keys(_pend);
+    const rowsForState = _pendIds.length
+      ? rows.filter(r => !(r.field_id in _pend)).concat(_pendIds.map(f => ({ field_id: f, field_value: _pend[f] })))
+      : rows;
     const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} };
-    rows.forEach(row => {
+    rowsForState.forEach(row => {
       const { field_id, field_value } = row;
-      snapshot[field_id] = field_value;
       if (field_id.startsWith('meta_')) {
         state.meta[field_id.replace('meta_','')] = field_value;
       } else if (field_id.startsWith('meas_val_')) {
@@ -5319,7 +5449,7 @@ async function loadJob() {
     // Cache snapshot for the data-loss guard — but only if the job has actual data.
     // For empty/new jobs we want null so the server-wins merge in autoSave()
     // never fills blank fields from a previous job's snapshot.
-    if (rows.length === 0) {
+    if (rowsForState.length === 0) {
       // New/empty job — clear the form so we don't carry over the previous job's data.
       // Use an empty snapshot object so autosave is allowed for this freshly loaded
       // blank job, while still preventing stale server values from overwriting.
@@ -5331,6 +5461,11 @@ async function loadJob() {
       _lastServerSnapshot = snapshot;
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
       setSyncStatus('✓ Loaded ' + rows.filter(r => isPresent(r.field_value)).length + ' values');
+      if (_pendIds.length) {
+        setSyncStatus('⚠ Not saved yet — will retry (' + _pendIds.length + ' kept on this device)');
+        _retryDelay = 0;
+        setTimeout(retryPendingNow, 2600); // after restoreState un-suspends saves (2 s)
+      }
     }
   } catch(e) {
     setSyncStatus('Load failed — tap LOAD to retry');
@@ -5353,9 +5488,11 @@ function autoSave() {
     }, 500);
     return;
   }
+  if (_net.paused) { if (!_savesSuspended) keepOnDevice(CURRENT_JOB_ID); return; }
   clearTimeout(_syncTimer);
-  setSyncStatus('Saving...');
+  setSyncStatus('Saving…');
   _syncTimer = setTimeout(async () => {
+    _syncTimer = null;
     if (_savesSuspended) return;
     if (!CURRENT_JOB_ID) {
       // No active job loaded yet. If a Job # has been typed, save a local
@@ -5391,7 +5528,7 @@ function autoSave() {
     }
     const state = collectState();
     await syncToCloud(CURRENT_JOB_ID, state, { source: 'autosave' });
-  }, 1500);
+  }, SAVE_DEBOUNCE_MS);
 }
 
 
@@ -5652,67 +5789,44 @@ function restoreLbState(lb) {
 // END SECTION 9 LOGIC
 // ══════════════════════════════════════════════════════════════════
 
-// Periodic cloud sync every 30 seconds
-setInterval(() => {
-  if (CURRENT_JOB_ID && !_savesSuspended && _lastServerSnapshot !== null) {
-    syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'periodic' });
-  }
-}, 30000);
+// No periodic cloud sync (Oct 19 usage fix): it re-sent the whole sheet every
+// 30 s whether or not anything changed. Saves now happen only after a change.
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SAFETY PROTECTIONS
 // ══════════════════════════════════════════════════════════════════════════════
 
-// 1. BEFOREUNLOAD WARNING — warn if there's an active job and unsaved changes
-//    (The 1.5s autosave debounce means a fast page close can lose the last input)
-let _lastSaveTime = Date.now();
-// Track save time by watching the sync-status element — avoids redefining setSyncStatus
-const _syncStatusEl = document.getElementById('sync-status');
-if (_syncStatusEl) {
-  new MutationObserver(() => {
-    if (_syncStatusEl.textContent && _syncStatusEl.textContent.startsWith('✓ Saved')) {
-      _lastSaveTime = Date.now();
-    }
-  }).observe(_syncStatusEl, { childList: true, subtree: true, characterData: true });
+// 1. BEFOREUNLOAD WARNING — warn if anything on screen isn't confirmed by the server.
+function hasUnsavedChanges() {
+  if (!CURRENT_JOB_ID) return false;
+  if (_saveInFlight || hasPending(CURRENT_JOB_ID)) return true;
+  if (_savesSuspended || _lastServerSnapshot === null) return false;
+  try { return Object.keys(changedFields(CURRENT_JOB_ID, collectState())).length > 0; } catch(e) { return false; }
 }
-
 window.addEventListener('beforeunload', (e) => {
-  // Only warn if: a job is loaded AND there's been recent input (within 3 seconds)
-  if (!CURRENT_JOB_ID) return;
-  const timeSinceLastSave = Date.now() - _lastSaveTime;
-  // If a save happened within the last 5 seconds, we're fine
-  if (timeSinceLastSave < 5000) return;
-  // If _syncTimer is pending, there's a debounced save waiting
-  if (_syncTimer !== null) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved changes. Wait a moment for the autosave to complete before leaving.';
-    return e.returnValue;
-  }
+  if (!hasUnsavedChanges()) return;
+  e.preventDefault();
+  e.returnValue = 'You have unsaved changes. Wait a moment for them to save before leaving.';
+  return e.returnValue;
 });
 
-// 2. VISIBILITY CHANGE — force-save when user switches away from the tab
-//    (covers mobile: switching apps, locking screen, opening another tab)
+// 2. VISIBILITY CHANGE — when the tab is hidden (tab switch, app switch, screen
+//    lock), send a change that is still waiting ONCE, then nothing while hidden.
+//    Back on screen: retry anything kept on this device.
+function flushOnHide(source) {
+  if (!CURRENT_JOB_ID || _savesSuspended || _lastServerSnapshot === null || _net.paused) return;
+  clearTimeout(_syncTimer); _syncTimer = null;
+  if (Object.keys(changedFields(CURRENT_JOB_ID, collectState())).length) {
+    syncToCloud(CURRENT_JOB_ID, collectState(), { source, keepalive: true });
+  }
+}
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    // Page is being hidden (tab switch, app switch, screen lock)
-    // Force an immediate save if there's a pending debounced save
-    if (CURRENT_JOB_ID && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
-      clearTimeout(_syncTimer);
-      _syncTimer = null;
-      // Fire the save synchronously (best-effort — mobile may kill it mid-flight)
-      syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'visibility-hide' });
-    }
-  }
+  if (document.visibilityState === 'hidden') flushOnHide('visibility-hide');
+  else retryPendingNow();
 });
 
-// 3. PAGEHIDE — same as visibilitychange but fires on iOS when closing a tab
-window.addEventListener('pagehide', () => {
-  if (CURRENT_JOB_ID && _syncTimer !== null && !_savesSuspended && _lastServerSnapshot !== null) {
-    clearTimeout(_syncTimer);
-    _syncTimer = null;
-    syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'pagehide' });
-  }
-});
+// 3. PAGEHIDE — same, for iOS closing a tab
+window.addEventListener('pagehide', () => flushOnHide('pagehide'));
 
 // 4. ONLINE/OFFLINE STATUS — show a banner when connection is lost
 window.addEventListener('offline', () => {
@@ -5721,10 +5835,9 @@ window.addEventListener('offline', () => {
 });
 window.addEventListener('online', () => {
   hideOfflineBanner();
-  // Re-sync when connection restored
-  if (CURRENT_JOB_ID && !_savesSuspended && _lastServerSnapshot !== null) {
-    syncToCloud(CURRENT_JOB_ID, collectState(), { source: 'reconnect' });
-  }
+  // Send what was kept on this device (only the changed fields).
+  _retryDelay = 0;
+  retryPendingNow();
 });
 
 function setSyncStatus(msg) {
