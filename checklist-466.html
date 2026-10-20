@@ -504,6 +504,17 @@ body.variant-NA .ta-only, body.variant-TA .na-only{display:none!important;}
 .lash-table th,.lash-table td{border:1px solid var(--border);padding:.45rem .75rem;font-size:13px;}
 .lash-table th{background:var(--navy);color:#fff;text-align:left;}
 .src-kit-btn{margin-left:6px;}
+
+/* ══ Oil clearance calculator ══ */
+.clr-help{background:#EFF6FF;border-left:4px solid #1D4ED8;border-radius:0 8px 8px 0;padding:.75rem 1rem;margin:0 0 .9rem;font-family:Arial, sans-serif;font-size:13px;color:#1E3A8A;line-height:1.5;}
+.clr-help strong{display:block;font-size:12px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;}
+.clr-help ol{margin:.35rem 0 0 1.1rem;padding:0;}
+.meas-input.clr-auto{background:#EEF4FF;font-weight:700;color:#1A3A5C;border-color:#B9D0F0;cursor:default;}
+.clr-note{font-family:Arial, sans-serif;font-size:10px;line-height:1.35;margin-top:3px;color:#1E40AF;}
+.clr-note.warn{color:#B45309;font-weight:700;}
+.clr-note.bad{color:#991B1B;font-weight:700;}
+.unit-field select#uf-clrmethod{width:100%;min-height:40px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:5px 8px;color:white;font-family:Arial, sans-serif;font-size:13px;font-weight:700;}
+.unit-field select#uf-clrmethod option{color:#111;}
 </style>
 </head>
 <body>
@@ -1788,6 +1799,131 @@ function loadSrcParts(){
   alert(added ? ('Added '+added+' SRC parts. Edit quantities to match the job.') : 'All SRC kit parts are already on the list.');
 }
 
+
+// ══ OIL CLEARANCE CALCULATOR — bore gauge (bore − journal) or gauge zeroed on the journal (direct) ══
+const CLR={main:{n:7,j:'g1-main-j',b:'g2-bore-',c:'g2-clr-',sec:'sec-2',name:'Main'},rod:{n:6,j:'g1-rod-j',b:'g3-bore-',c:'g3-clr-',sec:'sec-3',name:'Rod'}};
+const CLR_ZERO_TOL=0.0002;   // mic setting may differ from recorded journal OD by this much before a warning (in)
+function clrMethod(){ const e=document.getElementById('uf-clrmethod'); return (e&&e.value)||'bore'; }
+function clrRowData(id){ if(typeof measRow==='function') return measRow(id); return allMeasRows().find(r=>r.id===id); }
+function clrNum(id){ const e=document.getElementById('val-'+id); if(!e) return NaN; const t=e.value.trim(); if(!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(t)) return NaN; return Number(t); }
+function clrFmt(x){ return (Math.round(x*100000)/100000).toFixed(5).replace(/0+$/,'').replace(/\.$/,'') || '0'; }
+function clrValidate(id){ const r=clrRowData(id); if(r) validateMeas(id, r.min, r.max); }
+function clrNote(id, html, cls){
+  const stat=document.getElementById('stat-'+id); if(!stat) return;
+  let n=document.getElementById('clrn-'+id);
+  if(!n){ n=document.createElement('div'); n.id='clrn-'+id; stat.parentNode.appendChild(n); }
+  n.className='clr-note'+(cls?' '+cls:''); n.innerHTML=html||'';
+}
+function clrSetLabel(id, label, spec){
+  const row=document.getElementById('row-'+id); if(!row) return;
+  const td=row.querySelector('td');
+  if(td){ if(!td.dataset.orig) td.dataset.orig=td.textContent; td.textContent=label||td.dataset.orig; }
+  const sp=document.getElementById('spec-'+id), r=clrRowData(id);
+  if(sp && r){ if(r._baseSpec===undefined) r._baseSpec=r.spec; r.spec=spec||r._baseSpec; sp.textContent=r.spec; }
+}
+// Recalculate one journal position. fromUser=false on restore: saved values are never overwritten.
+function clrCalc(kind, i, fromUser){
+  const c=CLR[kind]; const jId=c.j+i, bId=c.b+i, cId=c.c+i;
+  const jv=clrNum(jId), bv=clrNum(bId), cIn=document.getElementById('val-'+cId);
+  if(!cIn) return;
+  if(clrMethod()==='direct'){
+    clrNote(cId, '');
+    if(isFinite(jv) && isFinite(bv)){
+      const d=Math.round(Math.abs(bv-jv)*1e7)/1e7;
+      if(d>CLR_ZERO_TOL) clrNote(bId, `Mic setting differs from journal #${i} (${clrFmt(jv)}") by ${clrFmt(d)}" — re-zero on the journal size.`, 'warn');
+      else clrNote(bId, `Matches journal #${i} ✓`);
+    } else clrNote(bId, isFinite(bv)?`Enter journal #${i} in Section 1 to confirm the zero setting.`:'');
+    return;
+  }
+  clrNote(bId, '');
+  if(isFinite(jv) && isFinite(bv)){
+    const clr=Math.round((bv-jv)*1e7)/1e7;   // strip float noise only
+    const txt=clrFmt(clr);
+    if(fromUser){
+      cIn.value=txt; cIn.dataset.auto='1';
+      if(typeof markRev==='function') markRev(cId);
+      clrValidate(cId);
+    }
+    if(cIn.value.trim()!=='' && cIn.value.trim()!==txt && !fromUser){
+      clrNote(cId, `Saved value ${cIn.value} ≠ bore − journal (${txt}"). Re-enter the bore reading to update.`, 'warn');
+    } else {
+      clrNote(cId, clr<0 ? `Bore ${clrFmt(bv)} − journal ${clrFmt(jv)} = ${txt}" — negative: check both entries.` : `Bore ${clrFmt(bv)} − journal ${clrFmt(jv)} = ${txt}"`, clr<0?'bad':'');
+    }
+  } else {
+    if(fromUser && cIn.dataset.auto==='1'){ cIn.value=''; clrValidate(cId); }
+    const miss=[!isFinite(jv)?`journal #${i} (Section 1)`:'', !isFinite(bv)?'bore reading':''].filter(Boolean).join(' and ');
+    clrNote(cId, `Waiting for ${miss}.`);
+  }
+}
+function clrApplyMode(fromUser){
+  const direct=clrMethod()==='direct';
+  ['main','rod'].forEach(kind=>{
+    const c=CLR[kind];
+    for(let i=1;i<=c.n;i++){
+      const bId=c.b+i, cId=c.c+i, cIn=document.getElementById('val-'+cId);
+      const base=(clrRowData(cId)||{});
+      if(base._baseSpec===undefined) base._baseSpec=base.spec;
+      if(direct){
+        clrSetLabel(bId, `Gauge Zero Setting (mic) — ${c.name} #${i}`, 'Record mic setting = journal OD');
+        clrSetLabel(cId, null, base._baseSpec+' · read direct from gauge');
+        if(cIn){ cIn.readOnly=false; cIn.classList.remove('clr-auto'); cIn.title=''; delete cIn.dataset.auto; }
+      } else {
+        clrSetLabel(bId, null, null);
+        clrSetLabel(cId, null, base._baseSpec+' · auto: bore − journal');
+        if(cIn){ cIn.readOnly=true; cIn.classList.add('clr-auto'); cIn.title='Auto: bore − journal (Section 1)'; }
+      }
+      clrCalc(kind, i, false);
+    }
+  });
+  document.querySelectorAll('.clr-help').forEach(h=>{ h.innerHTML=clrHelpHtml(h.dataset.kind); });
+}
+function clrHelpHtml(kind){
+  const c=CLR[kind];
+  if(clrMethod()==='direct') return `<strong>Clearance method: gauge zeroed on the journal (direct)</strong>
+    <ol><li>Set the outside mic to ${c.name.toLowerCase()} journal #N as measured in Section 1 (smallest reading).</li>
+    <li>Zero the dial bore gauge in the mic. Record that mic setting in the "Gauge Zero Setting" row — the sheet checks it matches the journal.</li>
+    <li>Read the bearing bore at 90° to the cap split line. The gauge reading IS the clearance — enter it in the clearance row.</li></ol>`;
+  return `<strong>Clearance method: bore ID — the sheet subtracts the journal</strong>
+    <ol><li>Enter each ${c.name.toLowerCase()} journal in Section 1 (smallest reading of that journal).</li>
+    <li>Measure the bearing bore with the dial bore gauge at 90° to the cap split line and enter it here.</li>
+    <li>The clearance row fills in automatically: bore − journal. A negative answer means a typo or a wrong number.</li></ol>
+    <div style="margin-top:4px;">Change the method in the job card: <b>Clearance Method</b>.</div>`;
+}
+function clrOnInput(e){
+  const id=(e.target&&e.target.id)||'';
+  if(!id.startsWith('val-')) return;
+  const f=id.slice(4);
+  ['main','rod'].forEach(kind=>{
+    const c=CLR[kind];
+    [c.j, c.b].forEach(p=>{ if(f.startsWith(p)){ const i=+f.slice(p.length); if(i>=1&&i<=c.n) clrCalc(kind, i, true); } });
+  });
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Job-card selector must exist before the autosave listeners attach.
+  const hours=document.getElementById('uf-hours');
+  const host=hours?hours.closest('.unit-field'):null;
+  if(host && !document.getElementById('uf-clrmethod')){
+    const d=document.createElement('div'); d.className='unit-field';
+    d.innerHTML='<label>Clearance Method</label><select id="uf-clrmethod" onchange="clrApplyMode(true)"><option value="bore">Bore ID (sheet subtracts)</option><option value="direct">Gauge zeroed on journal</option></select>';
+    host.parentNode.insertBefore(d, host.nextSibling);
+  }
+  document.addEventListener('input', clrOnInput, true);
+  setTimeout(()=>{
+    ['main','rod'].forEach(kind=>{
+      const sec=document.getElementById(CLR[kind].sec); if(!sec) return;
+      const wrap=sec.querySelector('.meas-panel .meas-table-wrap'); if(!wrap || sec.querySelector('.clr-help')) return;
+      const h=document.createElement('div'); h.className='clr-help'; h.dataset.kind=kind; wrap.parentNode.insertBefore(h, wrap);
+    });
+    clrApplyMode(false);
+  },0);
+});
+const _clrRestore=restoreState;
+restoreState=function(state){
+  const res=_clrRestore.apply(this, arguments);
+  try{ const sel=document.getElementById('uf-clrmethod'); if(sel && !sel.value) sel.value='bore'; clrApplyMode(false); }catch(e){ console.warn('[clr] restore refresh failed', e); }
+  return res;
+};
+
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
   _savesSuspended = true;
@@ -2226,6 +2362,7 @@ function saveJSON(){
       hours:document.getElementById('uf-hours').value,
       variant:document.getElementById('uf-variant').value,
       grind:document.getElementById('uf-grind').value,
+      clrmethod:clrMethod(),
       savedAt:new Date().toISOString()
     },
     measurements:{},
@@ -2930,6 +3067,17 @@ body.variant-NA .ta-only, body.variant-TA .na-only{display:none!important;}
 .lash-table th,.lash-table td{border:1px solid var(--border);padding:.45rem .75rem;font-size:13px;}
 .lash-table th{background:var(--navy);color:#fff;text-align:left;}
 .src-kit-btn{margin-left:6px;}
+
+/* ══ Oil clearance calculator ══ */
+.clr-help{background:#EFF6FF;border-left:4px solid #1D4ED8;border-radius:0 8px 8px 0;padding:.75rem 1rem;margin:0 0 .9rem;font-family:Arial, sans-serif;font-size:13px;color:#1E3A8A;line-height:1.5;}
+.clr-help strong{display:block;font-size:12px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;}
+.clr-help ol{margin:.35rem 0 0 1.1rem;padding:0;}
+.meas-input.clr-auto{background:#EEF4FF;font-weight:700;color:#1A3A5C;border-color:#B9D0F0;cursor:default;}
+.clr-note{font-family:Arial, sans-serif;font-size:10px;line-height:1.35;margin-top:3px;color:#1E40AF;}
+.clr-note.warn{color:#B45309;font-weight:700;}
+.clr-note.bad{color:#991B1B;font-weight:700;}
+.unit-field select#uf-clrmethod{width:100%;min-height:40px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:5px 8px;color:white;font-family:Arial, sans-serif;font-size:13px;font-weight:700;}
+.unit-field select#uf-clrmethod option{color:#111;}
 </style>
 </head>
 <body>
@@ -3852,7 +4000,7 @@ function isCriticalField(fid) {
 function collectState() {
   const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{} };
 
-  ['wo','serial','model','unit','customer','tech','date','hours','variant','grind'].forEach(k => {
+  ['wo','serial','model','unit','customer','tech','date','hours','variant','grind','clrmethod'].forEach(k => {
     const el = document.getElementById('uf-'+k);
     if (el) state.meta[k] = el.value || '';
   });
@@ -4027,7 +4175,7 @@ function restoreState(state) {
     // Without this, switching to an empty job leaves previous job's values
     // visible because the forEach loops below only write fields IN the state
     // object — they never clear ones that aren't there.
-    ['wo','serial','model','unit','customer','tech','date','hours','variant','grind'].forEach(k => {
+    ['wo','serial','model','unit','customer','tech','date','hours','variant','grind','clrmethod'].forEach(k => {
       const el = document.getElementById('uf-'+k);
       if (el) el.value = '';
     });
