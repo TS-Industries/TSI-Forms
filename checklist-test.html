@@ -853,7 +853,7 @@ body{font-family:Arial, sans-serif;background:#F5F7FA;color:var(--dark);min-heig
       <div class="section-num">3</div>
       <div class="section-title-wrap">
         <div class="section-title">Connecting Rod Bearings — Inspection &amp; Torque</div>
-        <div class="section-subtitle">Procedure 001-005 / 001-054 &nbsp;|&nbsp; Side Clearance &nbsp;|&nbsp; Final angle HOLD</div>
+        <div class="section-subtitle">Procedure 001-005 / 001-054 &nbsp;|&nbsp; Side Clearance &nbsp;|&nbsp; Hardware-specific final angle</div>
       </div>
       <div class="section-badges"><span class="badge badge-gray" id="badge-sec-3">0/28</span></div>
       <span class="chevron">▼</span>
@@ -2215,7 +2215,56 @@ const sec7Meas=[{"id": "s7-lash-i1", "label": "Valve Lash — Intake Cyl #1", "s
 const sec8Meas=[{"id": "s8-lg-bl", "label": "Backlash — Check A (pump installed)", "spec": "0.003–0.013\"", "min": 0.003, "max": 0.013, "loc": "Adjoining gear held still", "group": "Pump Backlash (007-031)", "plaus": [0, 0.1]}, {"id": "s8-sm-bl", "label": "Backlash — Check B (pump installed)", "spec": "0.003–0.013\"", "min": 0.003, "max": 0.013, "loc": "Adjoining gear held still", "group": null, "plaus": [0, 0.1], "review": true}, {"id": "s8-op-idle", "label": "Oil Pressure — Low Idle, Hot (psi)", "spec": "MIN 10 psi", "min": 10, "max": null, "loc": "Gauge", "group": "Oil Pressure After Start (OIL 018-017)", "plaus": [0, 150]}, {"id": "s8-op-1400", "label": "Oil Pressure — 1400 rpm / Torque Peak, Hot (psi)", "spec": "MIN 30 psi", "min": 30, "max": null, "loc": "Gauge", "group": null, "plaus": [0, 150]}, {"id": "s8-op-rated", "label": "Oil Pressure — Rated Speed, Hot (psi)", "spec": "Record (TSI rule 40 psi)", "min": null, "max": null, "loc": "Gauge", "group": null, "plaus": [0, 150]}];
 const viSec1=["Journal surfaces — no deep scoring or overheating discoloration", "Oil drilling passages — clean, no blockage (bristle brush + compressed air)", "Threaded holes — no cross-threading or damage (repair with insert kit if needed)", "Front oil seal contact area — no wear groove exceeding 0.010\"", "Rear oil seal contact area — no wear groove exceeding 0.010\"", "Keyway and timing gear area — no damage or fretting", "Journal size identified (STD / undersize) and bearings ordered to match"];
 const viSec2=["Bearing shells — no pitting, flaking, corrosion, or lock tang damage", "Block saddle surfaces — clean, no raised metal or burrs", "Cap bolt threads — clean, no damage or galling", "Crankshaft rotates freely after all caps torqued", "Crankshaft end play measured and within specification", "Bearing backs and saddles clean and DRY; bearing working faces oiled", "Bolt threads and under heads oiled, excess drained; 50 → 95 N·m → 60° done in order 1–14"];
-const viSec3=["Bearing shells — no pitting, flaking, corrosion, or lock tang damage", "Rod cap serial numbers match rod serial numbers — all 6 verified", "Rod cap orientation — locking tang faces camshaft side on all 6", "Crankshaft rotates freely after each cap installed", "Rod threads and under nuts oiled; 30 → 70 N·m done on all 6", "HOLD — final rod angle (60° or 90°) confirmed by Cummins for the fitted hardware"];
+const viSec3=["Bearing shells — no pitting, flaking, corrosion, or lock tang damage", "Rod cap serial numbers match rod serial numbers — all 6 verified", "Rod cap orientation — locking tang faces camshaft side on all 6", "Crankshaft rotates freely after each cap installed", "Rod threads and under nuts oiled; 30 → 70 N·m done on all 6", "Rod fastener type and matching final angle recorded: studs/nuts 60° or capscrews 90°"];
+// Cummins QuickServe audit — ESN 74365429 / TRM 3666206 (20-Oct-2026).
+// Keep the hardware-specific rod angle explicit: these are different fastener designs, not an OEM conflict.
+for (const row of sec3Meas) {
+  if (row.id.startsWith('s3-bore-')) {
+    row.spec = 'Record — bore ID with bearing';
+    row.group = row.group ? 'Bore ID with Bearing Installed' : null;
+  }
+  if (row.id.startsWith('s3-clr-')) {
+    row.spec = 'MAX 0.0046\"';
+    row.min = 0;
+    row.max = 0.0046;
+    row.group = row.group ? 'Oil Clearance (Bore − Journal)' : null;
+    delete row.hold;
+    row.review = true;
+  }
+  if (row.id === 's3-fast-type') row.spec = 'Record: studs+nuts / capscrews';
+  if (row.id === 's3-angle') {
+    row.spec = 'Record: 60° studs/nuts · 90° capscrews';
+    row.type = 'text';
+    delete row.hold;
+  }
+}
+for (const row of sec4Meas) {
+  if (row.id.startsWith('s4-prot-') && row.id !== 's4-prot-adj') {
+    row.spec = '0.001–0.005\"';
+    row.min = 0.001;
+    row.max = 0.005;
+    row.group = row.group ? 'Installed Liner Protrusion' : null;
+    delete row.hold;
+    row.review = true;
+  }
+}
+
+function applyCumminsAuditCorrections() {
+  const sectionThree = document.getElementById('sec-3');
+  if (sectionThree) {
+    const torque = document.getElementById('proc-3-torque');
+    const specs = document.getElementById('proc-3-specs');
+    const procedure = document.getElementById('proc-3-procedure');
+    const torqueTab = sectionThree.querySelector('button[onclick*="proc-3-torque"]');
+    if (torqueTab) torqueTab.textContent = 'Torque';
+    if (torque) torque.innerHTML = `<div class="proc-title">Connecting Rod Torque — Hardware-Specific</div><div class="alert-box alert-info"><strong>✓ Cummins verified — no torque conflict (R09 closed)</strong>QuickServe TRM 3666206, PISTON 001-054 distinguishes two fastener designs: <b>studs/nuts: 30 N·m → 70 N·m → 60°</b>; <b>capscrews: 30 N·m → 70 N·m → 90°</b>. ROD 001-005 confirms the 90° sequence for its capscrew-nut configuration. Identify and record the installed hardware before applying the final angle.</div><div class="torque-sequence-box"><div class="torque-seq-title">Lubricate threads and under the fastener head/nut with clean engine oil · tighten in alternating sequence</div><div class="torque-steps"><div class="torque-step"><div class="torque-step-num">Step 1</div><div class="torque-step-val">22</div><div class="torque-step-unit">ft-lb</div><div class="torque-step-nm">30 N·m</div></div><div class="torque-arrow">→</div><div class="torque-step"><div class="torque-step-num">Step 2</div><div class="torque-step-val">52</div><div class="torque-step-unit">ft-lb</div><div class="torque-step-nm">70 N·m</div></div><div class="torque-arrow">→</div><div class="torque-step highlight"><div class="torque-step-num">Step 3 — final angle</div><div class="torque-step-val">60° / 90°</div><div class="torque-step-unit">match hardware</div><div class="torque-step-nm">studs/nuts 60° · capscrews 90°</div></div></div></div><div class="src-line">Source: PISTON 001-054 · ROD 001-005 · QuickServe TRM 3666206 (audit 20-Oct-2026)</div>`;
+    if (specs) specs.innerHTML = `<div class="proc-title">Connecting Rod Bearing Specifications</div><div class="spec-grid"><div class="spec-card primary"><div class="spec-label">Con Rod Side Clearance</div><div class="spec-value" style="font-size:15px;">0.004–0.013<span class="spec-unit">in</span></div><div class="spec-sub">0.10–0.33 mm</div></div><div class="spec-card primary"><div class="spec-label">Maximum Bearing Clearance</div><div class="spec-value">0.0046<span class="spec-unit">in</span></div><div class="spec-sub">0.117 mm · bearing-installed bore − journal</div></div><div class="spec-card"><div class="spec-label">New Bearing Shell Thickness</div><div class="spec-value">Record</div><div class="spec-sub">For reference only</div></div></div><div class="alert-box alert-info"><strong>✓ Cummins verified — clearance method (R08 closed)</strong>CRANK 001-016 defines bearing clearance as <b>bore diameter with bearing installed minus crankshaft journal diameter</b>, maximum <b>0.0046 in [0.117 mm]</b>. Measure only after tightening the cap with the matching installed-hardware sequence. A bore gauge zeroed to the measured journal OD displays that subtraction directly.</div><div class="alert-box alert-info"><strong>Cap orientation</strong>Rod and cap serial numbers must match; the cap locking tang faces the CAMSHAFT side.</div><div class="src-line">Source: CRANK 001-016 · ROD 001-005 · PISTON 001-054 · QuickServe TRM 3666206 (audit 20-Oct-2026)</div>`;
+    if (procedure) procedure.innerHTML = `<div class="proc-title">Connecting Rod Bearing Installation Procedure</div><ol class="proc-steps"><li>Before removal, mark each shell U/L and journal number. Confirm rod and cap serial numbers match.</li><li>Clean caps, fasteners, and bearings. Bearing backs remain dry; working faces are oiled.</li><li>Identify the installed rod hardware and record it: studs/nuts or capscrews.</li><li>Fit the cap with matching serial number and the locking tang toward the camshaft.</li><li>Oil fastener threads and under the head/nut. Tighten alternately to 30 N·m, then 70 N·m.</li><li>Apply the matching final angle: <b>60° for studs/nuts</b>; <b>90° for capscrews</b>. Record the angle used.</li><li>With the bearing installed and cap tightened, measure the bore ID or zero the bore gauge to the measured journal OD and record the direct clearance. Maximum 0.0046 in.</li><li>Confirm the crank turns freely and measure side clearance with a feeler gauge.</li></ol><div class="src-line">Source: CRANK 001-016 · ROD 001-005 · PISTON 001-054 · QuickServe TRM 3666206 (audit 20-Oct-2026)</div>`;
+  }
+  const protrusion = document.getElementById('proc-4-protrusion');
+  if (protrusion) protrusion.innerHTML = `<div class="proc-title">Liner Protrusion — Installed Acceptance</div><ol class="proc-steps"><li>Seat each liner with two clamps at <b>68 N·m [50 ft-lb]</b>.</li><li><b>Remove the clamps.</b> Measure protrusion unclamped with gauge 3823495 at four points, 90° apart.</li><li>Installed liner acceptance is <b>0.001–0.005 in</b>; adjacent cylinders may differ by no more than 0.002 in.</li><li>If readings vary more than 0.001 in across 180°, reclamp and recheck; inspect the liner, seat, and counterbore if it persists.</li></ol><div class="alert-box alert-info"><strong>✓ Cummins verified — installed protrusion (R14 closed)</strong>The 0.000–0.005 in allowance applies to the <b>initial inspection</b> of used block/used liner combinations before removal. The installation section separately requires <b>0.001–0.005 in</b> for the installed liner, including after replacement or reinstallation.</div><div class="src-line">Source: LINER 001-028 · QuickServe TRM 3666206 (audit 20-Oct-2026)</div>`;
+}
+applyCumminsAuditCorrections();
 const viSec4=["Liner bore — no vertical scoring deep enough to catch fingernail", "Liner hone crosshatch — visible, not polished out", "Piston crowns — no erosion, cracks, or hot spots", "Piston ring grooves — no excessive wear or damage", "Piston pins — no scoring or discoloration", "Connecting rod alignment — no bending or twist", "Piston part number matches ESN 74365429 parts listing (compression ratio recorded)", "Ring gaps staggered 120° before installation", "Liner O-rings — new O-rings installed, no cuts or damage", "Liner seated with 2 clamps at 50 ft-lb, clamps REMOVED, protrusion read at 4 points", "Piston FRONT mark toward front; pin retainers seated; rod tang toward camshaft"];
 const viSec5=["Combustion deck — no cracks, erosion, or pitting between valves", "Coolant passages — clean, no scale or blockage", "Valve faces — no pitting, burning, or erosion", "Valve stems — no scoring or bending", "Core plugs — all present and secure", "Local flatness — 2 in straightedge, 0.001 in feeler does NOT fit anywhere", "Pressure test record — 40 psi, immersed in 140°F water, no leaks", "Seat insert parts confirmed correct for CPL 2474 (parts catalogue / shop)"];
 const viSec7=["Rocker arm contact pads — no wear or pitting", "Rocker shaft — no scoring or wear at contact areas", "Push rods — straight, no bending or worn ball/socket ends", "Valve springs — no cracks; free length recorded; load test per OEM setup", "Valve retainers and locks — correct installation, fully seated", "Rocker lever cover gasket — replaced with new", "Camshaft lobes — no pitting (TSI rule, stricter than OEM criteria)", "Rocker pedestals 41 ft-lb, threads oiled, adjusting balls seated in pushrods", "Cam thrust plate capscrews 212 in-lb", "Lash rechecked at the Step A and Step B positions after locknuts torqued"];
