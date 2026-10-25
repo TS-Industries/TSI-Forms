@@ -1281,7 +1281,7 @@ body{padding-bottom:148px!important}
           <div style="font-family:Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:.625rem;">Photo Documentation — Load Bank Run</div>
           <div style="background:var(--gray-light);border:1px solid var(--border);border-radius:8px;padding:.875rem 1rem;">
             <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.625rem;">
-              <button class="photo-btn" id="photo-btn-lb-run" onclick="document.getElementById(&#39;photo-input-lb-run&#39;).click()">📷 Add Photos</button>
+              <button class="photo-btn" id="photo-btn-lb-run" onclick="choosePhotoSource(&#39;photo-input-lb-run&#39;)">📷 Add Photos</button>
               <input type="file" id="photo-input-lb-run" accept="image/*" multiple="" style="display:none;" onchange="handlePhotoUpload(&#39;lb-run&#39;,this)">
               <span style="font-size:11px;color:var(--gray);">Add photos from the load bank run — engine, generator, load bank setup, readings, etc.</span>
             </div>
@@ -2093,8 +2093,8 @@ function buildMeasTable(tbodyId, rows){
       <td><span class="status-cell status-pending" id="stat-${r.id}">—</span></td>
       <td><input class="meas-note" id="note-${r.id}" placeholder="Notes..."></td>
       <td class="photo-cell">
-        <input type="file" accept="image/*" capture="environment" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
-        <button class="photo-btn" id="photo-btn-${r.id}" onclick="document.getElementById('photo-input-${r.id}').click()">&#128247; Add</button>
+        <input type="file" accept="image/*" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
+        <button class="photo-btn" id="photo-btn-${r.id}" onclick="choosePhotoSource('photo-input-${r.id}')">&#128247; Add</button>
         <div class="photo-thumbs" id="photo-thumbs-${r.id}"></div>
       </td>`;
     tb.appendChild(tr);
@@ -2166,8 +2166,8 @@ function buildVIItems(containerId,prefix,items){
       <div class="vi-btns">
         <button class="vi-btn vi-btn-pass" id="pass-${id}" onclick="setVI('${id}','pass')">PASS</button>
         <button class="vi-btn vi-btn-fail" id="fail-${id}" onclick="setVI('${id}','fail')">FAIL</button>
-        <input type="file" accept="image/*" capture="environment" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
-        <button class="photo-btn" id="photo-btn-${id}" onclick="document.getElementById('photo-input-${id}').click()" title="Attach photo">&#128247;</button>
+        <input type="file" accept="image/*" id="photo-input-${id}" style="display:none;" multiple onchange="handlePhotoUpload('${id}',this)">
+        <button class="photo-btn" id="photo-btn-${id}" onclick="choosePhotoSource('photo-input-${id}')" title="Attach photo">&#128247;</button>
         <div class="photo-thumbs" id="photo-thumbs-${id}"></div>
       </div>`;
     c.appendChild(div);
@@ -3171,6 +3171,16 @@ body.variant-NA .ta-only, body.variant-TA .na-only{display:none!important;}
   </div>
   <div style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:.4rem;">Scroll to zoom  ·  Click image to toggle zoom  ·  ← → to navigate  ·  Esc to close</div>
 </div>
+<dialog id="photo-source-dialog" aria-labelledby="photo-source-title" style="border:2px solid #ed8500;border-radius:12px;padding:24px;max-width:calc(100vw - 32px);box-sizing:border-box;color:#182b40;">
+  <h2 id="photo-source-title" style="margin:0 0 18px;font-size:20px;">Add photos</h2>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <button type="button" class="photo-btn" style="min-height:48px;font-size:16px;" onclick="selectPhotoSource('library')">Choose from phone / files</button>
+    <button type="button" class="photo-btn" style="min-height:48px;font-size:16px;" onclick="selectPhotoSource('camera')">Take a picture</button>
+    <button type="button" class="photo-btn" style="min-height:44px;font-size:16px;" onclick="document.getElementById('photo-source-dialog').close()">Cancel</button>
+  </div>
+</dialog>
+<input type="file" id="photo-camera-input" accept="image/*" capture="environment" hidden>
+<style>#photo-source-dialog::backdrop{background:rgba(0,0,0,.6);}</style>
 </body>
 </html>`;
   // Build lightbox script block - script tags are split to avoid breaking HTML parser
@@ -3538,6 +3548,27 @@ async function uploadPhotoToStorage(jobId, fieldId, blob) {
   return data.url; // Worker returns { url, key }
 }
 
+// Keep library selection separate from camera capture on mobile browsers.
+let activePhotoInput = null;
+function choosePhotoSource(inputId) {
+  activePhotoInput = document.getElementById(inputId);
+  if (!activePhotoInput) return;
+  document.getElementById('photo-source-dialog').showModal();
+}
+function selectPhotoSource(source) {
+  const original = activePhotoInput;
+  document.getElementById('photo-source-dialog').close();
+  if (!original) return;
+  if (source === 'library') {
+    original.value = '';
+    original.click();
+  } else {
+    const camera = document.getElementById('photo-camera-input');
+    camera.value = '';
+    camera.onchange = function () { original.onchange.call(this); };
+    camera.click();
+  }
+}
 async function handlePhotoUpload(id, input) {
   if (!input.files || !input.files.length) return;
   if (!photoStore[id]) photoStore[id] = [];
@@ -5065,8 +5096,8 @@ function buildPreOverhaulSection() {
     card.innerHTML = `
       <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;">
         <div style="font-family:Arial, sans-serif;font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--navy);flex:1;">${def.title}</div>
-        <button class="photo-btn" onclick="document.getElementById('po-input-${gid}').click()">&#128247; Add Photos</button>
-        <input type="file" accept="image/*" capture="environment" id="po-input-${gid}" style="display:none;" multiple onchange="handlePreOverhaulUpload('${gid}',this)">
+        <button class="photo-btn" onclick="choosePhotoSource('po-input-${gid}')">&#128247; Add Photos</button>
+        <input type="file" accept="image/*" id="po-input-${gid}" style="display:none;" multiple onchange="handlePreOverhaulUpload('${gid}',this)">
       </div>
       <div class="po-photo-grid" id="po-grid-${gid}" style="display:flex;flex-wrap:wrap;gap:.75rem;"></div>
     `;
@@ -5210,4 +5241,14 @@ async function deletePreOverhaulPhoto(gid, idx) {
 })();
 </script>
 <!-- TSI-WORKFLOW-NAV-MODULE-END -->
+<dialog id="photo-source-dialog" aria-labelledby="photo-source-title" style="border:2px solid #ed8500;border-radius:12px;padding:24px;max-width:calc(100vw - 32px);box-sizing:border-box;color:#182b40;">
+  <h2 id="photo-source-title" style="margin:0 0 18px;font-size:20px;">Add photos</h2>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <button type="button" class="photo-btn" style="min-height:48px;font-size:16px;" onclick="selectPhotoSource('library')">Choose from phone / files</button>
+    <button type="button" class="photo-btn" style="min-height:48px;font-size:16px;" onclick="selectPhotoSource('camera')">Take a picture</button>
+    <button type="button" class="photo-btn" style="min-height:44px;font-size:16px;" onclick="document.getElementById('photo-source-dialog').close()">Cancel</button>
+  </div>
+</dialog>
+<input type="file" id="photo-camera-input" accept="image/*" capture="environment" hidden>
+<style>#photo-source-dialog::backdrop{background:rgba(0,0,0,.6);}</style>
 </body></html>
