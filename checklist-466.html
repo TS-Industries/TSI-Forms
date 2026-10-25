@@ -1640,6 +1640,42 @@ function attachAutoSaveListeners() {
   });
 }
 
+
+// Per-job recovery copies are retained independently of cloud reads.
+function getLocalBackupKey(jobId) {
+  const id=String(jobId || document.getElementById('job-id-input')?.value || CURRENT_JOB_ID || '').trim();
+  return id ? 'tsi466_local_backup_'+id : null;
+}
+function hasRecoveryEntries(s) {
+  if(!s || typeof s!=='object')return false;
+  if(['wo','serial','model','unit','customer','tech','hours'].some(k=>String(s.meta?.[k]||'').trim()))return true;
+  if(Object.values(s.meas||{}).some(v=>String(v?.value??'').trim()||String(v?.note??'').trim()))return true;
+  if(Object.values(s.vi||{}).some(v=>v==='pass'||v==='fail') || Object.values(s.bolts||{}).some(Boolean))return true;
+  if(Object.values(s.notes||{}).some(v=>String(v||'').trim()) || String(s.summary||'').trim())return true;
+  if((s.parts||[]).length || Object.values(s.photos||{}).some(v=>Array.isArray(v)&&v.length) || Object.values(s.preOverhaulPhotos||{}).some(v=>Array.isArray(v)&&v.length))return true;
+  const lb=s.lb||{};
+  return ['genMake','genModel','genSerial','genKw','genVolts','ambientC','kw','volts'].some(k=>String(lb[k]||'').trim()) || (lb.rows||[]).some(r=>Object.entries(r).some(([k,v])=>!['id','kw'].includes(k)&&String(v??'').trim()));
+}
+function readLocalJobBackup(jobId) {
+  try {
+    const raw=localStorage.getItem(getLocalBackupKey(jobId));if(!raw)return null;
+    const recovered=JSON.parse(raw);
+    const wo=String(recovered.meta?.wo||'').trim();
+    if(wo && wo!==String(jobId).trim())return null;
+    return hasRecoveryEntries(recovered)?recovered:null;
+  }catch(e){return null}
+}
+function keepJobRecoveryCopy(jobId, snapshot) {
+  try {
+    const key=getLocalBackupKey(jobId);if(!key)return;
+    const recovered=snapshot||collectState();
+    if(!hasRecoveryEntries(recovered))return; // a blank form must not erase a useful recovery copy
+    const wo=String(recovered.meta?.wo||'').trim();
+    if(wo && wo!==String(jobId).trim())return;
+    localStorage.setItem(key,JSON.stringify({...recovered,_backupAt:new Date().toISOString()}));
+  }catch(e){console.warn('Local recovery copy unavailable',e)}
+}
+
 // ── Check for unsaved local backup on startup ──
 function checkRestore() {
   try {
@@ -1649,10 +1685,10 @@ function checkRestore() {
       return;
     }
     const raw = localStorage.getItem(key);
-    if (!raw) {
-      dismissRestore();
-      return;
-    }
+    const recovered=raw?readLocalJobBackup(String(document.getElementById('job-id-input')?.value||CURRENT_JOB_ID||'').trim()):null;
+    if (!recovered) {dismissRestore();return;}
+    const stamp=document.getElementById('restore-time');
+    if(stamp)stamp.textContent=recovered._backupAt?new Date(recovered._backupAt).toLocaleString():'this device';
     const banner = document.getElementById('restore-banner');
     if (banner) banner.style.display = 'flex';
   } catch(e) { /* ignore */ }
@@ -2426,6 +2462,7 @@ function saveJSON(){
       });
     }
   }
+  data.recoveryState=collectState(); // includes section notes, torque checks, photos and load-bank entries
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -4492,9 +4529,9 @@ async function loadJob() {
     CURRENT_JOB_ID = jobId;
     _lastServerSnapshot = null; // clear immediately — must not carry stale WO data into the new job
     localStorage.setItem('tsi466_last_job_id', jobId);
-    // Cloud data is now authoritative for this job — purge any stale local
-    // backup for this WO# and hide the restore banner.
-    try { localStorage.removeItem('tsi466_local_backup_' + jobId); } catch(e) {}
+    // Do not delete a local recovery copy before knowing what the cloud contains.
+    // A successful empty read must never destroy the only saved copy.
+    const localRecovery=readLocalJobBackup(jobId);
     dismissRestore();
     setSyncStatus('Loading...');
 
@@ -4505,6 +4542,7 @@ async function loadJob() {
       WORKER_URL + '/api/job/' + encodeURIComponent(wkJob(jobId)),
       { method: 'GET', headers: { 'Content-Type': 'application/json' } }
     );
+    if(!res.ok)throw new Error('Cloud load failed (HTTP '+res.status+')');
     const rawRows = await res.json();
     // Deduplicate: keep only the first (= most-recent) occurrence of each field_id
     const seenFields = new Set();
@@ -4583,9 +4621,16 @@ async function loadJob() {
       // Use an empty snapshot object so autosave is allowed for this freshly loaded
       // blank job, while still preventing stale server values from overwriting.
       _lastServerSnapshot = {};
-      restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
-      updateProgress();
-      setSyncStatus('✓ New job — form cleared and ready');
+      if(localRecovery){
+        restoreState(localRecovery);
+        updateProgress();
+        setSyncStatus('⚠ Cloud empty — recovered local entries. Saving to cloud…');
+        setTimeout(()=>{if(CURRENT_JOB_ID===jobId && !jobIdTypedAway())autoSave();},2600);
+      }else{
+        restoreState({ meta:{}, meas:{}, vi:{}, bolts:{}, notes:{}, photos:{}, parts:[], preOverhaulPhotos:{} });
+        updateProgress();
+        setSyncStatus('No cloud records for '+jobId+' — check the computer’s Job # and Saved status');
+      }
     } else {
       _lastServerSnapshot = snapshot;
       restoreState(state); // this will re-suspend saves internally; we un-suspend after
@@ -4598,6 +4643,7 @@ async function loadJob() {
     }
   } catch(e) {
     setSyncStatus('Load failed — tap LOAD to retry');
+    checkRestore(); // keep any matching recovery copy accessible after a failed load
     console.error('Load error:', e);
   } finally {
     // restoreState handles its own un-suspend; if it didn't run, un-suspend here
@@ -4617,6 +4663,8 @@ function autoSave() {
     }, 500);
     return;
   }
+  const typedForRecovery=String(document.getElementById('job-id-input')?.value||document.getElementById('uf-wo')?.value||'').trim();
+  if((CURRENT_JOB_ID && !jobIdTypedAway()) || (!CURRENT_JOB_ID && typedForRecovery))keepJobRecoveryCopy(CURRENT_JOB_ID||typedForRecovery);
   if (_net.paused) { if (!_savesSuspended) keepOnDevice(CURRENT_JOB_ID); return; }
   clearTimeout(_syncTimer);
   _changeWaiting = true;
