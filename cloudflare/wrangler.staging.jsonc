@@ -1,11 +1,15 @@
 {
   "name": "tsi-forms-staging",
+  "account_id": "1848a2cd5ab51fa4bb59bcb441fdab10",
+  "d1_databases": [{"binding":"DB","database_name":"tsi-overhaul-staging","database_id":"aba43c99-5db7-4606-a3f5-c92148c8ed2e"}],
+  "r2_buckets": [{"binding":"PHOTOS","bucket_name":"tsi-overhaul-staging-photos"}],
   "main": "src/worker.mjs",
   "compatibility_date": "2026-10-27",
   "workers_dev": false,
   "preview_urls": false,
   "assets": {"directory": "./dist", "binding": "ASSETS", "run_worker_first": true},
-  "vars": {"ENVIRONMENT": "staging", "ACCESS_TEAM_DOMAIN": "UNCONFIGURED", "ACCESS_AUD": "UNCONFIGURED"}
-  // Bind DB to an independently restored staging D1, PHOTOS to a private staging R2.
-  // No production resource bindings are intentionally present.
+  "vars": {"ENVIRONMENT": "staging", "ACCESS_TEAM_DOMAIN": "dry-queen-78b7.cloudflareaccess.com", "ACCESS_AUD": "8ffe2bcf614c088113dc11c34512ab5cee9be1376a710c448b7534472713f39a"}
+  // Isolated empty staging resources. Production data has not been imported.
+  // No production resource bindings are present. workers_dev stays false as a safe
+  // CLI default: do not enable an unprotected hostname with a CLI deploy.
 }
