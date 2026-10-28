@@ -9,22 +9,31 @@ export async function identity(request, env, fetcher=fetch) {
   if (!/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(team||'') || !audience || audience==='UNCONFIGURED') throw new HttpError(503,'Access configuration required');
   const token=request.headers.get('Cf-Access-Jwt-Assertion');
   if (!token || token.length>16384) throw new HttpError(401,'Sign in with Cloudflare Access');
+  let phase='token-parse';
   try {
     const parts=token.split('.'); if(parts.length!==3) throw Error();
     const [h,p]=parts.slice(0,2).map(parse), now=Date.now()/1000;
-    if(h.alg!=='RS256'||typeof h.kid!=='string'||p.iss!==`https://${team}`||!Array.isArray(p.aud)||!p.aud.includes(audience)||!Number.isFinite(p.exp)||p.exp<=now||!Number.isFinite(p.iat)||p.iat>now+30||(p.nbf!==undefined&&(!Number.isFinite(p.nbf)||p.nbf>now+30))||typeof p.sub!=='string'||!p.sub||typeof p.email!=='string'||!p.email.includes('@')||p.type!=='app') throw Error();
+    if(h.alg!=='RS256'||typeof h.kid!=='string')throw new Error('algorithm');
+    if(p.iss!==`https://${team}`)throw new Error('issuer');
+    if(!Array.isArray(p.aud)||!p.aud.includes(audience))throw new Error('audience');
+    if(!Number.isFinite(p.exp)||p.exp<=now||!Number.isFinite(p.iat)||p.iat>now+30||(p.nbf!==undefined&&(!Number.isFinite(p.nbf)||p.nbf>now+30)))throw new Error('expired');
+    if(typeof p.sub!=='string'||!p.sub||typeof p.email!=='string'||!p.email.includes('@')||p.type!=='app')throw new Error('claims');
     let entry=cache.get(team);
     if(!entry||entry.until<Date.now()) {
-      const res=await fetcher(`https://${team}/cdn-cgi/access/certs`,{redirect:'error'});
-      if(!res.ok) throw Error();
-      const body=await res.json(); if(!Array.isArray(body.keys))throw Error();
+      phase='certificate-fetch';
+      const res=await fetcher(`https://${team}/cdn-cgi/access/certs`,{redirect:'manual'});
+      if(!res.ok) throw new Error('certificates');
+      phase='certificate-json';
+      const body=await res.json(); if(!Array.isArray(body.keys))throw new Error('certificates');
       entry={keys:body.keys,until:Date.now()+300000}; cache.set(team,entry);
     }
-    const jwk=entry.keys.find(k=>k.kid===h.kid&&k.kty==='RSA'); if(!jwk)throw Error();
+    const jwk=entry.keys.find(k=>k.kid===h.kid&&k.kty==='RSA'); if(!jwk)throw new Error('key');
+    phase='key-import';
     const key=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
-    if(!await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,bytes(parts[2]),new TextEncoder().encode(parts[0]+'.'+parts[1]))) throw Error();
+    phase='signature-check';
+    if(!await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,bytes(parts[2]),new TextEncoder().encode(parts[0]+'.'+parts[1]))) throw new Error('signature');
     return {id:p.sub,email:p.email.toLowerCase()};
-  } catch {throw new HttpError(401,'Invalid or expired Access identity');}
+  } catch(e) {const reason=['algorithm','issuer','audience','expired','claims','certificates','key','signature'].includes(e.message)?e.message:phase;throw new HttpError(401,'Access identity rejected: '+reason);}
 }
 export function checkMutation(request) {
   if(['GET','HEAD'].includes(request.method))return;
