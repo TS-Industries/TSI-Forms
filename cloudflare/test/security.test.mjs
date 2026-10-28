@@ -25,3 +25,9 @@ test('invalid job identifiers rejected',()=>{for(const key of ['',' WO','WO/1','
 test('missing DB is not interpreted as empty work order',async()=>assert.rejects(route(new Request('https://tsi.example/api/i466/WO/events'),{}, {id:'x'}),{status:503}));
 test('missing membership denies access',async()=>{const DB={prepare:()=>({bind:()=>({first:async()=>null})})};await assert.rejects(route(new Request('https://tsi.example/api/i466/WO/events'),{DB},{id:'x'}),{status:403});});
 test('assets not reached without authentication',async()=>{let touched=false;const res=await worker.fetch(new Request('https://tsi.example/'),{...env,ASSETS:{fetch:()=>{touched=true;return new Response('secret');}}});assert.equal(res.status,401);assert.equal(touched,false);});
+test('JWKS retrieval uses Worker-supported manual redirects and fails closed on redirects',async()=>{
+ const isolated={...env,ACCESS_TEAM_DOMAIN:'tsi-redirect-test.cloudflareaccess.com'};
+ const signed=await token({iss:'https://'+isolated.ACCESS_TEAM_DOMAIN});let called=false;
+ await assert.rejects(identity(req(signed),isolated,async(url,options)=>{called=true;assert.equal(options.redirect,'manual');return new Response(null,{status:302,headers:{Location:'https://untrusted.example'}});}),{status:401});
+ assert.equal(called,true);
+});
