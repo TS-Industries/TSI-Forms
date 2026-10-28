@@ -42,6 +42,7 @@ export function checkMutation(request) {
 }
 export async function jobRole(env, job, user) {
   if(!env.DB)throw new HttpError(503,'Staging database not configured');
+  if(env.ENVIRONMENT==='staging'&&typeof env.STAGING_OWNER_EMAIL==='string'&&env.STAGING_OWNER_EMAIL&&user.email===env.STAGING_OWNER_EMAIL.toLowerCase())return 'admin';
   const row=await env.DB.prepare('SELECT role FROM i466_job_access WHERE job_id = ? AND principal_id = ?').bind(job,user.id).first();
   if(!row)throw new HttpError(403,'Work-order access required');
   return row.role;

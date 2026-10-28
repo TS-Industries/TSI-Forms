@@ -5,11 +5,13 @@ const original=window.fetch.bind(window),legacy='https://tsi-overhaul-api.jason-
 const digest=async text=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');
 window.fetch=async(input,init)=>{
  const raw=typeof input==='string'?input:input instanceof URL?input.href:input.url,url=new URL(raw,location.href);
+ if(url.origin!==location.origin&&url.origin!==legacy&&!['blob:','data:'].includes(url.protocol))throw new Error('External data connections are disabled in protected staging.');
  if(url.hostname.endsWith('.supabase.co'))throw new Error('Direct legacy connection blocked in secure staging.');
  if(url.origin===legacy){const target=location.origin+url.pathname+url.search;input=input instanceof Request?new Request(target,input):target;url.href=target;}
  const method=(init?.method||input.method||'GET').toUpperCase(),match=url.origin===location.origin&&url.pathname.match(/^\/api\/job\/([^/]+)$/);
  if(match&&method==='POST'){
   const rows=JSON.parse(init.body);if(Array.isArray(rows)){
+   if(rows.some(r=>r.field_id==='report_html'))return Response.json({error:'Staging reports download locally; public publishing is disabled.'},{status:403});
    const known=versions.get(match[1])||{},base=Object.fromEntries(rows.map(r=>[r.field_id,known[r.field_id]??null]));
    const session=await original('/api/session',{credentials:'same-origin'});if(!session.ok)return session;
    const owner=await session.json(),payload={rows:rows.map(r=>({...r,field_value:String(r.field_value??'')})),base};

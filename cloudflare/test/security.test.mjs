@@ -31,3 +31,9 @@ test('JWKS retrieval uses Worker-supported manual redirects and fails closed on 
  await assert.rejects(identity(req(signed),isolated,async(url,options)=>{called=true;assert.equal(options.redirect,'manual');return new Response(null,{status:302,headers:{Location:'https://untrusted.example'}});}),{status:401});
  assert.equal(called,true);
 });
+test('staging owner convenience authorization never applies in production',async()=>{
+ const {jobRole}=await import('../src/access.mjs');const DB={prepare:()=>({bind:()=>({first:async()=>null})})};const user={id:'owner',email:'owner@example.com'};
+ assert.equal(await jobRole({DB,ENVIRONMENT:'staging',STAGING_OWNER_EMAIL:'owner@example.com'},'QA',user),'admin');
+ await assert.rejects(jobRole({DB,ENVIRONMENT:'production',STAGING_OWNER_EMAIL:'owner@example.com'},'QA',user),{status:403});
+ await assert.rejects(jobRole({DB,ENVIRONMENT:'staging',STAGING_OWNER_EMAIL:'owner@example.com'},'QA',{id:'other',email:'other@example.com'}),{status:403});
+});
