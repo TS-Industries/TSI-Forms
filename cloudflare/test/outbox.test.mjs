@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Outbox} from '../src/outbox.mjs';
+const store=()=>{const data=new Map();return {get:async id=>data.get(id),put:async r=>data.set(r.id,r),all:async()=>[...data.values()]};};
+const event={id:'event1',event_type:'measurement',payload:{value:'1'}};
+test('network failure retains pending entry; reconnect acknowledges once',async()=>{const s=store();let online=false,count=0;const q=new Outbox(s,async r=>{if(!online)throw Error('offline');count++;return Response.json({id:r.id});});await q.enqueue('mechanic1','WO1',event);assert.equal((await q.flush('mechanic1')).offline,true);assert.equal((await s.get(event.id)).status,'pending');online=true;await q.flush('mechanic1');await q.flush('mechanic1');assert.equal(count,1);assert.equal((await s.get(event.id)).status,'acknowledged');});
+test('different logged-in account cannot send another mechanic outbox',async()=>{let count=0;const q=new Outbox(store(),async()=>{count++;});await q.enqueue('mechanic1','WO1',event);await q.flush('mechanic2');assert.equal(count,0);});
+test('changed content cannot replace queued history',async()=>{const q=new Outbox(store(),async()=>{});await q.enqueue('mechanic1','WO1',event);await assert.rejects(q.enqueue('mechanic1','WO1',{...event,payload:{value:'2'}}));});
+test('conflicts stay for review and do not loop',async()=>{const s=store();let count=0;const q=new Outbox(s,async()=>{count++;return new Response('conflict',{status:409});});await q.enqueue('mechanic1','WO1',event);await q.flush('mechanic1');await q.flush('mechanic1');assert.equal(count,1);assert.equal((await s.get(event.id)).status,'review');});
+test('expired session keeps queued events',async()=>{const s=store(),q=new Outbox(s,async()=>new Response('sign in',{status:401}));await q.enqueue('mechanic1','WO1',event);assert.equal((await q.flush('mechanic1')).blocked,true);assert.equal((await s.get(event.id)).status,'pending');});
+test('incorrect acknowledgment never clears a pending entry',async()=>{const s=store(),q=new Outbox(s,async()=>Response.json({id:'different'}));await q.enqueue('mechanic1','WO1',event);assert.equal((await q.flush('mechanic1')).invalidAcknowledgement,true);assert.equal((await s.get(event.id)).status,'pending');});
+test('duplicate ID cannot cross accounts or work orders',async()=>{const q=new Outbox(store(),async()=>{});await q.enqueue('one','job1',event);await assert.rejects(q.enqueue('two','job1',event));await assert.rejects(q.enqueue('one','job2',event));});
