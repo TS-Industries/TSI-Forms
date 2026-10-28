@@ -10,3 +10,14 @@ test('image content signature validated before storing',async()=>{let touched=fa
 test('viewer cannot upload',async()=>assert.rejects(photos(new Request('https://tsi.example/api/photos/WO/field',{method:'POST',headers:{'Content-Type':'image/jpeg'},body:new Uint8Array([255,216,255,0])}),env('viewer'),user),{status:403}));
 test('valid photo upload returns authenticated relative route',async()=>{const r=await photos(new Request('https://tsi.example/api/photos/WO/field',{method:'POST',headers:{'Content-Type':'image/jpeg'},body:new Uint8Array([255,216,255,0])}),env(),user);assert.equal(r.status,201);assert.match((await r.json()).url,/^\/photos\/WO\/field\//);});
 test('photo deletion cannot destroy data',async()=>assert.rejects(photos(new Request('https://tsi.example/api/photos/WO/field',{method:'DELETE'}),env(),user),{status:405}));
+test('uploaded photo bytes round-trip through private storage and HEAD has no body',async()=>{
+ const e=env(),objects=new Map(),bytes=new Uint8Array([137,80,78,71,13,10,26,10,1,2,3]);
+ e.PHOTOS.put=async(key,data,options)=>objects.set(key,{body:data,httpMetadata:options.httpMetadata});
+ e.PHOTOS.get=async key=>objects.get(key);
+ const response=await photos(new Request('https://tsi.example/api/photos/QA-ONLY/inspection',{method:'POST',headers:{'Content-Type':'image/png'},body:bytes}),e,user);
+ const {url}=await response.json();
+ const get=await photos(new Request('https://tsi.example'+url),e,user);
+ assert.deepEqual(new Uint8Array(await get.arrayBuffer()),bytes);assert.equal(get.headers.get('Content-Type'),'image/png');
+ const head=await photos(new Request('https://tsi.example'+url,{method:'HEAD'}),e,user);assert.equal(await head.text(),'');
+ await assert.rejects(photos(new Request('https://tsi.example'+url),{...e,DB:env(null).DB},user),{status:403});
+});
