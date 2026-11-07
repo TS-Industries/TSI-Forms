@@ -1300,41 +1300,6 @@ body{padding-bottom:148px!important}
     </div><!-- end section-body -->
   </div><!-- end sec-9 -->
 
-  <!-- ═══════════════════════════════════════════════════════════
-       PARTS TRACKER
-  ═══════════════════════════════════════════════════════════ -->
-  <div class="section" id="sec-parts">
-    <div class="section-header" onclick="toggleSection(&#39;sec-parts&#39;)">
-      <div class="section-num" style="background:#475569;">P</div>
-      <div class="section-title-wrap">
-        <div class="section-title">Parts Tracker</div>
-        <div class="section-subtitle">All parts installed during this overhaul — included in Customer Report</div>
-      </div>
-      <div class="section-badges">
-        <button class="btn btn-gold" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();addPartsRow()">+ Add Part</button><button class="btn btn-gold src-kit-btn" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();loadSrcParts()">+ SRC Parts List</button>
-      </div>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="section-body">
-      <div class="parts-section">
-        <table class="parts-table">
-          <thead><tr>
-            <th>Description</th><th>Part Number</th><th>Qty</th><th>Supplier</th><th>Condition</th><th>Notes</th><th></th>
-          </tr></thead>
-          <tbody id="parts-tbody"></tbody>
-        </table>
-
-        <div class="parts-actions">
-          <div class="parts-actions-note">
-            <strong>0-Hour Reorder Sheet</strong> — exports this parts list as a vendor-ready
-            spreadsheet you can email for a quote. Reuse it as the starting point for the next full overhaul.
-          </div>
-          <button class="btn btn-gold" onclick="exportPartsSheet()">&#128202; Export Parts Sheet (CSV)</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div><!-- /container -->
 
 <footer class="footer">
@@ -1401,11 +1366,6 @@ body{padding-bottom:148px!important}
       <div id="rpt-photos-gallery"></div>
       <div class="report-section-title" id="rpt-lb-title" style="display:none;">10. Load Bank Break-In — Post-Overhaul Acceptance</div>
       <div id="rpt-lb-section"></div>
-      <div class="report-section-title">Parts Installed</div>
-      <table class="parts-report-table">
-        <thead><tr><th>Description</th><th>Part Number</th><th>Qty</th><th>Supplier</th><th>Condition</th><th>Notes</th></tr></thead>
-        <tbody id="rpt-parts-tbody"></tbody>
-      </table>
       <div class="signoff-block">
         <div style="font-family:Arial,sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;color:var(--navy);">SIGN-OFF &amp; CERTIFICATION</div>
         <div class="signoff-grid">
@@ -2214,6 +2174,7 @@ function applyVIRowCue(id,result){
 
 
 // ══ PARTS TRACKER ══
+let retiredParts=[];
 let partRowId=0;
 function addPartsRow(){
   const tb=document.getElementById('parts-tbody');
@@ -2575,25 +2536,6 @@ function openReport(){
     // Section spacer
     mt.innerHTML+=`<tr><td colspan="6" style="height:12px;background:#F3F4F6;border:none;padding:0;"></td></tr>`;
   });
-  // Parts
-  const pt=document.getElementById('rpt-parts-tbody');
-  pt.innerHTML='';
-  for(let i=1;i<=partRowId;i++){
-    const row=document.getElementById('part-row-'+i);
-    if(!row) continue;
-    const desc=document.getElementById('part-desc-'+i);
-    if(desc&&desc.value){
-      pt.innerHTML+=`<tr>
-        <td>${desc.value}</td>
-        <td class="mono">${document.getElementById('part-num-'+i)?.value||''}</td>
-        <td>${document.getElementById('part-qty-'+i)?.value||''}</td>
-        <td>${document.getElementById('part-sup-'+i)?.value||''}</td>
-        <td>${document.getElementById('part-cond-'+i)?.value||''}</td>
-        <td style="font-size:10px;color:var(--gray);">${document.getElementById('part-note-'+i)?.value||''}</td>
-      </tr>`;
-    }
-  }
-  if(!pt.innerHTML) pt.innerHTML='<tr><td colspan="6" style="color:var(--gray);font-size:12px;text-align:center;padding:.75rem;">No parts recorded.</td></tr>';
   // Flagged items panel
   buildFlaggedPanel(sectionDefs);
   // Pre-overhaul condition photos
@@ -4143,25 +4085,8 @@ function collectState() {
   }
 // Pre-overhaul condition photos (serialized as single JSON blob)
   state.preOverhaulPhotos = JSON.parse(JSON.stringify(preOverhaulPhotos));
-  // Parts — serialize the whole list as one array (rows grow/shrink, not a fixed schema)
-  state.parts = [];
-  for (let i = 1; i <= partRowId; i++) {
-    const row = document.getElementById('part-row-'+i);
-    if (!row) continue;
-    const desc = document.getElementById('part-desc-'+i);
-    const part = {
-      desc:    desc ? desc.value : '',
-      partNum: document.getElementById('part-num-'+i)?.value  || '',
-      qty:     document.getElementById('part-qty-'+i)?.value  || '',
-      sup:     document.getElementById('part-sup-'+i)?.value  || '',
-      cond:    document.getElementById('part-cond-'+i)?.value || '',
-      note:    document.getElementById('part-note-'+i)?.value || ''
-    };
-    // Only save rows that have at least something in them
-    if (part.desc || part.partNum || part.qty || part.sup || part.cond || part.note) {
-      state.parts.push(part);
-    }
-  }
+  // Retain legacy parts in recovery copies; parts are maintained on the actual WO.
+  state.parts = JSON.parse(JSON.stringify(retiredParts));
 
   return state;
 }
@@ -4185,7 +4110,7 @@ function flattenState(state) {
   flat['summary'] = state.summary || '';
   Object.entries(state.photos||{}).forEach(([id,u])=> flat['photos_'+id] = JSON.stringify(u || []));
   // Parts list serialized as a single JSON string
-  flat['parts_list'] = JSON.stringify(state.parts || []);
+  // Do not write parts_list: preserve historical database records unchanged.
   // Section 9 load bank data serialized as single JSON blob
   flat['lb_data'] = JSON.stringify(state.lb || {});
   flat['preoverhaul_photos'] = JSON.stringify(state.preOverhaulPhotos || {});
@@ -4370,30 +4295,9 @@ function restoreState(state) {
       preOverhaulPhotos[gid] = Array.isArray(arr) ? arr.slice() : [];
     });
     if (typeof buildPreOverhaulSection === 'function') buildPreOverhaulSection();
-    // Parts — clear existing rows, then recreate from saved state
-    const partsTbody = document.getElementById('parts-tbody');
-    if (partsTbody) partsTbody.innerHTML = '';
+    // No parts editor in I466. Preserve legacy data only for recovery/export.
+    retiredParts = Array.isArray(state.parts) ? JSON.parse(JSON.stringify(state.parts)) : [];
     partRowId = 0;
-    const partsArr = Array.isArray(state.parts) ? state.parts : [];
-    if (partsArr.length === 0) {
-      // No saved parts — give user 3 empty rows to start with
-      addPartsRow(); addPartsRow(); addPartsRow();
-    } else {
-      partsArr.forEach(p => {
-        addPartsRow();
-        const id = partRowId;
-        const set = (field, val) => {
-          const el = document.getElementById('part-'+field+'-'+id);
-          if (el) el.value = val || '';
-        };
-        set('desc', p.desc);
-        set('num',  p.partNum);
-        set('qty',  p.qty);
-        set('sup',  p.sup);
-        set('cond', p.cond);
-        set('note', p.note);
-      });
-    }
 
     if (typeof updateProgress === 'function') updateProgress();
   } finally {
@@ -5205,7 +5109,7 @@ async function deletePreOverhaulPhoto(gid, idx) {
 (function(){
  'use strict';
  const params=new URLSearchParams(location.search);
- const allowedSections=new Set(['sec-preoverhaul','sec-1','sec-2','sec-3','sec-4','sec-5','sec-6','sec-7','sec-8','sec-9','sec-10','sec-parts']);
+ const allowedSections=new Set(['sec-preoverhaul','sec-1','sec-2','sec-3','sec-4','sec-5','sec-6','sec-7','sec-8','sec-9','sec-10']);
  function returnBase(){
   const fallback=new URL('TSI-SRC466-Workflow.html',location.href);
   try{
