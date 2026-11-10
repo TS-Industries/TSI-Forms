@@ -1698,6 +1698,11 @@ const sectionDefs=[
   {id:'8', title:"Lubrication & Cooling", meas:()=>sec8Meas, vi:()=>viSec8, viPrefix:'vi8'},
   {id:'10', title:"Ignition, Fuel & Pre-Start", meas:()=>sec10Meas, vi:()=>viSec10, viPrefix:'vi10'},
 ];
+// Photo groups are separate from measurement sections; misc has no inspection rows.
+const preOverhaulGroups = [
+  ...sectionDefs.map(({id, title}) => ({id, title})),
+  {id:'misc', title:'Miscellaneous Photos'},
+];
 const VI_SECTIONS=[
   {id:'1', prefix:'vi1', items:viSec1, title:"Crankshaft"},
   {id:'2', prefix:'vi2', items:viSec2, title:"Main Bearings"},
@@ -2087,8 +2092,8 @@ function validateMeas(id,min,max){
     updateProgress();return;
   }
   stat.title='';
-  // Bare counterbore depths are dimensional records, not standalone acceptance checks.
-  if(/^g4-cbore-[1-6]$/.test(id)){
+  // Counterbore depths and piston deck heights have no verified acceptance limits.
+  if(/^g4-(cbore|pist)-[1-6]$/.test(id)){
     stat.className='status-cell status-pending';stat.textContent='RECORDED';
     inp.style.borderColor='';
     if(row){row.classList.remove('row-pass','row-fail');}
@@ -3754,7 +3759,7 @@ function buildPreOverhaulReportSection(){
   if (!container || !title) return;
   container.innerHTML = '';
   let total = 0;
-  sectionDefs.forEach(def => {
+  preOverhaulGroups.forEach(def => {
     const photos = preOverhaulPhotos[def.id] || [];
     if (!photos.length) return;
     total += photos.length;
@@ -3762,7 +3767,7 @@ function buildPreOverhaulReportSection(){
     sec.className = 'rpt-photo-section';
     let html = `<div class="rpt-photo-section-title">${def.title} — ${photos.length} photo${photos.length>1?'s':''}</div><div class="rpt-photo-grid">`;
     photos.forEach(p => {
-      const caption = (p.caption || 'Pre-overhaul condition').replace(/"/g,'&quot;');
+      const caption = escapePhotoDescription(p.caption || 'Pre-overhaul condition');
       html += `<div class="rpt-photo-item">
         <img src="${p.url}" crossorigin="anonymous" onclick="openLightbox_report('${p.url}')" title="${caption}">
         <div class="rpt-photo-caption">${caption}</div>
@@ -4426,6 +4431,10 @@ async function forceNextSave() {
 
 // ── LOAD JOB ──
 async function loadJob() {
+  if (_preOverhaulUploadInFlight) {
+    setSyncStatus('Finish the photo upload before loading another job.');
+    return;
+  }
   if (_loadInFlight) {
     setSyncStatus('⏳ Already loading — please wait...');
     return;
@@ -4994,12 +5003,13 @@ function hideOfflineBanner() {
 // ══════════════════════════════════════════════════════════════════════════════
 // ══ PRE-OVERHAUL CONDITION PHOTOS ══
 const preOverhaulPhotos = {}; // { sectionId: [{url, caption}] }
+let _preOverhaulUploadInFlight = false;
 
 function buildPreOverhaulSection() {
   const wrap = document.getElementById('preoverhaul-groups');
   if (!wrap) return;
   wrap.innerHTML = '';
-  sectionDefs.forEach(def => {
+  preOverhaulGroups.forEach(def => {
     const gid = def.id;
     if (!preOverhaulPhotos[gid]) preOverhaulPhotos[gid] = [];
     const card = document.createElement('div');
@@ -5020,28 +5030,48 @@ function buildPreOverhaulSection() {
 
 async function handlePreOverhaulUpload(gid, input) {
   if (!input.files || !input.files.length) return;
-  if (!CURRENT_JOB_ID) {
+  if (_preOverhaulUploadInFlight) {
+    alert('Wait for the current photo upload to finish.');
+    input.value = '';
+    return;
+  }
+  if (!CURRENT_JOB_ID || _lastServerSnapshot === null || _savesSuspended || jobIdTypedAway()) {
     alert('Enter a Job # and click LOAD before adding photos.');
     input.value = '';
     return;
   }
-  if (!preOverhaulPhotos[gid]) preOverhaulPhotos[gid] = [];
-  setSyncStatus('Uploading photo…');
-  const files = Array.from(input.files);
-  for (const file of files) {
-    try {
-      const compressed = await compressImage(file);
-      const publicUrl = await uploadPhotoToStorage(CURRENT_JOB_ID, 'preoverhaul-' + gid, compressed);
-      preOverhaulPhotos[gid].push({ url: publicUrl, caption: '' });
-      renderPreOverhaulThumbs(gid);
-    } catch (err) {
-      console.error('Pre-overhaul photo upload failed', err);
-      alert('Photo upload failed: ' + err.message);
+  const uploadJobId = CURRENT_JOB_ID;
+  const jobInput = document.getElementById('job-id-input');
+  const wasReadOnly = jobInput ? jobInput.readOnly : false;
+  if (jobInput) jobInput.readOnly = true;
+  _preOverhaulUploadInFlight = true;
+  try {
+    if (!preOverhaulPhotos[gid]) preOverhaulPhotos[gid] = [];
+    setSyncStatus('Uploading photo…');
+    const files = Array.from(input.files);
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file);
+        const publicUrl = await uploadPhotoToStorage(uploadJobId, 'preoverhaul-' + gid, compressed);
+        preOverhaulPhotos[gid].push({ url: publicUrl, caption: '' });
+        renderPreOverhaulThumbs(gid);
+      } catch (err) {
+        console.error('Pre-overhaul photo upload failed', err);
+        alert('Photo upload failed: ' + err.message);
+      }
     }
+    input.value = '';
+    updatePreOverhaulBadge();
+    autoSave();
+  } finally {
+    _preOverhaulUploadInFlight = false;
+    if (jobInput) jobInput.readOnly = wasReadOnly;
   }
-  input.value = '';
-  updatePreOverhaulBadge();
-  autoSave();
+}
+
+function escapePhotoDescription(value) {
+  return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function renderPreOverhaulThumbs(gid) {
@@ -5051,7 +5081,7 @@ function renderPreOverhaulThumbs(gid) {
   grid.innerHTML = photos.map((p, idx) => `
     <div class="po-photo-item" style="width:130px;">
       <img src="${p.url}" style="width:130px;height:95px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;display:block;" onclick="openLightbox_report('${p.url}')">
-      <input class="po-caption-input" value="${(p.caption||'').replace(/"/g,'&quot;')}" placeholder="Caption..."
+      <input class="po-caption-input" value="${escapePhotoDescription(p.caption||'')}" placeholder="Description (optional)" aria-label="Photo ${idx+1} description (optional)"
         style="width:130px;margin-top:4px;font-size:10px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;font-family:Arial, sans-serif;"
         oninput="updatePreOverhaulCaption('${gid}',${idx},this.value)">
       <button onclick="deletePreOverhaulPhoto('${gid}',${idx})" style="font-size:10px;color:var(--fail);background:none;border:none;cursor:pointer;margin-top:2px;padding:0;">&#10005; Remove</button>
@@ -5060,7 +5090,7 @@ function renderPreOverhaulThumbs(gid) {
 }
 
 function renderAllPreOverhaulThumbs() {
-  sectionDefs.forEach(def => renderPreOverhaulThumbs(def.id));
+  preOverhaulGroups.forEach(def => renderPreOverhaulThumbs(def.id));
 }
 
 function updatePreOverhaulCaption(gid, idx, val) {
