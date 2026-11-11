@@ -207,13 +207,13 @@ body{font-family:Arial, sans-serif;background:#F5F7FA;color:var(--dark);min-heig
 .meas-table .group-header td{background:linear-gradient(90deg,#EFF6FF,#F8FAFC);font-family:Arial, sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);border-top:2px solid var(--navy);border-bottom:1px solid rgba(37,99,235,0.2);padding:.4rem .75rem;}
 .meas-input{width:100%;max-width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-family:Arial, sans-serif;font-size:12px;font-weight:600;text-align:center;}
 .meas-input:focus{outline:none;border-color:var(--navy);}
-.meas-note{width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;color:var(--gray);}
+.meas-note{font-family:inherit;resize:vertical;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;color:var(--gray);}
 .meas-note:focus{outline:none;border-color:var(--navy);}
 .mono{font-family:Arial, sans-serif;font-size:11px;font-weight:600;color:var(--navy);}
 .status-cell{display:inline-block;padding:2px 8px;border-radius:4px;font-family:Arial, sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;min-width:44px;text-align:center;}
 .status-pass{background:var(--pass-bg);color:var(--pass);}
 .status-fail{background:var(--fail-bg);color:var(--fail);}
-.status-pending{background:var(--gray-light);color:var(--gray);}
+.status-pending,.status-recorded{background:var(--gray-light);color:var(--gray);}
 
 /* ── VISUAL INSPECTION ── */
 .vi-panel{padding:1rem 1.5rem;}
@@ -590,13 +590,14 @@ body{padding-bottom:148px!important}
   <!-- PROGRESS CARD -->
   <div class="progress-card">
     <div class="progress-stats">
-      <div class="stat total"><div class="stat-num" id="prog-total">231</div><div class="stat-label">Total</div></div>
+      <div class="stat total"><div class="stat-num" id="prog-total">0</div><div class="stat-label">Total</div></div>
       <div class="stat pass"><div class="stat-num" id="prog-pass">0</div><div class="stat-label">Pass</div></div>
       <div class="stat fail"><div class="stat-num" id="prog-fail">0</div><div class="stat-label">Fail</div></div>
+      <div class="stat"><div class="stat-num" id="prog-recorded">0</div><div class="stat-label">Recorded</div></div>
       <div class="stat pct"><div class="stat-num" id="prog-pct">0%</div><div class="stat-label">Done</div></div>
     </div>
     <div class="progress-bar-wrap">
-      <div class="progress-bar-labels"><span id="prog-label">0 of 231 checks complete</span><span>Completion</span></div>
+      <div class="progress-bar-labels"><span id="prog-label">0 of 0 checks complete</span><span>Completion</span></div>
       <div class="progress-bar-track"><div class="progress-bar-fill" id="prog-bar" style="width: 0%;"></div></div>
     </div>
   </div>
@@ -692,7 +693,7 @@ body{padding-bottom:148px!important}
       <span class="chevron">▼</span>
     </div>
     <div class="section-body">
-      <div class="procedure-panel"><div class="proc-tabs"><button class="proc-tab active" onclick="switchTab(this,&#39;proc-5-specs&#39;)">Specifications</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-5-procedure&#39;)">Procedure</button></div><div id="proc-5-specs" class="proc-content active"><div class="proc-title">Cylinder Head Specifications — SRC natural gas head N104011</div><div class="spec-grid"><div class="spec-card primary"><div class="spec-label">Head Thickness (deck to deck)</div><div class="spec-value" style="font-size:15px;">4.198–4.202<span class="spec-unit">in</span></div><div class="spec-sub">New · 106.6–106.7 mm · IH</div></div><div class="spec-card danger"><div class="spec-label">Minimum Head Thickness</div><div class="spec-value">4.188<span class="spec-unit">in</span></div><div class="spec-sub">106.38 mm · max removal 0.010 · IH</div></div><div class="spec-card"><div class="spec-label">Flatness — across width</div><div class="spec-value">0.004<span class="spec-unit">in</span></div><div class="spec-sub">Feeler under straight edge · IH</div></div><div class="spec-card"><div class="spec-label">Flatness — lengthwise</div><div class="spec-value">0.006<span class="spec-unit">in</span></div><div class="spec-sub">5 lengthwise positions · IH</div></div><div class="spec-card"><div class="spec-label">Valve Recession</div><div class="spec-value" style="font-size:15px;">0.000–0.014<span class="spec-unit">in</span></div><div class="spec-sub">Intake &amp; exhaust · IH</div></div><div class="spec-card"><div class="spec-label">Valve Guide ID</div><div class="spec-value" style="font-size:15px;">0.3740–0.3750<span class="spec-unit">in</span></div><div class="spec-sub">Ream after install · IH</div></div><div class="spec-card"><div class="spec-label">Stem-to-Guide Clearance</div><div class="spec-value" style="font-size:15px;">0.0015–0.0032<span class="spec-unit">in</span></div><div class="spec-sub">Recondition over 0.006 · IH</div></div><div class="spec-card"><div class="spec-label">Valve Spring Load</div><div class="spec-value">156–164<span class="spec-unit">lb</span></div><div class="spec-sub">At 1.56 in · free length 2.34 in · IH</div></div><div class="spec-card"><div class="spec-label">Valve Lash (Int &amp; Exh)</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card primary"><div class="spec-label">Spark Plug Gap</div><div class="spec-value">0.015<span class="spec-unit">in</span></div><div class="spec-sub">0.381 mm</div></div><div class="spec-card"><div class="spec-label">Spark Plug Torque</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">Anti-seize on threads</div></div><div class="spec-card"><div class="spec-label">Spark Plug</div><div class="spec-value">N104019</div><div class="spec-sub">Double iridium — SRC</div></div><div class="spec-card"><div class="spec-label">Head Gasket</div><div class="spec-value">N103999</div><div class="spec-sub">.010" oversize — SRC</div></div><div class="spec-card"><div class="spec-label">Valve Seats</div><div class="spec-value">M2 steel</div><div class="spec-sub">Cryo-treated valves (DS)</div></div><div class="spec-card"><div class="spec-label">Head Exchange Interval</div><div class="spec-value">9,000<span class="spec-unit">hrs</span></div><div class="spec-sub">SRC PM schedule</div></div></div><div class="alert-box alert-caution"><strong>Head Gasket is .010" Oversize</strong>SRC lists head gasket N103999 as .010" O/S. That means the head or block deck has been machined on this build. Confirm the deck and head heights before choosing the gasket.</div><div class="alert-box alert-warn"><strong>Source Note</strong>Thickness, flatness, recession, guide and spring limits are from the IH 400-series shop manual (diesel head). The old 5.040 in figure was for a DT466E head and is removed. If the SRC natural gas head (N104011) has a different deck height, use SRC's figure. Scratches or gouges may not be deeper than 0.002 in.</div></div><div id="proc-5-procedure" class="proc-content"><div class="proc-title">Cylinder Head Inspection Procedure</div><ol class="proc-steps"><li>SRC calls for a head <b>exchange</b> at 9,000 hours. If you are fitting an exchange or rebuilt head, get the shop paperwork (pressure test, valve job, seat material).</li><li>Clean carbon from the deck and ports. Look for cracks between valve seats and around plug bores.</li><li>Measure deck-to-deck thickness (valve cover face to gasket face) at both ends and the centre. Record the thinnest. Minimum 4.188 in.</li><li>Flatness: straight edge across the width — resurface if a 0.004 in feeler fits; then 5 lengthwise positions — resurface if a 0.006 in feeler fits. Never remove more than 0.010 in.</li><li>Valve recession on all 12 valves: 0.000–0.014 in. Over the limit = new seat inserts. Guide ID 0.3740–0.3750 in. Springs: 156–164 lb at 1.56 in.</li><li>Check deck flatness with a straight edge and feeler gauge, lengthwise and corner to corner.</li><li>Measure valve head recession on all 12 valves with a depth gauge. Record.</li><li>Clean the spark plug threads with a thread chaser. Check plug wells for oil or coolant.</li><li>Check the head part number is N104011 (466TA natural gas head).</li></ol></div></div>
+      <div class="procedure-panel"><div class="proc-tabs"><button class="proc-tab active" onclick="switchTab(this,&#39;proc-5-specs&#39;)">Specifications</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-5-procedure&#39;)">Procedure</button></div><div id="proc-5-specs" class="proc-content active"><div class="proc-title">Cylinder Head Specifications — SRC natural gas head N104011</div><div class="spec-grid"><div class="spec-card primary"><div class="spec-label">Head Thickness (deck to deck)</div><div class="spec-value" style="font-size:15px;">4.198–4.202<span class="spec-unit">in</span></div><div class="spec-sub">New · 106.6–106.7 mm · IH</div></div><div class="spec-card danger"><div class="spec-label">Minimum Head Thickness</div><div class="spec-value">4.188<span class="spec-unit">in</span></div><div class="spec-sub">106.38 mm · max removal 0.010 · IH</div></div><div class="spec-card"><div class="spec-label">Flatness — across width</div><div class="spec-value">0.004<span class="spec-unit">in</span></div><div class="spec-sub">Feeler under straight edge · IH</div></div><div class="spec-card"><div class="spec-label">Flatness — lengthwise</div><div class="spec-value">0.006<span class="spec-unit">in</span></div><div class="spec-sub">5 lengthwise positions · IH</div></div><div class="spec-card"><div class="spec-label">Valve Recession</div><div class="spec-value" style="font-size:15px;">Record readings</div><div class="spec-sub">Intake and exhaust · inches</div></div><div class="spec-card"><div class="spec-label">Valve Lash (Int &amp; Exh)</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card primary"><div class="spec-label">Spark Plug Gap</div><div class="spec-value">0.015<span class="spec-unit">in</span></div><div class="spec-sub">0.381 mm</div></div><div class="spec-card"><div class="spec-label">Spark Plug Torque</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">Anti-seize on threads</div></div><div class="spec-card"><div class="spec-label">Spark Plug</div><div class="spec-value">N104019</div><div class="spec-sub">Double iridium — SRC</div></div><div class="spec-card"><div class="spec-label">Head Gasket</div><div class="spec-value">N103999</div><div class="spec-sub">.010" oversize — SRC</div></div><div class="spec-card"><div class="spec-label">Valve Seats</div><div class="spec-value">M2 steel</div><div class="spec-sub">Cryo-treated valves (DS)</div></div><div class="spec-card"><div class="spec-label">Head Exchange Interval</div><div class="spec-value">9,000<span class="spec-unit">hrs</span></div><div class="spec-sub">SRC PM schedule</div></div></div><div class="alert-box alert-caution"><strong>Head Gasket is .010" Oversize</strong>SRC lists head gasket N103999 as .010" O/S. That means the head or block deck has been machined on this build. Confirm the deck and head heights before choosing the gasket.</div><div class="alert-box alert-warn"><strong>Source Note</strong>Thickness and flatness limits are from the IH 400-series shop manual (diesel head). The old 5.040 in figure was for a DT466E head and is removed. If the SRC natural gas head (N104011) has a different deck height, use SRC's figure. Scratches or gouges may not be deeper than 0.002 in.</div></div><div id="proc-5-procedure" class="proc-content"><div class="proc-title">Cylinder Head Inspection Procedure</div><ol class="proc-steps"><li>SRC calls for a head <b>exchange</b> at 9,000 hours. If you are fitting an exchange or rebuilt head, get the shop paperwork (pressure test, valve job, seat material).</li><li>Clean carbon from the deck and ports. Look for cracks between valve seats and around plug bores.</li><li>Measure deck-to-deck thickness (valve cover face to gasket face) at both ends and the centre. Record the thinnest. Minimum 4.188 in.</li><li>Flatness: straight edge across the width — resurface if a 0.004 in feeler fits; then 5 lengthwise positions — resurface if a 0.006 in feeler fits. Never remove more than 0.010 in.</li><li>Check deck flatness with a straight edge and feeler gauge, lengthwise and corner to corner.</li><li>Measure valve recession on all 12 valves from the clean gasket face. Enter the deeper reading for each valve and both readings in its note. Record the rebuilder’s assessment in the head notes when supplied.</li><li>Clean the spark plug threads with a thread chaser. Check plug wells for oil or coolant.</li><li>Check the head part number is N104011 (466TA natural gas head).</li></ol></div></div>
       <div class="meas-panel"><div class="proc-title" style="margin-bottom:.75rem;">Cylinder Head Measurements</div><div class="meas-table-wrap"><table class="meas-table"><thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead><tbody id="tbody-5"></tbody></table></div></div><div class="vi-panel"><div class="proc-title" style="margin-bottom:.75rem;">Visual Inspection &amp; Hold Points</div><div id="vi-sec5"></div></div><div class="section-notes-panel"><div class="section-notes-label">Technician Notes — Cylinder Head</div><div class="notes-voice-wrap"><textarea class="section-notes-input" id="notes-sec5" placeholder="Record head source (exchange/rebuilt), shop paperwork, findings..." spellcheck="true" autocapitalize="sentences"></textarea><button type="button" class="mic-icon-btn" id="mic-btn-notes-sec5" onclick="toggleDictation('notes-sec5')" aria-label="Dictate with your voice" title="Dictate with your voice"><svg class="mic-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button><span class="listening-tag" id="listening-notes-sec5" style="display:none;">● LISTENING…</span></div><button class="polish-btn" id="polish-btn-sec5" onclick="polishNotes(&#39;notes-sec5&#39;)">✨ Polish with AI</button></div>
     </div>
   </div>
@@ -733,12 +734,12 @@ body{padding-bottom:148px!important}
   <div class="section" id="sec-7">
     <div class="section-header" onclick="toggleSection(&#39;sec-7&#39;)">
       <div class="section-num">7</div>
-      <div class="section-title-wrap"><div class="section-title">Valvetrain, Camshaft &amp; Gear Train</div><div class="section-subtitle">Valve Lash 0.025" (warm) · Cam · Gear Backlash · Rockers</div></div>
+      <div class="section-title-wrap"><div class="section-title">Valvetrain, Camshaft &amp; Gear Train</div><div class="section-subtitle">Valve Lash 0.025" (warm) · Cam · Gear Backlash</div></div>
       <div class="section-badges"><span class="badge badge-gray" id="badge-sec-7">0/0</span></div>
       <span class="chevron">▼</span>
     </div>
     <div class="section-body">
-      <div class="procedure-panel"><div class="proc-tabs"><button class="proc-tab active" onclick="switchTab(this,&#39;proc-7-specs&#39;)">Specifications</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-7-lash&#39;)">Valve Lash</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-7-cam&#39;)">Cam &amp; Gears</button></div><div id="proc-7-specs" class="proc-content active"><div class="proc-title">Valvetrain, Camshaft &amp; Gear Train Specifications</div><div class="spec-grid"><div class="spec-card primary"><div class="spec-label">Valve Lash — Intake</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card primary"><div class="spec-label">Valve Lash — Exhaust</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card"><div class="spec-label">Rocker Adjust Nut</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Firing Order</div><div class="spec-value" style="font-size:15px;">1-5-3-6-2-4</div></div><div class="spec-card"><div class="spec-label">Camshaft End Clearance</div><div class="spec-value" style="font-size:15px;">0.005–0.013<span class="spec-unit">in</span></div><div class="spec-sub">0.13–0.33 mm · IH</div></div><div class="spec-card"><div class="spec-label">Cam Thrust Plate Thickness</div><div class="spec-value" style="font-size:15px;">0.274–0.276<span class="spec-unit">in</span></div><div class="spec-sub">New · IH</div></div><div class="spec-card"><div class="spec-label">Timing Gear Backlash</div><div class="spec-value" style="font-size:15px;">0.003–0.007<span class="spec-unit">in</span></div><div class="spec-sub">Any pair · reject over 0.016 · IH</div></div><div class="spec-card"><div class="spec-label">Rocker Shaft OD</div><div class="spec-value" style="font-size:15px;">0.8491–0.8501<span class="spec-unit">in</span></div><div class="spec-sub">Bushing ID 0.852–0.854 · IH</div></div><div class="spec-card"><div class="spec-label">Rocker Clearance on Shaft</div><div class="spec-value" style="font-size:15px;">0.0019–0.0049<span class="spec-unit">in</span></div><div class="spec-sub">IH</div></div><div class="spec-card"><div class="spec-label">Cam Thrust Plate Bolts</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Idler Gear Bolts</div><div class="spec-value">85<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Valve Cover (aluminium)</div><div class="spec-value">40 ±10<span class="spec-unit">in-lb</span></div><div class="spec-sub">SRC p.33 · procedure says 36</div></div></div><div class="alert-box alert-info"><strong>Lash Interval (SRC)</strong>Set lash at overhaul, again at 750 hours (one time), then every 1,500 hours. Replace the valve cover gasket each time.</div><div class="alert-box alert-caution"><strong>Warm or cold?</strong>The IH lash chart is for an engine at operating temperature (warm). SRC gives 0.025 in but does not say warm or cold. Until SRC confirms, set it warm per IH and note the temperature. Never use a feeler gauge with the engine running.</div><div class="alert-box alert-warn"><strong>Source Note</strong>Cam, gear backlash and rocker figures are from the IH 400-series shop manual.</div></div><div id="proc-7-lash" class="proc-content"><div class="proc-title">Valve Lash — Two-Position Method (SRC p.16–17)</div><ol class="proc-steps"><li>Engine at operating temperature (IH: engine warm), stopped. Remove the valve cover.</li><li>Turn the crank until #1 is at TDC compression and the pointer lines up with the TDC mark. Both #1 pushrods turn freely by hand.</li><li>Set the six valves in the first table to 0.025". Slight drag on the feeler gauge is correct.</li><li>Hold the screw, tighten the locknut to 20 ft-lb, and recheck.</li><li>Turn the crank one full turn (360°) to #6 TDC compression. Set the six valves in the second table.</li><li>Fit a new gasket and grommets. Make sure the cover sits flat and is not resting on nearby bolts or washers. Torque to spec.</li></ol><div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.75rem;"><table class="lash-table"><thead><tr><th>#1 at TDC</th><th>Set</th></tr></thead><tbody><tr><td>Cyl 1</td><td>Intake + Exhaust</td></tr><tr><td>Cyl 2</td><td>Intake</td></tr><tr><td>Cyl 3</td><td>Exhaust</td></tr><tr><td>Cyl 4</td><td>Intake</td></tr><tr><td>Cyl 5</td><td>Exhaust</td></tr></tbody></table><table class="lash-table"><thead><tr><th>#6 at TDC</th><th>Set</th></tr></thead><tbody><tr><td>Cyl 2</td><td>Exhaust</td></tr><tr><td>Cyl 3</td><td>Intake</td></tr><tr><td>Cyl 4</td><td>Exhaust</td></tr><tr><td>Cyl 5</td><td>Intake</td></tr><tr><td>Cyl 6</td><td>Intake + Exhaust</td></tr></tbody></table></div></div><div id="proc-7-cam" class="proc-content"><div class="proc-title">Camshaft &amp; Gear Train</div><ol class="proc-steps"><li>Inspect cam lobes and journals for pitting, scuffing or flat spots. Inspect lifter faces.</li><li>Check cam bushings for scoring and correct oil hole alignment.</li><li>Fit the thrust plate and gear. Measure cam end play with a dial indicator. Record.</li><li>Replace the idler gear bearing (SRC N104217). Torque idler gear bolts to 85 ft-lb.</li><li>Line up all timing marks before the front cover goes on. Photograph the marks.</li><li>Measure gear backlash at each mesh with a dial indicator and record.</li></ol></div></div>
+      <div class="procedure-panel"><div class="proc-tabs"><button class="proc-tab active" onclick="switchTab(this,&#39;proc-7-specs&#39;)">Specifications</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-7-lash&#39;)">Valve Lash</button><button class="proc-tab" onclick="switchTab(this,&#39;proc-7-cam&#39;)">Cam &amp; Gears</button></div><div id="proc-7-specs" class="proc-content active"><div class="proc-title">Valvetrain, Camshaft &amp; Gear Train Specifications</div><div class="spec-grid"><div class="spec-card primary"><div class="spec-label">Valve Lash — Intake</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card primary"><div class="spec-label">Valve Lash — Exhaust</div><div class="spec-value">0.025<span class="spec-unit">in</span></div><div class="spec-sub">0.635 mm · IH: engine warm</div></div><div class="spec-card"><div class="spec-label">Rocker Adjust Nut</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Firing Order</div><div class="spec-value" style="font-size:15px;">1-5-3-6-2-4</div></div><div class="spec-card"><div class="spec-label">Camshaft End Clearance</div><div class="spec-value" style="font-size:15px;">0.005–0.013<span class="spec-unit">in</span></div><div class="spec-sub">0.13–0.33 mm · IH</div></div><div class="spec-card"><div class="spec-label">Cam Thrust Plate Thickness</div><div class="spec-value" style="font-size:15px;">0.274–0.276<span class="spec-unit">in</span></div><div class="spec-sub">New · IH</div></div><div class="spec-card"><div class="spec-label">Timing Gear Backlash</div><div class="spec-value" style="font-size:15px;">0.003–0.007<span class="spec-unit">in</span></div><div class="spec-sub">Any pair · reject over 0.016 · IH</div></div><div class="spec-card"><div class="spec-label">Cam Thrust Plate Bolts</div><div class="spec-value">20<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Idler Gear Bolts</div><div class="spec-value">85<span class="spec-unit">ft-lb</span></div><div class="spec-sub">SRC p.33</div></div><div class="spec-card"><div class="spec-label">Valve Cover (aluminium)</div><div class="spec-value">40 ±10<span class="spec-unit">in-lb</span></div><div class="spec-sub">SRC p.33 · procedure says 36</div></div></div><div class="alert-box alert-info"><strong>Lash Interval (SRC)</strong>Set lash at overhaul, again at 750 hours (one time), then every 1,500 hours. Replace the valve cover gasket each time.</div><div class="alert-box alert-caution"><strong>Warm or cold?</strong>The IH lash chart is for an engine at operating temperature (warm). SRC gives 0.025 in but does not say warm or cold. Until SRC confirms, set it warm per IH and note the temperature. Never use a feeler gauge with the engine running.</div><div class="alert-box alert-warn"><strong>Source Note</strong>Cam and gear backlash figures are from the IH 400-series shop manual.</div></div><div id="proc-7-lash" class="proc-content"><div class="proc-title">Valve Lash — Two-Position Method (SRC p.16–17)</div><ol class="proc-steps"><li>Engine at operating temperature (IH: engine warm), stopped. Remove the valve cover.</li><li>Turn the crank until #1 is at TDC compression and the pointer lines up with the TDC mark. Both #1 pushrods turn freely by hand.</li><li>Set the six valves in the first table to 0.025". Slight drag on the feeler gauge is correct.</li><li>Hold the screw, tighten the locknut to 20 ft-lb, and recheck.</li><li>Turn the crank one full turn (360°) to #6 TDC compression. Set the six valves in the second table.</li><li>Fit a new gasket and grommets. Make sure the cover sits flat and is not resting on nearby bolts or washers. Torque to spec.</li></ol><div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.75rem;"><table class="lash-table"><thead><tr><th>#1 at TDC</th><th>Set</th></tr></thead><tbody><tr><td>Cyl 1</td><td>Intake + Exhaust</td></tr><tr><td>Cyl 2</td><td>Intake</td></tr><tr><td>Cyl 3</td><td>Exhaust</td></tr><tr><td>Cyl 4</td><td>Intake</td></tr><tr><td>Cyl 5</td><td>Exhaust</td></tr></tbody></table><table class="lash-table"><thead><tr><th>#6 at TDC</th><th>Set</th></tr></thead><tbody><tr><td>Cyl 2</td><td>Exhaust</td></tr><tr><td>Cyl 3</td><td>Intake</td></tr><tr><td>Cyl 4</td><td>Exhaust</td></tr><tr><td>Cyl 5</td><td>Intake</td></tr><tr><td>Cyl 6</td><td>Intake + Exhaust</td></tr></tbody></table></div></div><div id="proc-7-cam" class="proc-content"><div class="proc-title">Camshaft &amp; Gear Train</div><ol class="proc-steps"><li>Inspect cam lobes and journals for pitting, scuffing or flat spots. Inspect lifter faces.</li><li>Check cam bushings for scoring and correct oil hole alignment.</li><li>Fit the thrust plate and gear. Measure cam end play with a dial indicator. Record.</li><li>Replace the idler gear bearing (SRC N104217). Torque idler gear bolts to 85 ft-lb.</li><li>Line up all timing marks before the front cover goes on. Photograph the marks.</li><li>Measure gear backlash at each mesh with a dial indicator and record.</li></ol></div></div>
       <div class="meas-panel"><div class="proc-title" style="margin-bottom:.75rem;">Valvetrain, Camshaft &amp; Gear Train Measurements</div><div class="meas-table-wrap"><table class="meas-table"><thead><tr><th>Measurement</th><th>Factory Spec</th><th>Location</th><th>Actual Value</th><th>Status</th><th>Notes</th><th class="photo-cell">Photo</th></tr></thead><tbody id="tbody-7"></tbody></table></div></div><div class="vi-panel"><div class="proc-title" style="margin-bottom:.75rem;">Visual Inspection &amp; Hold Points</div><div id="vi-sec7"></div></div><div class="section-notes-panel"><div class="section-notes-label">Technician Notes — Valvetrain</div><div class="notes-voice-wrap"><textarea class="section-notes-input" id="notes-sec7" placeholder="Record lifter/cam condition, timing mark photo, lash findings..." spellcheck="true" autocapitalize="sentences"></textarea><button type="button" class="mic-icon-btn" id="mic-btn-notes-sec7" onclick="toggleDictation('notes-sec7')" aria-label="Dictate with your voice" title="Dictate with your voice"><svg class="mic-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button><span class="listening-tag" id="listening-notes-sec7" style="display:none;">● LISTENING…</span></div><button class="polish-btn" id="polish-btn-sec7" onclick="polishNotes(&#39;notes-sec7&#39;)">✨ Polish with AI</button></div>
     </div>
   </div>
@@ -781,7 +782,7 @@ body{padding-bottom:148px!important}
         <div class="section-title">Load Bank Break-In — Post-Overhaul Acceptance</div>
         <div class="section-subtitle">4-Hour Run at 75% Engine Load &nbsp;|&nbsp; Record every 30 minutes &nbsp;|&nbsp; 3-Phase Generator</div>
       </div>
-      <div class="section-badges"><span class="badge badge-pass" id="badge-sec-9">COMPLETE</span></div>
+      <div class="section-badges"><span class="badge badge-gray" id="badge-sec-9">0/8 readings</span></div>
       <span class="chevron">▼</span>
     </div>
     <div class="section-body">
@@ -854,7 +855,7 @@ body{padding-bottom:148px!important}
 
         <!-- ── GENERATOR INFORMATION ── -->
         <div style="background:var(--gold-mid);border:1px solid rgba(217,119,6,0.25);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;">
-          <div style="font-family:Arial,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:.875rem;">Generator Information</div>
+          <div style="font-family:Arial,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:.875rem;">Generator Information <span id="lb-setup-count">0/6</span></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem;">
             <div class="unit-field" style="background:transparent;">
               <label style="color:var(--navy);opacity:.7;">Generator Make</label>
@@ -935,7 +936,7 @@ body{padding-bottom:148px!important}
             <div style="font-family:Arial,sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;color:white;">4-Hour Run Data Log</div>
             <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-left:4px;">Record all parameters every 30 minutes — 8 readings over 4 hours</div>
             <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center;">
-              <span style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);" id="lb-reading-count">8 / 8 readings</span>
+              <span style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);" id="lb-reading-count">0 / 8 readings</span>
               <button onclick="lbAddRow()" style="background:var(--gold);color:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-family:Arial,sans-serif;font-weight:700;font-size:11px;cursor:pointer;">+ Add Row</button>
             </div>
           </div>
@@ -966,327 +967,7 @@ body{padding-bottom:148px!important}
                   <th style="background:#0D2A4A;color:#93C5FD;padding:4px 5px;text-align:center;border:1px solid var(--border);font-size:10px;">L3</th>
                 </tr>
               </thead>
-              <tbody id="lb-tbody"><tr id="lb-row-0" style="">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-0-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(0)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-0" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-0-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(0)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-1" style="background: rgb(250, 250, 250);">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-1-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(1)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-1" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-1-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(1)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-2" style="">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-2-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(2)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-2" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-2-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(2)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-3" style="background: rgb(250, 250, 250);">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-3-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(3)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-3" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-3-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(3)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-4" style="">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-4-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(4)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-4" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-4-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(4)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-5" style="background: rgb(250, 250, 250);">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-5-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(5)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-5" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-5-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(5)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-6" style="">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-6-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(6)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-6" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-6-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(6)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr><tr id="lb-row-7" style="background: rgb(250, 250, 250);">
-    <td style="border:1px solid var(--border);padding:0;background:#f8f9fa;">
-      <input id="lb-row-7-time" type="text" placeholder="0:30" style="width:70px;background:transparent;border:none;padding:5px 6px;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--gold);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-v1" type="text" placeholder="L1-L2" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-v2" type="text" placeholder="L2-L3" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-v3" type="text" placeholder="L3-L1" style="width:58px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-a1" type="text" placeholder="L1" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-a2" type="text" placeholder="L2" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-a3" type="text" placeholder="L3" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave();lbRecalcKW(7)">
-    </td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-hz" type="text" placeholder="60.0" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td id="lb-kw-7" style="border:1px solid var(--border);padding:5px 4px;text-align:center;background:#f0fdf4;font-family:Arial,monospace;font-size:11px;font-weight:700;color:var(--pass);white-space:nowrap;">—</td>
-    <td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-oilpsi" type="text" placeholder="PSI" style="width:48px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-coolant" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-oiltemp" type="text" placeholder="°F" style="width:52px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-batt" type="text" placeholder="V" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-fuelpsi" type="text" placeholder="PSI" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-fuelwc" type="text" placeholder="" wc"="" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td><td style="border:1px solid var(--border);padding:0;">
-      <input id="lb-row-7-timing" type="text" placeholder="°" style="width:46px;background:transparent;border:none;padding:5px 3px;font-family:Arial,monospace;font-size:11px;font-weight:700;text-align:center;color:var(--dark);" oninput="autoSave()">
-    </td>
-    <td style="border:1px solid var(--border);padding:3px;text-align:center;">
-      <button onclick="lbRemoveRow(7)" style="background:none;border:none;color:var(--fail);cursor:pointer;font-size:13px;padding:2px;">✕</button>
-    </td>
-  </tr></tbody>
+              <tbody id="lb-tbody"></tbody>
             </table>
           </div>
           <div style="padding:.75rem 1.25rem;background:var(--gray-light);border-top:1px solid var(--border);font-size:11px;color:var(--gray);">
@@ -1693,8 +1374,8 @@ const sec1Meas=[{"id": "g1-main-j1","dyn": "main","label": "Main Journal #1 Diam
 const sec2Meas=[{"id": "g2-bore-1","label": "Main Bore ID w/ Shell — #1","spec": "Record bore ID","min": null,"max": null,"loc": "Main 1","group": "Bore ID — Dial Bore Gauge (shells in, caps torqued)"},{"id": "g2-bore-2","label": "Main Bore ID w/ Shell — #2","spec": "Record bore ID","min": null,"max": null,"loc": "Main 2","group": null},{"id": "g2-bore-3","label": "Main Bore ID w/ Shell — #3","spec": "Record bore ID","min": null,"max": null,"loc": "Main 3","group": null},{"id": "g2-bore-4","label": "Main Bore ID w/ Shell — #4","spec": "Record bore ID","min": null,"max": null,"loc": "Main 4","group": null},{"id": "g2-bore-5","label": "Main Bore ID w/ Shell — #5","spec": "Record bore ID","min": null,"max": null,"loc": "Main 5","group": null},{"id": "g2-bore-6","label": "Main Bore ID w/ Shell — #6","spec": "Record bore ID","min": null,"max": null,"loc": "Main 6","group": null},{"id": "g2-bore-7","label": "Main Bore ID w/ Shell — #7","spec": "Record bore ID","min": null,"max": null,"loc": "Main 7","group": null},{"id": "g2-clr-1","label": "Main Oil Clearance — #1","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 1","group": "Oil Clearance (Bore ID − Journal OD)"},{"id": "g2-clr-2","label": "Main Oil Clearance — #2","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 2","group": null},{"id": "g2-clr-3","label": "Main Oil Clearance — #3","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 3","group": null},{"id": "g2-clr-4","label": "Main Oil Clearance — #4","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 4","group": null},{"id": "g2-clr-5","label": "Main Oil Clearance — #5","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 5","group": null},{"id": "g2-clr-6","label": "Main Oil Clearance — #6","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 6","group": null},{"id": "g2-clr-7","label": "Main Oil Clearance — #7","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Main 7","group": null},{"id": "g2-endplay","label": "Crankshaft End Play","spec": "0.006–0.012\"","min": 0.006,"max": 0.012,"loc": "Dial indicator on crank nose","group": "End Play"}];
 const sec3Meas=[{"id": "g3-bore-1","label": "Rod Bore ID w/ Shell — #1","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 1","group": "Bore ID — Dial Bore Gauge (shells in, cap torqued)"},{"id": "g3-bore-2","label": "Rod Bore ID w/ Shell — #2","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 2","group": null},{"id": "g3-bore-3","label": "Rod Bore ID w/ Shell — #3","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 3","group": null},{"id": "g3-bore-4","label": "Rod Bore ID w/ Shell — #4","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 4","group": null},{"id": "g3-bore-5","label": "Rod Bore ID w/ Shell — #5","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 5","group": null},{"id": "g3-bore-6","label": "Rod Bore ID w/ Shell — #6","spec": "Record bore ID","min": null,"max": null,"loc": "Rod 6","group": null},{"id": "g3-clr-1","label": "Rod Oil Clearance — #1","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 1","group": "Oil Clearance (Bore ID − Journal OD)"},{"id": "g3-clr-2","label": "Rod Oil Clearance — #2","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 2","group": null},{"id": "g3-clr-3","label": "Rod Oil Clearance — #3","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 3","group": null},{"id": "g3-clr-4","label": "Rod Oil Clearance — #4","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 4","group": null},{"id": "g3-clr-5","label": "Rod Oil Clearance — #5","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 5","group": null},{"id": "g3-clr-6","label": "Rod Oil Clearance — #6","spec": "0.0018–0.0051\"","min": 0.0018,"max": 0.0051,"loc": "Rod 6","group": null},{"id": "g3-side-1","label": "Rod Side Clearance — #1","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 1","group": "Side Clearance"},{"id": "g3-side-2","label": "Rod Side Clearance — #2","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 2","group": null},{"id": "g3-side-3","label": "Rod Side Clearance — #3","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 3","group": null},{"id": "g3-side-4","label": "Rod Side Clearance — #4","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 4","group": null},{"id": "g3-side-5","label": "Rod Side Clearance — #5","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 5","group": null},{"id": "g3-side-6","label": "Rod Side Clearance — #6","spec": "0.007–0.015\"","min": 0.007,"max": 0.015,"loc": "Rod 6","group": null},{"id": "g3-torque","label": "Rod Bolt Final Torque Applied (ft-lb)","spec": "130 ft-lb","min": 130,"max": 130,"loc": "All 6 rods","group": "Torque Record"}];
 const sec4Meas=[{"id": "g4-prot-1","label": "Sleeve Protrusion — Cyl #1","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 1 — lowest of 4","group": "Sleeve Protrusion"},{"id": "g4-prot-2","label": "Sleeve Protrusion — Cyl #2","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 2 — lowest of 4","group": null},{"id": "g4-prot-3","label": "Sleeve Protrusion — Cyl #3","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 3 — lowest of 4","group": null},{"id": "g4-prot-4","label": "Sleeve Protrusion — Cyl #4","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 4 — lowest of 4","group": null},{"id": "g4-prot-5","label": "Sleeve Protrusion — Cyl #5","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 5 — lowest of 4","group": null},{"id": "g4-prot-6","label": "Sleeve Protrusion — Cyl #6","spec": "0.002–0.005\"","min": 0.002,"max": 0.005,"loc": "Cyl 6 — lowest of 4","group": null},{"id": "g4-prot-diff","label": "Largest Protrusion Difference, Adjacent Cylinders","spec": "Record (ref 0.001\")","min": null,"max": null,"loc": "Cyl 1–6","group": null},{"id": "g4-cbore-1","label": "Counterbore Depth — Cyl #1","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 1","group": "Block Counterbore Depth"},{"id": "g4-cbore-2","label": "Counterbore Depth — Cyl #2","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 2","group": null},{"id": "g4-cbore-3","label": "Counterbore Depth — Cyl #3","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 3","group": null},{"id": "g4-cbore-4","label": "Counterbore Depth — Cyl #4","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 4","group": null},{"id": "g4-cbore-5","label": "Counterbore Depth — Cyl #5","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 5","group": null},{"id": "g4-cbore-6","label": "Counterbore Depth — Cyl #6","spec": "Record only (in)","min": null,"max": null,"loc": "Cyl 6","group": null},{"id": "g4-deck","label": "Block Deck Flatness (TIR)","spec": "MAX 0.003\"","min": null,"max": 0.003,"loc": "Head gasket surface","group": null},{"id": "g4-shim-1","label": "Shim Stack Installed — Cyl #1","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 1","group": "Protrusion Shims"},{"id": "g4-shim-2","label": "Shim Stack Installed — Cyl #2","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 2","group": null},{"id": "g4-shim-3","label": "Shim Stack Installed — Cyl #3","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 3","group": null},{"id": "g4-shim-4","label": "Shim Stack Installed — Cyl #4","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 4","group": null},{"id": "g4-shim-5","label": "Shim Stack Installed — Cyl #5","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 5","group": null},{"id": "g4-shim-6","label": "Shim Stack Installed — Cyl #6","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 6","group": null},{"id": "g4-id-1","label": "New Sleeve Bore ID — Cyl #1","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 1","group": "Sleeve Bore (installed)"},{"id": "g4-id-2","label": "New Sleeve Bore ID — Cyl #2","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 2","group": null},{"id": "g4-id-3","label": "New Sleeve Bore ID — Cyl #3","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 3","group": null},{"id": "g4-id-4","label": "New Sleeve Bore ID — Cyl #4","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 4","group": null},{"id": "g4-id-5","label": "New Sleeve Bore ID — Cyl #5","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 5","group": null},{"id": "g4-id-6","label": "New Sleeve Bore ID — Cyl #6","spec": "4.3005–4.3015\"","min": 4.3005,"max": 4.3015,"loc": "Cyl 6","group": null},{"id": "g4-gaptop-1","label": "Top Ring End Gap — Cyl #1","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 1","group": "Top Ring End Gap"},{"id": "g4-gaptop-2","label": "Top Ring End Gap — Cyl #2","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 2","group": null},{"id": "g4-gaptop-3","label": "Top Ring End Gap — Cyl #3","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 3","group": null},{"id": "g4-gaptop-4","label": "Top Ring End Gap — Cyl #4","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 4","group": null},{"id": "g4-gaptop-5","label": "Top Ring End Gap — Cyl #5","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 5","group": null},{"id": "g4-gaptop-6","label": "Top Ring End Gap — Cyl #6","spec": "0.016–0.029\"","min": 0.016,"max": 0.029,"loc": "Cyl 6","group": null},{"id": "g4-gap2nd-1","label": "Second Ring End Gap — Cyl #1","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 1","group": "Second Ring End Gap"},{"id": "g4-gap2nd-2","label": "Second Ring End Gap — Cyl #2","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 2","group": null},{"id": "g4-gap2nd-3","label": "Second Ring End Gap — Cyl #3","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 3","group": null},{"id": "g4-gap2nd-4","label": "Second Ring End Gap — Cyl #4","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 4","group": null},{"id": "g4-gap2nd-5","label": "Second Ring End Gap — Cyl #5","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 5","group": null},{"id": "g4-gap2nd-6","label": "Second Ring End Gap — Cyl #6","spec": "Record — narrow 0.020–0.033 / wide 0.065–0.078","min": null,"max": null,"loc": "Cyl 6","group": null},{"id": "g4-gapoil-1","label": "Oil Ring End Gap — Cyl #1","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 1","group": "Oil Ring End Gap"},{"id": "g4-gapoil-2","label": "Oil Ring End Gap — Cyl #2","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 2","group": null},{"id": "g4-gapoil-3","label": "Oil Ring End Gap — Cyl #3","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 3","group": null},{"id": "g4-gapoil-4","label": "Oil Ring End Gap — Cyl #4","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 4","group": null},{"id": "g4-gapoil-5","label": "Oil Ring End Gap — Cyl #5","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 5","group": null},{"id": "g4-gapoil-6","label": "Oil Ring End Gap — Cyl #6","spec": "0.010–0.028\"","min": 0.01,"max": 0.028,"loc": "Cyl 6","group": null},{"id": "g4-pist-1","label": "Piston Height at TDC — Cyl #1","spec": "Record","min": null,"max": null,"loc": "Cyl 1","group": "Piston Height at TDC (record only)"},{"id": "g4-pist-2","label": "Piston Height at TDC — Cyl #2","spec": "Record","min": null,"max": null,"loc": "Cyl 2","group": null},{"id": "g4-pist-3","label": "Piston Height at TDC — Cyl #3","spec": "Record","min": null,"max": null,"loc": "Cyl 3","group": null},{"id": "g4-pist-4","label": "Piston Height at TDC — Cyl #4","spec": "Record","min": null,"max": null,"loc": "Cyl 4","group": null},{"id": "g4-pist-5","label": "Piston Height at TDC — Cyl #5","spec": "Record","min": null,"max": null,"loc": "Cyl 5","group": null},{"id": "g4-pist-6","label": "Piston Height at TDC — Cyl #6","spec": "Record","min": null,"max": null,"loc": "Cyl 6","group": null}];
-const sec5Meas=[{"id": "g5-thick","label": "Head Thickness — deck to deck (thinnest)","spec": "MIN 4.188\"","min": 4.188,"max": null,"loc": "Front / centre / rear","group": "Head Dimensions"},{"id": "g5-flat","label": "Flatness — lengthwise (worst of 5)","spec": "MAX 0.006\"","min": null,"max": 0.006,"loc": "Straight edge, lengthwise","group": null},{"id": "g5-flat-w","label": "Flatness — across width","spec": "MAX 0.004\"","min": null,"max": 0.004,"loc": "Straight edge, across","group": null},{"id": "g5-rec-i1","label": "Valve Recession — Intake #1","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 1 Intake","group": "Valve Recession — Intake"},{"id": "g5-rec-i2","label": "Valve Recession — Intake #2","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 2 Intake","group": null},{"id": "g5-rec-i3","label": "Valve Recession — Intake #3","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 3 Intake","group": null},{"id": "g5-rec-i4","label": "Valve Recession — Intake #4","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 4 Intake","group": null},{"id": "g5-rec-i5","label": "Valve Recession — Intake #5","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 5 Intake","group": null},{"id": "g5-rec-i6","label": "Valve Recession — Intake #6","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 6 Intake","group": null},{"id": "g5-rec-e1","label": "Valve Recession — Exhaust #1","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 1 Exhaust","group": "Valve Recession — Exhaust"},{"id": "g5-rec-e2","label": "Valve Recession — Exhaust #2","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 2 Exhaust","group": null},{"id": "g5-rec-e3","label": "Valve Recession — Exhaust #3","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 3 Exhaust","group": null},{"id": "g5-rec-e4","label": "Valve Recession — Exhaust #4","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 4 Exhaust","group": null},{"id": "g5-rec-e5","label": "Valve Recession — Exhaust #5","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 5 Exhaust","group": null},{"id": "g5-rec-e6","label": "Valve Recession — Exhaust #6","spec": "0.000–0.014\"","min": 0.0,"max": 0.014,"loc": "Cyl 6 Exhaust","group": null},{"id": "g5-guide","label": "Valve Guide ID — largest","spec": "0.3740–0.3750\"","min": 0.374,"max": 0.375,"loc": "All 12 guides","group": "Guides &amp; Springs"},{"id": "g5-stem","label": "Stem-to-Guide Clearance — largest","spec": "MAX 0.006\" (new 0.0015–0.0032)","min": null,"max": 0.006,"loc": "All 12 valves","group": null},{"id": "g5-spring-fl","label": "Valve Spring Free Length — shortest","spec": "Record (new 2.34\")","min": null,"max": null,"loc": "All 12 springs","group": null},{"id": "g5-spring-ld","label": "Valve Spring Load at 1.56\" — lowest (lb)","spec": "156–164 lb","min": 156,"max": 164,"loc": "Spring tester","group": null}];
-const sec7Meas=[{"id": "g7-lash-i1","label": "Valve Lash — Intake Cyl #1","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 1 Intake","group": "Valve Lash — Intake (0.025\" ±0.001\" TSI tolerance)"},{"id": "g7-lash-i2","label": "Valve Lash — Intake Cyl #2","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 2 Intake","group": null},{"id": "g7-lash-i3","label": "Valve Lash — Intake Cyl #3","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 3 Intake","group": null},{"id": "g7-lash-i4","label": "Valve Lash — Intake Cyl #4","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 4 Intake","group": null},{"id": "g7-lash-i5","label": "Valve Lash — Intake Cyl #5","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 5 Intake","group": null},{"id": "g7-lash-i6","label": "Valve Lash — Intake Cyl #6","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 6 Intake","group": null},{"id": "g7-lash-e1","label": "Valve Lash — Exhaust Cyl #1","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 1 Exhaust","group": "Valve Lash — Exhaust (0.025\" ±0.001\" TSI tolerance)"},{"id": "g7-lash-e2","label": "Valve Lash — Exhaust Cyl #2","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 2 Exhaust","group": null},{"id": "g7-lash-e3","label": "Valve Lash — Exhaust Cyl #3","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 3 Exhaust","group": null},{"id": "g7-lash-e4","label": "Valve Lash — Exhaust Cyl #4","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 4 Exhaust","group": null},{"id": "g7-lash-e5","label": "Valve Lash — Exhaust Cyl #5","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 5 Exhaust","group": null},{"id": "g7-lash-e6","label": "Valve Lash — Exhaust Cyl #6","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 6 Exhaust","group": null},{"id": "g7-cam-end","label": "Camshaft End Clearance","spec": "0.005–0.013\"","min": 0.005,"max": 0.013,"loc": "Cam nose","group": "Camshaft &amp; Gears"},{"id": "g7-cam-tp","label": "Cam Thrust Plate Thickness","spec": "0.274–0.276\" (new)","min": 0.274,"max": 0.276,"loc": "Thrust plate","group": null},{"id": "g7-bl-crank","label": "Gear Backlash — Crank to Idler","spec": "0.003–0.007\"","min": 0.003,"max": 0.007,"loc": "Gear mesh","group": null},{"id": "g7-bl-cam","label": "Gear Backlash — Idler to Cam","spec": "0.003–0.007\"","min": 0.003,"max": 0.007,"loc": "Gear mesh","group": null},{"id": "g7-rk-shaft","label": "Rocker Shaft OD — smallest","spec": "0.8491–0.8501\"","min": 0.8491,"max": 0.8501,"loc": "Rocker shaft","group": "Rocker Levers"},{"id": "g7-rk-clr","label": "Rocker Clearance on Shaft — largest","spec": "0.0019–0.0049\"","min": 0.0019,"max": 0.0049,"loc": "All 12 levers","group": null}];
+const sec5Meas=[{"id": "g5-thick","label": "Head Thickness — deck to deck (thinnest)","spec": "MIN 4.188\"","min": 4.188,"max": null,"loc": "Front / centre / rear","group": "Head Dimensions"},{"id": "g5-flat","label": "Flatness — lengthwise (worst of 5)","spec": "MAX 0.006\"","min": null,"max": 0.006,"loc": "Straight edge, lengthwise","group": null},{"id": "g5-flat-w","label": "Flatness — across width","spec": "MAX 0.004\"","min": null,"max": 0.004,"loc": "Straight edge, across","group": null},{"id": "g5-rec-i1","label": "Valve Recession — Intake #1","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 1 Intake","group": "Valve Recession — Intake"},{"id": "g5-rec-i2","label": "Valve Recession — Intake #2","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 2 Intake","group": null},{"id": "g5-rec-i3","label": "Valve Recession — Intake #3","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 3 Intake","group": null},{"id": "g5-rec-i4","label": "Valve Recession — Intake #4","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 4 Intake","group": null},{"id": "g5-rec-i5","label": "Valve Recession — Intake #5","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 5 Intake","group": null},{"id": "g5-rec-i6","label": "Valve Recession — Intake #6","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 6 Intake","group": null},{"id": "g5-rec-e1","label": "Valve Recession — Exhaust #1","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 1 Exhaust","group": "Valve Recession — Exhaust"},{"id": "g5-rec-e2","label": "Valve Recession — Exhaust #2","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 2 Exhaust","group": null},{"id": "g5-rec-e3","label": "Valve Recession — Exhaust #3","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 3 Exhaust","group": null},{"id": "g5-rec-e4","label": "Valve Recession — Exhaust #4","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 4 Exhaust","group": null},{"id": "g5-rec-e5","label": "Valve Recession — Exhaust #5","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 5 Exhaust","group": null},{"id": "g5-rec-e6","label": "Valve Recession — Exhaust #6","spec": "Record (in)","min": null,"max": null,"loc": "Cyl 6 Exhaust","group": null}];
+const sec7Meas=[{"id": "g7-lash-i1","label": "Valve Lash — Intake Cyl #1","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 1 Intake","group": "Valve Lash — Intake (0.025\" ±0.001\" TSI tolerance)"},{"id": "g7-lash-i2","label": "Valve Lash — Intake Cyl #2","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 2 Intake","group": null},{"id": "g7-lash-i3","label": "Valve Lash — Intake Cyl #3","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 3 Intake","group": null},{"id": "g7-lash-i4","label": "Valve Lash — Intake Cyl #4","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 4 Intake","group": null},{"id": "g7-lash-i5","label": "Valve Lash — Intake Cyl #5","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 5 Intake","group": null},{"id": "g7-lash-i6","label": "Valve Lash — Intake Cyl #6","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 6 Intake","group": null},{"id": "g7-lash-e1","label": "Valve Lash — Exhaust Cyl #1","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 1 Exhaust","group": "Valve Lash — Exhaust (0.025\" ±0.001\" TSI tolerance)"},{"id": "g7-lash-e2","label": "Valve Lash — Exhaust Cyl #2","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 2 Exhaust","group": null},{"id": "g7-lash-e3","label": "Valve Lash — Exhaust Cyl #3","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 3 Exhaust","group": null},{"id": "g7-lash-e4","label": "Valve Lash — Exhaust Cyl #4","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 4 Exhaust","group": null},{"id": "g7-lash-e5","label": "Valve Lash — Exhaust Cyl #5","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 5 Exhaust","group": null},{"id": "g7-lash-e6","label": "Valve Lash — Exhaust Cyl #6","spec": "0.025\"","min": 0.024,"max": 0.026,"loc": "Cyl 6 Exhaust","group": null},{"id": "g7-cam-end","label": "Camshaft End Clearance","spec": "0.005–0.013\"","min": 0.005,"max": 0.013,"loc": "Cam nose","group": "Camshaft &amp; Gears"},{"id": "g7-cam-tp","label": "Cam Thrust Plate Thickness","spec": "0.274–0.276\" (new)","min": 0.274,"max": 0.276,"loc": "Thrust plate","group": null},{"id": "g7-bl-crank","label": "Gear Backlash — Crank to Idler","spec": "0.003–0.007\"","min": 0.003,"max": 0.007,"loc": "Gear mesh","group": null},{"id": "g7-bl-cam","label": "Gear Backlash — Idler to Cam","spec": "0.003–0.007\"","min": 0.003,"max": 0.007,"loc": "Gear mesh","group": null}];
 const sec8Meas=[{"id": "g8-pump-oend","label": "Outer Rotor End Clearance","spec": "0.0015–0.0040\"","min": 0.0015,"max": 0.004,"loc": "Straight edge + feeler","group": "Oil Pump (gerotor)"},{"id": "g8-pump-iend","label": "Inner Rotor End Clearance","spec": "0.0018–0.0044\"","min": 0.0018,"max": 0.0044,"loc": "Straight edge + feeler","group": null},{"id": "g8-pump-rad","label": "Outer Rotor Radial Clearance","spec": "0.0055–0.0085\"","min": 0.0055,"max": 0.0085,"loc": "Rotor to housing","group": null},{"id": "g8-coolant-mix","label": "Coolant Freeze Point (°C)","spec": "Record — site requirement","min": null,"max": null,"loc": "Refractometer","group": "Coolant"}];
 const sec10Meas=[{"id": "g10-timing","label": "Ignition Timing Set","spec": "Per fuel — see Specs","min": null,"max": null,"loc": "Timing light at damper","group": "Ignition &amp; Fuel"},{"id": "g10-fuelp","label": "Fuel Pressure at Mixer","spec": "3.5–5.5 \"WC","min": 3.5,"max": 5.5,"loc": "At mixer inlet","group": null},{"id": "g10-intake","label": "Intake Restriction","spec": "MAX 10 \"H₂O","min": null,"max": 10,"loc": "After air cleaner","group": "Air &amp; Exhaust"},{"id": "g10-exhaust","label": "Exhaust Back Pressure","spec": "MAX 27 \"H₂O","min": null,"max": 27,"loc": "Turbo / manifold outlet","group": null},{"id": "g10-oilp-idle","label": "Oil Pressure at Idle (hot, psi)","spec": "MIN 15 psi","min": 15,"max": null,"loc": "Gauge","group": "First Start"},{"id": "g10-oilp-rated","label": "Oil Pressure at 1800 rpm (hot, psi)","spec": "45–65 psi","min": 45,"max": 65,"loc": "Gauge","group": null}];
 const sec6Meas=[];
@@ -1878,8 +1559,8 @@ function clrCalc(kind, i, fromUser){
       if(typeof markRev==='function') markRev(cId);
       clrValidate(cId);
     }
-    if(cIn.value.trim()!=='' && cIn.value.trim()!==txt && !fromUser){
-      clrNote(cId, `Saved value ${cIn.value} ≠ bore − journal (${txt}"). Re-enter the bore reading to update.`, 'warn');
+    if(!fromUser && cIn.value.trim()!=='' && Number(cIn.value)!==Number(txt)){
+      clrNote(cId, `Gauge record ${cIn.value}". Bore less journal ${txt}".`);
     } else {
       clrNote(cId, clr<0 ? `Bore ${clrFmt(bv)} − journal ${clrFmt(jv)} = ${txt}" — negative: check both entries.` : `Bore ${clrFmt(bv)} − journal ${clrFmt(jv)} = ${txt}"`, clr<0?'bad':'');
     }
@@ -2074,7 +1755,7 @@ function buildMeasTable(tbodyId, rows){
         </div>` : `
         <input class="meas-input" id="val-${r.id}" placeholder="0.0000" oninput="validateMeas('${r.id}',${r.min},${r.max})">`}</td>
       <td><span class="status-cell status-pending" id="stat-${r.id}">—</span></td>
-      <td><input class="meas-note" id="note-${r.id}" placeholder="Notes..."></td>
+      <td><textarea class="meas-note" id="note-${r.id}" rows="1" aria-label="Measurement note" placeholder="Notes..."></textarea></td>
       <td class="photo-cell">
         <input type="file" accept="image/*" id="photo-input-${r.id}" style="display:none;" multiple onchange="handlePhotoUpload('${r.id}',this)">
         <button class="photo-btn" id="photo-btn-${r.id}" onclick="choosePhotoSource('photo-input-${r.id}')">&#128247; Add</button>
@@ -2110,9 +1791,8 @@ function validateMeas(id,min,max){
     updateProgress();return;
   }
   stat.title='';
-  // Counterbore depths and piston deck heights have no verified acceptance limits.
-  if(/^g4-(cbore|pist)-[1-6]$/.test(id)){
-    stat.className='status-cell status-pending';stat.textContent='RECORDED';
+  if (min === null && max === null) {
+    stat.className='status-cell status-recorded';stat.textContent='RECORDED';
     inp.style.borderColor='';
     if(row){row.classList.remove('row-pass','row-fail');}
     updateProgress();return;
@@ -2205,6 +1885,7 @@ function applyVIRowCue(id,result){
 
 // ══ PARTS TRACKER ══
 let retiredParts=[];
+let retiredMeasurementNotes={};
 let partRowId=0;
 function addPartsRow(){
   const tb=document.getElementById('parts-tbody');
@@ -2323,78 +2004,56 @@ function exportPartsSheet(){
 
 
 // ══ PROGRESS TRACKING ══
-function updateProgress(){
-  const allMeas=allMeasRows();
-  let total=allMeas.length, pass=0, fail=0;
-  allMeas.forEach(r=>{
-    const s=document.getElementById('stat-'+r.id);
-    if(!s) return;
-    if(s.classList.contains('status-pass')) pass++;
-    else if(s.classList.contains('status-fail')) fail++;
-  });
-  VI_SECTIONS.forEach(({prefix,items})=>{
-    const count=items.length;
-    for(let i=0;i<count;i++){
-      const id=`${prefix}-${i}`;
-      if(!viActive(prefix,i)) continue;
-      total++;
-      const pb=document.getElementById('pass-'+id);
-      const fb=document.getElementById('fail-'+id);
-      if(pb&&pb.classList.contains('selected-pass')) pass++;
-      else if(fb&&fb.classList.contains('selected-fail')) fail++;
-    }
-  });
-  // Head-bolt caps are OPTIONAL for overall completion — they only apply on a
-  // head R&R job. Count them in Section 6's own badge, NOT the global percentage,
-  // so skipping caps doesn't strand the form in the high-80s.
-  const boltCbs=document.querySelectorAll('.bolt-cb');
-  const boltDone=[...boltCbs].filter(c=>c.checked).length;
-  const capBadge=document.getElementById('badge-sec-6-bolts');
-  if(capBadge){
-    if(boltCbs.length&&boltDone===boltCbs.length){capBadge.className='badge badge-pass';capBadge.textContent='COMPLETE';}
-    else{capBadge.className='badge badge-gold';capBadge.textContent=boltDone+'/'+boltCbs.length;}
+function inspectionCounts(def) {
+  const counts = {total: def.meas().length, pass: 0, fail: 0, recorded: 0};
+  for (const row of def.meas()) {
+    const status = document.getElementById('stat-' + row.id)?.textContent;
+    if (status === 'PASS') counts.pass++;
+    if (status === 'FAIL') counts.fail++;
+    if (status === 'RECORDED') counts.recorded++;
   }
-  const entered=pass+fail;
-  const pct=total>0?Math.round((entered/total)*100):0;
-  document.getElementById('prog-total').textContent=total;
-  document.getElementById('prog-pass').textContent=pass;
-  document.getElementById('prog-fail').textContent=fail;
-  document.getElementById('prog-pct').textContent=pct+'%';
-  document.getElementById('prog-bar').style.width=pct+'%';
-  document.getElementById('prog-label').textContent=`${entered} of ${total} checks complete`;
-  updateSectionBadge('sec-1','badge-sec-1',sec1Meas,'vi1',viSec1.length);
-  updateSectionBadge('sec-2','badge-sec-2',sec2Meas,'vi2',viSec2.length);
-  updateSectionBadge('sec-3','badge-sec-3',sec3Meas,'vi3',viSec3.length);
-  updateSectionBadge('sec-4','badge-sec-4',sec4Meas,'vi4',viSec4.length);
-  updateSectionBadge('sec-5','badge-sec-5',sec5Meas,'vi5',viSec5.length);
-  updateSectionBadge('sec-7','badge-sec-7',sec7Meas,'vi7',viSec7.length);
-  updateSectionBadge('sec-8','badge-sec-8',sec8Meas,'vi8',viSec8.length);
-  updateSectionBadge('sec-10','badge-sec-10',sec10Meas,'vi10',viSec10.length);
+  def.vi().forEach((label, i) => {
+    if (!viActive(def.viPrefix, i)) return;
+    counts.total++;
+    const id = def.viPrefix + '-' + i;
+    if (document.getElementById('pass-' + id)?.classList.contains('selected-pass')) counts.pass++;
+    if (document.getElementById('fail-' + id)?.classList.contains('selected-fail')) counts.fail++;
+  });
+  return counts;
 }
 
-function updateSectionBadge(secId,badgeId,measArr,viPrefix,viCount){
-  let pass=0,fail=0,total=measArr.length;
-  for(let i=0;i<viCount;i++){ if(viActive(viPrefix,i)) total++; }
-  measArr.forEach(r=>{
-    const s=document.getElementById('stat-'+r.id);
-    if(!s) return;
-    if(s.classList.contains('status-pass')) pass++;
-    else if(s.classList.contains('status-fail')) fail++;
-  });
-  for(let i=0;i<viCount;i++){
-    if(!viActive(viPrefix,i)) continue;
-    const id=`${viPrefix}-${i}`;
-    const pb=document.getElementById('pass-'+id);
-    const fb=document.getElementById('fail-'+id);
-    if(pb&&pb.classList.contains('selected-pass')) pass++;
-    else if(fb&&fb.classList.contains('selected-fail')) fail++;
+function checklistCounts() {
+  const sections = sectionDefs.map(def => ({id: def.id, ...inspectionCounts(def)}));
+  const bolts = [...document.querySelectorAll('.bolt-cb')];
+  sections.push({id: '6-bolts', total: bolts.length, recorded: bolts.filter(b => b.checked).length, pass: 0, fail: 0});
+  const load = loadBankCounts();
+  sections.push({id: '9', total: load.total + load.setupTotal, recorded: load.complete + load.setup, pass: 0, fail: 0});
+  const overall = {total: 0, pass: 0, fail: 0, recorded: 0};
+  for (const section of sections) {
+    for (const key of Object.keys(overall)) overall[key] += section[key];
   }
-  const b=document.getElementById(badgeId);
-  if(!b) return;
-  const entered=pass+fail;
-  if(fail>0){b.className='badge badge-fail';b.textContent=`${fail} FAIL`;}
-  else if(entered===total&&total>0){b.className='badge badge-pass';b.textContent='COMPLETE';}
-  else{b.className='badge badge-gray';b.textContent=`${entered}/${total}`;}
+  return {sections, overall, load};
+}
+
+function updateProgress() {
+  const {sections, overall, load} = checklistCounts();
+  for (const section of sections) {
+    const badge = document.getElementById('badge-sec-' + section.id);
+    const done = section.pass + section.fail + section.recorded;
+    const full = done === section.total && section.total > 0;
+    badge.className = 'badge ' + (section.fail ? 'badge-fail' : full ? 'badge-pass' : 'badge-gray');
+    const status = section.fail ? ' · ' + section.fail + ' FAIL' : full ? ' COMPLETE' : '';
+    badge.textContent = done + '/' + section.total + status;
+  }
+  document.getElementById('lb-setup-count').textContent = load.setup + '/' + load.setupTotal;
+  document.getElementById('lb-reading-count').textContent = load.complete + ' / ' + load.total + ' readings';
+  document.getElementById('badge-sec-9').title = load.setup + '/' + load.setupTotal + ' generator setup fields, ' + load.complete + '/' + load.total + ' full readings';
+  const done = overall.pass + overall.fail + overall.recorded;
+  const pct = overall.total ? Math.floor(done * 100 / overall.total) : 0;
+  for (const key of Object.keys(overall)) document.getElementById('prog-' + key).textContent = overall[key];
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = done + ' of ' + overall.total + ' checks complete';
 }
 
 // ══ SAVE JSON ══
@@ -2495,25 +2154,42 @@ function openReport(){
     }
   }
 
-  const allMeas=allMeasRows();
-  let total=allMeas.length,pass=0,fail=0;
-  allMeas.forEach(r=>{
-    const s=document.getElementById('stat-'+r.id);
-    if(!s) return;
-    if(s.classList.contains('status-pass')) pass++;
-    else if(s.classList.contains('status-fail')) fail++;
-  });
-  const banner=document.getElementById('rpt-status-banner');
-  if(fail>0){banner.className='report-status-banner review';banner.textContent=`⚠ REVIEW REQUIRED — ${fail} FAILED MEASUREMENT(S)`;}
-  else if(pass===total){banner.className='report-status-banner approved';banner.textContent='✓ ALL MEASUREMENTS PASS — APPROVED FOR SERVICE';}
-  else if(pass>0){banner.className='report-status-banner progress';banner.textContent=`IN PROGRESS — ${pass}/${total} MEASUREMENTS COMPLETE`;}
-  else{banner.className='report-status-banner incomplete';banner.textContent='CHECKLIST NOT YET STARTED';}
+  const {overall} = checklistCounts();
+  const done = overall.pass + overall.fail + overall.recorded;
+  const banner = document.getElementById('rpt-status-banner');
+  const full = done === overall.total && overall.total > 0;
+  const state = overall.fail ? 'review' : full ? 'approved' : done ? 'progress' : 'incomplete';
+  banner.className = 'report-status-banner ' + state;
+  banner.textContent = done + '/' + overall.total + ' checks complete' + (overall.fail ? ' · ' + overall.fail + ' failed' : '');
   // Meas table — grouped by section, VI findings injected inline after each section
   const viMap={};
   VI_SECTIONS.forEach(v=>{viMap[v.id]=v;});
   const mt=document.getElementById('rpt-meas-tbody');
   mt.innerHTML='';
-  sectionDefs.forEach(def=>{
+  [...sectionDefs, {id:'6'}].sort((a,b) => Number(a.id) - Number(b.id)).forEach(def=>{
+    if (def.id === '6') {
+      const header = mt.insertRow().insertCell();
+      header.colSpan = 6;
+      header.className = 'rpt-section-row';
+      header.textContent = '6. Head Bolt Torque';
+      for (const cb of document.querySelectorAll('.bolt-cb')) {
+        const tr = mt.insertRow();
+        tr.insertCell().textContent = 'Head bolts';
+        const label = tr.insertCell();
+        label.colSpan = 3;
+        label.textContent = cb.closest('label').textContent.trim();
+        tr.insertCell().textContent = cb.checked ? 'Recorded' : '—';
+        tr.insertCell();
+      }
+      const note = document.getElementById('notes-sec6').value;
+      if (note) {
+        const cell = mt.insertRow().insertCell();
+        cell.colSpan = 6;
+        cell.textContent = note;
+        cell.style.whiteSpace = 'pre-line';
+      }
+      return;
+    }
     const mArr=def.meas();
     if(!mArr || !mArr.length) return;
     // Section header row
@@ -2531,7 +2207,7 @@ function openReport(){
       const n=document.getElementById('note-'+r.id);
       const st=s?s.textContent:'—';
       const cls=st==='PASS'?'r-pass':st==='FAIL'?'r-fail':'r-pend';
-      mt.innerHTML+=`<tr><td style="font-size:10px;color:var(--gray);">${def.title}</td><td>${r.label}</td><td class="mono">${r.spec}</td><td class="mono">${v?v.value:'—'}</td><td class="${cls}">${st}</td><td style="font-size:10px;color:var(--gray);">${n?n.value:''}</td></tr>`;
+      mt.innerHTML+=`<tr><td style="font-size:10px;color:var(--gray);">${def.title}</td><td>${r.label}</td><td class="mono">${r.spec}</td><td class="mono">${v?v.value:'—'}</td><td class="${cls}">${st}</td><td style="font-size:10px;color:var(--gray);white-space:pre-line;">${n?n.value:''}</td></tr>`;
     });
     // Inline VI findings for this section
     const vi=viMap[String(def.id)];
@@ -2640,12 +2316,12 @@ function buildLbReport() {
         batt: get('batt'), fuelpsi: get('fuelpsi'), fuelwc: get('fuelwc'), timing: get('timing')
       };
       // Only include rows that have at least a time entry
-      if (row.time || row.v1 || row.oilpsi) rows.push(row);
+      if (Object.entries(row).some(([key, value]) => key !== 'kw' && value.trim())) rows.push(row);
     });
   }
 
   // Check if there's anything to show
-  const hasData = rows.length > 0 || notes9 || genMake !== '—' || (photoStore['lb-run'] && photoStore['lb-run'].length > 0);
+  const hasData = rows.length > 0 || notes9 || [genMake, genModel, genSerial, genKw, genVolts, ambientC].some(value => value !== '—') || (photoStore['lb-run'] && photoStore['lb-run'].length > 0);
   if (!hasData) {
     title.style.display = 'none';
     return;
@@ -4061,7 +3737,7 @@ function isCriticalField(fid) {
 
 // ── COLLECT STATE ──
 function collectState() {
-  const state = { meta:{}, meas:{}, vi:{}, bolts:{}, notes:{} };
+  const state = { meta:{}, meas:{...retiredMeasurementNotes}, vi:{}, bolts:{}, notes:{} };
 
   ['wo','serial','model','unit','customer','tech','date','hours','variant','grind','clrmethod','crank'].forEach(k => {
     const el = document.getElementById('uf-'+k);
@@ -4245,7 +3921,9 @@ function restoreState(state) {
     applyVariant(true);
     applyGrind(true);
 
+    retiredMeasurementNotes = {};
     Object.entries(state.meas || {}).forEach(([id,data]) => {
+      if (!document.getElementById('val-'+id)) retiredMeasurementNotes[id] = data;
       const v = document.getElementById('val-'+id);
       const n = document.getElementById('note-'+id);
       if (v) v.value = data.value || '';
@@ -4688,6 +4366,7 @@ let lbRowCount = 0;
 
 // Sync generator kW from generator info field to calculator
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sec-9').addEventListener('input', lbUpdateCount);
   const genKwEl = document.getElementById('lb-gen-kw');
   const genVoltsEl = document.getElementById('lb-gen-volts');
   if (genKwEl) genKwEl.addEventListener('input', () => {
@@ -4838,26 +4517,21 @@ function lbRemoveRow(n) {
   lbUpdateCount();
 }
 
+function loadBankCounts() {
+  const setup = ['gen-make','gen-model','gen-serial','gen-kw','gen-volts','ambient-c'];
+  const entered = setup.filter(key => document.getElementById('lb-' + key)?.value.trim()).length;
+  const rows = document.getElementById('lb-tbody').rows;
+  let complete = 0, started = 0;
+  for (const row of rows) {
+    const inputs = Array.from(row.getElementsByTagName('input'));
+    if (inputs.some(input => input.value.trim())) started++;
+    if (inputs.length && inputs.every(input => input.value.trim() && (input.id.endsWith('-time') || Number.isFinite(Number(input.value))))) complete++;
+  }
+  return {total: Math.max(8, started), complete, setupTotal: setup.length, setup: entered};
+}
+
 function lbUpdateCount() {
-  const tbody = document.getElementById('lb-tbody');
-  const totalRows = tbody?.rows.length || 0;
-  // Count only rows that actually have data entered — a pre-rendered empty row
-  // is NOT a completed reading (prevents Section 9 showing COMPLETE on a blank form).
-  let filled = 0;
-  if (tbody) {
-    for (const row of tbody.rows) {
-      const hasData = [...row.querySelectorAll('input')].some(inp => inp.value.trim() !== '');
-      if (hasData) filled++;
-    }
-  }
-  const el = document.getElementById('lb-reading-count');
-  if (el) el.textContent = `${filled} / 8 readings`;
-  const badge = document.getElementById('badge-sec-9');
-  if (badge) {
-    if (filled === 0) { badge.textContent = '0 / 8 readings'; badge.className = 'badge badge-gray'; }
-    else if (filled >= 8) { badge.textContent = 'COMPLETE'; badge.className = 'badge badge-pass'; }
-    else { badge.textContent = `${filled} / 8 readings`; badge.className = 'badge badge-gray'; }
-  }
+  updateProgress();
 }
 
 function lbRecalcKW(n) {
@@ -4901,7 +4575,7 @@ function collectLbState() {
 
 // ── Restore Section 9 state ──
 function restoreLbState(lb) {
-  if (!lb) return;
+  lb = lb || {hp:currentVariant() === '466TA' ? '200' : '140'};
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set('lb-gen-make',   lb.genMake);
   set('lb-gen-model',  lb.genModel);
@@ -4919,7 +4593,12 @@ function restoreLbState(lb) {
   lbRowCount = 0;
 
   if (Array.isArray(lb.rows)) {
+    // Earlier templates generated the same eight IDs twice. Skip duplicate blank slots.
+    const seen = new Set();
     lb.rows.forEach(row => {
+      const entered = Object.entries(row).some(([key,value]) => key !== 'id' && key !== 'kw' && String(value ?? '').trim());
+      if (row.id != null && seen.has(row.id) && !entered) return;
+      seen.add(row.id);
       lbAddRow();
       const n = lbRowCount - 1;
       const cols = ['time','v1','v2','v3','a1','a2','a3','hz','oilpsi','coolant','oiltemp','batt','fuelpsi','fuelwc','timing'];
@@ -4930,6 +4609,7 @@ function restoreLbState(lb) {
       lbRecalcKW(n);
     });
   }
+  while (lbRowCount < 8) lbAddRow();
   lbUpdateCount();
   lbCalc();
 }
